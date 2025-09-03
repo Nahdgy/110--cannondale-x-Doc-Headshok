@@ -1,0 +1,313 @@
+add_shortcode('sous_categories_route', 'afficher_sous_categories_route');
+
+function afficher_sous_categories_route() {
+  ob_start();
+
+  $parent = get_term_by('slug', 'route', 'product_cat');
+  // Récupération des filtres depuis l'URL (GET)
+  $filtres = isset($_GET['filtre']) ? (array)$_GET['filtre'] : [];
+
+  // Construction de la requête pour get_terms
+  $args = [
+    'taxonomy' => 'product_cat',
+    'parent' => $parent ? $parent->term_id : 0,
+    'hide_empty' => false,
+  ];
+  if (!empty($filtres)) {
+    $args['slug'] = $filtres;
+  }
+  $sous_categories = get_terms($args);
+
+  $html_filtres = afficher_filtres_sous_categories_route($filtres);
+
+  if (!empty($sous_categories) && !is_wp_error($sous_categories)) {
+    ?>
+    <style>
+		ul.liste-categories {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+		
+	@media screen and (min-width: 1024px) {
+		ul.liste-categories {
+			display: grid;
+        	grid-template-columns: repeat(3, 1fr);
+        	gap: 20px;
+		}
+	}
+		
+	@media screen and (min-width: 767px) and (max-width: 1023px) {
+		ul.liste-categories {
+			display: grid;
+        	grid-template-columns: repeat(2, 1fr);
+       		gap: 20px;
+		}
+	}
+		
+	@media screen and (max-width: 766px) {
+		ul.liste-categories {
+			display: grid;
+        	grid-template-columns: repeat(1, 1fr);
+        	gap: 20px;
+		}
+	}
+      
+      ul.liste-categories li {
+        background-color: #F7F7F7;
+        border-radius: 6px;
+        padding: 15px;
+        box-sizing: border-box;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 300px;
+        transition: transform 0.3s ease;
+      }
+      ul.liste-categories li:hover {
+        transform: translateY(-4px);
+      }
+      ul.liste-categories li a {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+      }
+      ul.liste-categories li img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 15px;
+        object-fit: contain;
+        max-height: 180px;
+      }
+      ul.liste-categories li .titre-categorie {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: #000000;
+        text-align: center;
+        margin-top: auto;
+      }
+
+      .barre-tri {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      #nombre-produits {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 300;
+        font-size: 24px;
+        color: black;
+		margin-right:2rem;
+      }
+	
+		.toggle-titre{
+			color:black !important;
+			display: flex;
+			justify-content: space-between;
+		}
+		
+		#form-filtres{
+	  height:600px;
+      overflow-y: scroll;
+      position: relative;
+      width: 100%;
+      overflow-y: scroll;
+      scrollbar-color: black #F8F8F8;
+	}
+		
+	.filtre-groupe{
+		margin-right:1rem;
+		min-width:200px;
+	  }
+		
+      .tri-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+		
+      .tri-container label {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 300;
+        font-size: 16px;
+        color: #000;
+        margin-bottom: 0;
+      }
+		
+      #tri-sous-categories {
+        width: 160px;
+        padding: 6px 8px;
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-size: 14px;
+      }
+		
+      .separator-red {
+        border: none;
+        border-bottom: 2px solid #FF3F22;
+        margin: 0 0 20px 0;
+        width: 100%;
+      }
+    </style>
+
+   <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px;">
+      <div class="barre-tri">
+        <div style="display: flex; align-items: center;">
+          <div id="nombre-produits"><?php echo count($sous_categories); ?> résultats</div>
+          <div id="cacher-filtres">Cacher les filtres</div>
+        </div>
+        <div class="tri-container">
+          <label for="tri-sous-categories">Trier par :</label>
+          <select id="tri-sous-categories">
+            <option value="default">Tri par défaut</option>
+            <option value="alpha">Ordre alphabétique A-Z</option>
+            <option value="alpha-desc">Ordre alphabétique Z-A</option>
+          </select>
+        </div>
+      </div>
+      <hr class="separator-red">
+
+      <div style="display:flex; gap:20px;">
+        <div style="width:25%; min-width:170px" id="zone-filtres">
+          <?php echo $html_filtres; ?>
+        </div>
+        <div style="flex:1;">
+          <ul class="liste-categories" id="liste-sous-categories">
+            <?php foreach ($sous_categories as $cat) :
+              $thumbnail_id = get_term_meta($cat->term_id, 'thumbnail_id', true);
+              $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : wc_placeholder_img_src('medium');
+              ?>
+				<li data-name="<?php echo esc_attr($cat->name); ?>">
+				  <a href="<?php echo esc_url('https://cannonbale.com/detail-velo/?pratique=route&modele=' . sanitize_title($cat->name)); ?>">
+					<img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($cat->name); ?>">
+					<div class="titre-categorie"><?php echo esc_html($cat->name); ?></div>
+				  </a>
+				</li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const triSelect = document.getElementById('tri-sous-categories');
+      const liste = document.getElementById('liste-sous-categories');
+
+      triSelect.addEventListener('change', function () {
+        const items = Array.from(liste.querySelectorAll('li'));
+
+        if (this.value === 'alpha') {
+          items.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+        } else if (this.value === 'alpha-desc') {
+          items.sort((a, b) => b.dataset.name.localeCompare(a.dataset.name));
+        } else {
+          return; // Tri par défaut : pas de tri
+        }
+
+        items.forEach(item => liste.appendChild(item));
+      });
+
+      // Gestion des filtres (affichage/repli)
+      document.querySelectorAll(".toggle-titre").forEach((title) => {
+        title.addEventListener("click", () => {
+          const section = document.getElementById(title.dataset.target);
+          const arrow = title.querySelector("span");
+          const isOpen = section.style.display === "block";
+          section.style.display = isOpen ? "none" : "block";
+          arrow.textContent = isOpen ? "˅" : "˄";
+        });
+      });
+
+      const cacherFiltres = document.getElementById("cacher-filtres");
+      cacherFiltres?.addEventListener("click", () => {
+        document.querySelectorAll("#form-filtres .filtre-options").forEach(section => {
+          section.style.display = "none";
+        });
+        document.querySelectorAll("#form-filtres .toggle-titre span").forEach(span => {
+          span.textContent = " ˅";
+        });
+      });
+    });
+    </script>
+
+    <?php
+  } else {
+    echo '<p>Aucun modèle trouvé pour ROUTE.</p>';
+  }
+
+  return ob_get_clean();
+}
+
+function afficher_filtres_sous_categories_route($filtres_actuels = []) {
+  $parent = get_term_by('slug', 'route', 'product_cat');
+  $modeles = get_terms([
+    'taxonomy' => 'product_cat',
+    'parent' => $parent ? $parent->term_id : 0,
+    'hide_empty' => false,
+  ]);
+
+  $sections = [
+    'Filtres appliqués' => [],
+    'Disponibilité' => ['en-stock'],
+    'Modèles' => $modeles,
+    'Années' => ['2022', '2023', '2024'],
+  ];
+
+  $html = '<form id="form-filtres" method="get">';
+
+  foreach ($sections as $titre => $options) {
+    $id = 'section-' . sanitize_title($titre);
+    $html .= '<div class="filtre-groupe" style="margin-bottom: 20px;">';
+    $html .= '<h4 class="toggle-titre" data-target="' . $id . '">' . esc_html($titre) . ' <span>˅</span></h4>';
+    $html .= '<div class="filtre-options" id="' . $id . '" style="display:none;">';
+
+    if ($titre === 'Filtres appliqués') {
+      $html .= '<div id="filtres-appliques" style="margin-bottom: 5px;">';
+      if (!empty($filtres_actuels)) {
+        foreach ($filtres_actuels as $slug) {
+          $html .= '<span style="background:#FF3F22;color:#fff;padding:2px 8px;border-radius:4px;margin-right:4px;">' . esc_html($slug) . '</span>';
+        }
+      }
+      $html .= '</div>';
+      $html .= '<span id="reset" style="cursor:pointer; color:#FF3F22;">Tout effacer</span>';
+    } else {
+      foreach ($options as $opt) {
+        if (is_object($opt)) {
+          $slug = $opt->slug;
+          $label = $opt->name;
+        } else {
+          $slug = sanitize_title($opt);
+          $label = ucfirst($opt);
+        }
+        $checked = in_array($slug, $filtres_actuels) ? 'checked' : '';
+        $html .= '<label style="display:block; margin-bottom: 5px; font-family: DIN Next LT Pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
+        $html .= '<input type="checkbox" name="filtre[]" value="' . esc_attr($slug) . '" style="margin-right: 6px;" ' . $checked . '>'; 
+        $html .= esc_html($label) . '</label>';
+      }
+    }
+
+    $html .= '</div><hr class="separator-red"></div>';
+  }
+
+  $html .= '<button type="submit" style="background:#FF3F22;color:#fff;padding:6px 16px;border:none;border-radius:6px;">Filtrer</button>';
+  $html .= '</form>';
+
+  $html .= "<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const resetBtn = document.getElementById('reset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          document.querySelectorAll('#form-filtres input[type=checkbox]').forEach(cb => cb.checked = false);
+          document.getElementById('form-filtres').submit();
+        });
+      }
+    });
+  </script>";
+
+  return $html;
+}

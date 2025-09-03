@@ -1,0 +1,304 @@
+<style>
+.form-step {
+  display: none;
+}
+.form-step.active {
+  display: block;
+}
+.form-pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+.radio-group {
+  margin-bottom: 18px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.progress-bar-container {
+  width: 100%;
+  background: #fff;
+  border-radius: 3px;
+  height: 7px;
+  margin: 18px 0 24px 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.progress-bar {
+  height: 100%;
+  background: #FF3F22;
+  border-radius: 3px;
+  transition: width 0.3s;
+  width: 0%;
+}
+.radio-btn {
+  display: inline-block;
+  border: 2px solid #222;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  box-shadow: none;
+  outline: none;
+}
+.radio-btn input[type="radio"] {
+  display: none;
+}
+.radio-btn.selected {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+.button-disabled {
+  background: #ccc !important;
+  color: #888 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+</style>
+<?php if (is_user_logged_in()) : ?>
+<form id="multi-step-form">
+  <div style="margin-bottom:8px;">
+    <span style="font-weight:600;">Étape <span id="progress-step">1</span>/3</span>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+  </div>
+  <!-- Étape 1 -->
+  <div class="form-step active" id="step-1">
+    <h3>Étape 1 : Choisissez une option</h3>
+    <div class="radio-group">
+      <label class="radio-btn"><input type="radio" name="option1" value="A" required> Option A</label>
+      <label class="radio-btn"><input type="radio" name="option1" value="B"> Option B</label>
+      <label class="radio-btn"><input type="radio" name="option1" value="C"> Option C</label>
+    </div>
+    <div class="form-pagination">
+      <span></span>
+      <button type="button" id="next-1">Suivant</button>
+    </div>
+  </div>
+  <!-- Étape 2 -->
+  <div class="form-step" id="step-2">
+    <h3>Étape 2 : Sélectionnez une réponse</h3>
+    <div class="radio-group">
+      <label class="radio-btn"><input type="radio" name="option2" value="X" required> Réponse X</label>
+      <label class="radio-btn"><input type="radio" name="option2" value="Y"> Réponse Y</label>
+      <label class="radio-btn"><input type="radio" name="option2" value="Z"> Réponse Z</label>
+    </div>
+    <div class="form-pagination">
+      <button type="button" id="prev-2">Précédent</button>
+      <button type="button" id="next-2">Suivant</button>
+    </div>
+  </div>
+  <!-- Étape 3 -->
+  <div class="form-step" id="step-3">
+    <h3>Étape 3 : Informations complémentaires</h3>
+    <div style="margin-bottom:18px;">
+      <label for="date-revision" style="font-weight:600;display:block;margin-bottom:6px;">Date de la dernière révision</label>
+      <input type="date" id="date-revision" name="date_revision" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:320px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="poids-pilote" style="font-weight:600;display:block;margin-bottom:6px;">Poids du pilote (kg)</label>
+      <input type="number" id="poids-pilote" name="poids_pilote" min="0" step="1" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:180px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="modele-annee" style="font-weight:600;display:block;margin-bottom:6px;">Modèle et année du vélo</label>
+      <input type="text" id="modele-annee" name="modele_annee" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:320px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="remarques" style="font-weight:600;display:block;margin-bottom:6px;">Remarques</label>
+      <textarea id="remarques" name="remarques" rows="3" style="width:100%;max-width:420px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;"></textarea>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="fichier" style="font-weight:600;display:block;margin-bottom:6px;">Joindre un document</label>
+      <input type="file" id="fichier" name="fichier" style="padding:8px 0;">
+    </div>
+    <div class="form-pagination">
+      <button type="button" id="prev-3">Précédent</button>
+      <button type="button" id="next-3">Suivant</button>
+    </div>
+  </div>
+  <!-- Étape 4 : Résumé -->
+  <div class="form-step" id="step-4">
+    <h3>Résumé de votre demande</h3>
+    <div id="resume-content" style="margin-bottom:18px;"></div>
+    <div class="form-pagination">
+      <button type="button" id="prev-4">Précédent</button>
+      <button type="submit">Envoyer</button>
+    </div>
+  </div>
+  <div id="form-result" style="margin-top:20px; color:green;"></div>
+</form>
+<script>
+const steps = [
+  document.getElementById('step-1'),
+  document.getElementById('step-2'),
+  document.getElementById('step-3'),
+  document.getElementById('step-4')
+];
+let currentStep = 0;
+function showStep(index) {
+  steps.forEach((step, i) => step.classList.toggle('active', i === index));
+  updateProgressBar(index);
+  // Focus sur le formulaire pour le centrer à chaque changement d'étape
+  const form = document.getElementById('multi-step-form');
+  if(form) {
+    form.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
+}
+function updateProgressBar(index) {
+  // 3 étapes de questions, la 4e est le résumé
+  const totalSteps = 3;
+  let stepNum = index + 1;
+  if (stepNum > totalSteps) stepNum = totalSteps;
+  document.getElementById('progress-step').textContent = stepNum > totalSteps ? totalSteps : stepNum;
+  const percent = Math.round((stepNum-1) / totalSteps * 100);
+  document.getElementById('progress-bar').style.width = percent + '%';
+}
+function updateNextButtonState(step, radioName, nextBtnId) {
+  const radios = document.getElementsByName(radioName);
+  const nextBtn = document.getElementById(nextBtnId);
+  function check() {
+    let checked = false;
+    radios.forEach ? radios.forEach(r => { if(r.checked) checked = true; }) : Array.from(radios).forEach(r => { if(r.checked) checked = true; });
+    if (checked) {
+      nextBtn.classList.remove('button-disabled');
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.classList.add('button-disabled');
+      nextBtn.disabled = true;
+    }
+  }
+  radios.forEach ? radios.forEach(r => r.addEventListener('change', check)) : Array.from(radios).forEach(r => r.addEventListener('change', check));
+  check();
+}
+function updateNext3ButtonState() {
+  const dateVal = document.getElementById('date-revision').value;
+  const poidsVal = document.getElementById('poids-pilote').value;
+  const modeleVal = document.getElementById('modele-annee').value;
+  const remarquesVal = document.getElementById('remarques').value;
+  const nextBtn = document.getElementById('next-3');
+  if(dateVal && poidsVal && modeleVal && remarquesVal) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
+  }
+}
+function updateRadioSelected() {
+  document.querySelectorAll('.radio-group').forEach(group => {
+    group.querySelectorAll('.radio-btn').forEach(label => {
+      const input = label.querySelector('input[type="radio"]');
+      input.addEventListener('change', function() {
+        group.querySelectorAll('.radio-btn').forEach(l => l.classList.remove('selected'));
+        if(input.checked) label.classList.add('selected');
+      });
+      if(input.checked) label.classList.add('selected');
+      else label.classList.remove('selected');
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  updateNextButtonState('step-1', 'option1', 'next-1');
+  updateNextButtonState('step-2', 'option2', 'next-2');
+  updateNextButtonState('step-3', 'option3', 'next-3');
+  updateNext3ButtonState();
+  ['date-revision','poids-pilote','modele-annee','remarques'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateNext3ButtonState);
+  });
+  updateRadioSelected();
+  updateProgressBar(0);
+});
+document.querySelectorAll('input[type="radio"]').forEach(input => {
+  input.addEventListener('change', updateRadioSelected);
+});
+document.getElementById('next-1').onclick = function() {
+  if(document.querySelector('input[name="option1"]:checked')) {
+    currentStep = 1; showStep(currentStep);
+  }
+};
+document.getElementById('prev-2').onclick = function() {
+  currentStep = 0; showStep(currentStep);
+};
+document.getElementById('next-2').onclick = function() {
+  if(document.querySelector('input[name="option2"]:checked')) {
+    currentStep = 2; showStep(currentStep);
+  }
+};
+document.getElementById('prev-3').onclick = function() {
+  currentStep = 1; showStep(currentStep);
+};
+document.getElementById('next-3').onclick = function() {
+  // Validation : tous les champs obligatoires
+  const dateVal = document.getElementById('date-revision').value;
+  const poidsVal = document.getElementById('poids-pilote').value;
+  const modeleVal = document.getElementById('modele-annee').value;
+  const remarquesVal = document.getElementById('remarques').value;
+  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+    if(!dateVal) document.getElementById('date-revision').focus();
+    else if(!poidsVal) document.getElementById('poids-pilote').focus();
+    else if(!modeleVal) document.getElementById('modele-annee').focus();
+    else document.getElementById('remarques').focus();
+    return;
+  }
+  // Afficher le résumé
+  const r1 = document.querySelector('input[name="option1"]:checked')?.value;
+  const r2 = document.querySelector('input[name="option2"]:checked')?.value;
+  const date_revision = document.getElementById('date-revision').value;
+  const poids_pilote = document.getElementById('poids-pilote').value;
+  const modele_annee = document.getElementById('modele-annee').value;
+  const remarques = document.getElementById('remarques').value;
+  const fichier = document.getElementById('fichier').files[0];
+  let fileName = fichier ? fichier.name : 'Aucun';
+  document.getElementById('resume-content').innerHTML = `<strong>Option choisie :</strong> ${r1}<br><strong>Réponse :</strong> ${r2}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
+  currentStep = 3; showStep(currentStep);
+};
+document.getElementById('prev-4').onclick = function() {
+  currentStep = 2; showStep(currentStep);
+};
+document.getElementById('multi-step-form').onsubmit = function(e) {
+  e.preventDefault();
+  const r1 = document.querySelector('input[name="option1"]:checked')?.value;
+  const r2 = document.querySelector('input[name="option2"]:checked')?.value;
+  const date_revision = document.getElementById('date-revision').value;
+  const poids_pilote = document.getElementById('poids-pilote').value;
+  const modele_annee = document.getElementById('modele-annee').value;
+  const remarques = document.getElementById('remarques').value;
+  const fichier = document.getElementById('fichier').files[0];
+  var formData = new FormData();
+  formData.append('option1', r1);
+  formData.append('option2', r2);
+  formData.append('date_revision', date_revision);
+  formData.append('poids_pilote', poids_pilote);
+  formData.append('modele_annee', modele_annee);
+  formData.append('remarques', remarques);
+  if(fichier) formData.append('fichier', fichier);
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fox', true);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      document.getElementById('form-result').textContent = 'Formulaire envoyé avec succès !';
+      document.getElementById('multi-step-form').reset();
+      showStep(0);
+      updateNextButtonState('step-1', 'option1', 'next-1');
+      updateNextButtonState('step-2', 'option2', 'next-2');
+      updateRadioSelected();
+      updateProgressBar(0);
+    } else {
+      document.getElementById('form-result').textContent = 'Erreur lors de l’envoi.';
+    }
+  };
+  xhr.send(formData);
+};
+</script>
+<?php else : ?>
+<div style="text-align:center; margin:40px 0;">
+  <p style="font-size:1.2em; font-weight:600;">Vous devez être connecté pour accéder au formulaire.</p>
+  <a href="<?php echo wp_login_url(); ?>" class="button" style="background:#FF3F22;color:#fff;padding:12px 32px;border-radius:8px;font-weight:600;text-decoration:none;">Se connecter</a>
+</div>
+<?php endif; ?>

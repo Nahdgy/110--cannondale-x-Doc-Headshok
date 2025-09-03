@@ -1,0 +1,138 @@
+
+function filtre_velos_shortcode() {
+    $categories_pratiques = ['vtt', 'vae', 'route', 'velos-urbains'];
+    $modeles_par_pratique = [];
+
+    foreach ($categories_pratiques as $slug) {
+        $categorie = get_term_by('slug', $slug, 'product_cat');
+        $modeles_par_pratique[$slug] = [];
+        if ($categorie) {
+            $enfants = get_terms([
+                'taxonomy'   => 'product_cat',
+                'parent'     => $categorie->term_id,
+                'hide_empty' => false,
+            ]);
+            foreach ($enfants as $child) {
+                $modeles_par_pratique[$slug][] = [
+                    'slug' => $child->slug,
+                    'name' => $child->name
+                ];
+            }
+        }
+    }
+
+    ob_start();
+    ?>
+
+    <style>
+        .filtre-velo-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin: 30px auto;
+        }
+
+        .filtre-velo-wrapper select {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            border: 2px solid #D9D9D9;
+            padding: 10px;
+            height: 39px;
+            font-family: "DIN Next LT Pro", sans-serif;
+            font-size: 14px;
+            color: #151515;
+            width: 100%;
+            box-sizing: border-box;
+            display: block;
+        }
+
+        .filtre-velo-wrapper button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-family: "DIN Next LT Pro", sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            width: fit-content;
+            align-self: center;
+        }
+
+        .filtre-velo-wrapper button:hover {
+            background-color: #000; /* Pas d'effet hover */
+        }
+    </style>
+
+
+    <form class="filtre-velo-wrapper" onsubmit="return redirigerFiltreVelo(event)">
+        <select id="pratique" name="pratique">
+            <option value="" disabled selected hidden>Pratique</option>
+            <option value="vtt">VTT</option>
+            <option value="vae">VAE</option>
+            <option value="route">Route</option>
+            <option value="velos-urbains">Urbain</option>
+        </select>
+
+        <select id="modele" name="modele" disabled style="background-color:#eee; color:#aaa; cursor:not-allowed;">
+            <option value="" disabled selected hidden>Modèle</option>
+        </select>
+
+        <button type="submit">Rechercher</button>
+    </form>
+
+
+    <script>
+    // Données PHP pour JS : modèles par pratique
+    <?php echo 'var modelesParPratique = ' . json_encode($modeles_par_pratique) . ';'; ?>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var selectPratique = document.getElementById('pratique');
+        var selectModele = document.getElementById('modele');
+
+        selectPratique.addEventListener('change', function() {
+            // Désactive/active le select modèle
+            if (selectPratique.value) {
+                selectModele.disabled = false;
+                selectModele.style.backgroundColor = '#fff';
+                selectModele.style.color = '#151515';
+                selectModele.style.cursor = 'pointer';
+
+                // Met à jour les options du select modèle
+                selectModele.innerHTML = '<option value="" disabled selected hidden>Modèle</option>';
+                var modeles = modelesParPratique[selectPratique.value] || [];
+                modeles.forEach(function(m) {
+                    var opt = document.createElement('option');
+                    opt.value = m.slug;
+                    opt.textContent = m.name;
+                    selectModele.appendChild(opt);
+                });
+            } else {
+                selectModele.disabled = true;
+                selectModele.style.backgroundColor = '#eee';
+                selectModele.style.color = '#aaa';
+                selectModele.style.cursor = 'not-allowed';
+                selectModele.innerHTML = '<option value="" disabled selected hidden>Modèle</option>';
+            }
+        });
+    });
+
+    function redirigerFiltreVelo(event) {
+        event.preventDefault();
+        const pratique = document.getElementById('pratique').options[document.getElementById('pratique').selectedIndex].value;
+        const modele = document.getElementById('modele').value;
+        if (!pratique || !modele) {
+            alert("Veuillez sélectionner une pratique et un modèle.");
+            return false;
+        }
+        const url = `https://cannonbale.com/detail-velo/?pratique=${encodeURIComponent(pratique)}&modele=${encodeURIComponent(modele)}`;
+        window.location.href = url;
+        return false;
+    }
+    </script>
+
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('filtre_velos', 'filtre_velos_shortcode');

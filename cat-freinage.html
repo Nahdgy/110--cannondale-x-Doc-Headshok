@@ -1,0 +1,414 @@
+add_shortcode('produits_freinage', 'afficher_produits_freinage');
+
+function afficher_produits_freinage() {
+  ob_start();
+
+  $parent = get_term_by('slug', 'freinage', 'product_cat');
+  $produits = wc_get_products([
+    'status' => 'publish',
+    'limit' => -1,
+    'category' => [$parent ? $parent->slug : ''],
+  ]);
+
+  // Filtrage par catégorie via GET
+  if (isset($_GET['filtre']) && is_array($_GET['filtre']) && count($_GET['filtre']) > 0) {
+    $filtres = array_map('strtolower', array_map('sanitize_text_field', $_GET['filtre']));
+    $produits = array_filter($produits, function($prod) use ($filtres) {
+      $cats = $prod->get_category_ids();
+      $cat_slugs = array_map(function($cat_id) {
+        $term = get_term($cat_id, 'product_cat');
+        return $term ? strtolower($term->slug) : '';
+      }, $cats);
+      foreach ($filtres as $filtre) {
+        foreach ($cat_slugs as $slug) {
+          if (strpos($slug, $filtre) !== false) return true;
+        }
+      }
+      return false;
+    });
+    $produits = array_values($produits);
+  }
+
+  $html_filtres = afficher_filtres_freinage();
+
+  if (!empty($produits)) {
+    ?>
+    <style>
+      ul.liste-categories {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      @media screen and (min-width: 1024px) {
+        ul.liste-categories {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+      }
+
+      @media screen and (min-width: 767px) and (max-width: 1023px) {
+        ul.liste-categories {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+      }
+
+      @media screen and (max-width: 766px) {
+        ul.liste-categories {
+          display: grid;
+          grid-template-columns: repeat(1, 1fr);
+          gap: 20px;
+        }
+      }
+
+	ul.liste-categories li {
+	  background-color: #F7F7F7;
+	  border-radius: 6px;
+	  padding: 15px;
+	  box-sizing: border-box;
+	  position: relative;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  text-align: center;
+	  min-height: 400px; /* Augmentation de la hauteur */
+	  transition: transform 0.3s ease;
+	}
+
+      ul.liste-categories li:hover {
+        transform: translateY(-4px);
+      }
+
+      ul.liste-categories li a {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+      }
+
+      ul.liste-categories li img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 15px;
+        object-fit: contain;
+        max-height: 180px;
+      }
+
+      ul.liste-categories li .titre-categorie {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: #000000;
+        text-align: center;
+        margin-top: auto;
+      }
+
+      /*.btn-ajouter {
+        background-color: black;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 18px;
+        cursor: pointer;
+      }*/
+
+      .btn-voir-plus {
+        display: block;
+        margin: 30px auto 0 auto;
+        background-color: black;
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-family: 'DIN Next LT Pro', sans-serif;
+        border: none;
+        cursor: pointer;
+      }
+
+      .barre-tri {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      #nombre-produits {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 300;
+        font-size: 24px;
+        color: black;
+        margin-right: 2rem;
+      }
+
+      .toggle-titre {
+        color: black !important;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      #form-filtres {
+        height: 600px;
+        overflow-y: scroll;
+        position: relative;
+        width: 100%;
+        scrollbar-color: black #F8F8F8;
+      }
+
+      .filtre-groupe {
+        margin-right: 1rem;
+        min-width: 200px;
+      }
+
+      .tri-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tri-container label {
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-weight: 300;
+        font-size: 16px;
+        color: #000;
+        margin-bottom: 0;
+      }
+
+      #tri-sous-categories {
+        width: 160px;
+        padding: 6px 8px;
+        font-family: 'DIN Next LT Pro', sans-serif;
+        font-size: 14px;
+      }
+
+      .separator-red {
+        border: none;
+        border-bottom: 2px solid #FF3F22;
+        margin: 0 0 20px 0;
+        width: 100%;
+      }
+
+	.prix-ajout-container {
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	  width: calc(100% - 30px); /* 100% - padding gauche/droite */
+	  position: absolute;
+	  bottom: 15px;
+	  left: 15px;
+	  right: 15px;
+	}
+
+	/* Prix */
+	.prix-produit {
+	  font-family: 'DIN Next LT Pro', sans-serif;
+	  font-size: 16px;
+	  font-weight: 500;
+	  color: #000;
+	}
+
+	.btn-ajouter {
+	  background-color: black;
+	  color: white;
+	  border-radius: 50%;
+	  width: 32px;
+	  height: 32px;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  font-size: 18px;
+	  cursor: pointer;
+	  position: static; /* pas absolute ici */
+	}
+
+	/* Supprime l'effet hover du bouton "Voir plus" */
+	.btn-voir-plus:hover {
+	  background-color: black;
+	  color: white;
+	}
+    </style>
+
+    <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px;">
+      <div class="barre-tri">
+        <div style="display: flex; align-items: center;">
+          <div id="nombre-produits"><?php echo count($produits); ?> résultats</div>
+          <div id="cacher-filtres">Cacher les filtres</div>
+        </div>
+        <div class="tri-container">
+          <label for="tri-sous-categories">Trier par :</label>
+          <select id="tri-sous-categories">
+            <option value="default">Tri par défaut</option>
+            <option value="alpha">Ordre alphabétique A-Z</option>
+            <option value="alpha-desc">Ordre alphabétique Z-A</option>
+          </select>
+        </div>
+      </div>
+      <hr class="separator-red">
+
+      <div style="display:flex; gap:20px;">
+        <div style="width:25%; min-width:170px" id="zone-filtres">
+          <?php echo $html_filtres; ?>
+        </div>
+        <div style="flex:1;">
+          <ul class="liste-categories" id="liste-sous-categories">
+            <?php
+              $limite_affichage = 18;
+              $produits_affiches = array_slice($produits, 0, $limite_affichage);
+              foreach ($produits_affiches as $product) :
+                $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+            ?>
+              <li data-name="<?php echo esc_attr($product->get_name()); ?>">
+                <a href="<?php echo get_permalink($product->get_id()); ?>">
+                  <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product->get_name()); ?>">
+                 <div class="titre-categorie"><?php echo esc_html($product->get_name()); ?></div>
+				 <div class="prix-ajout-container">
+				  <span class="prix-produit"><?php echo $product->get_price_html(); ?></span>
+				  <div class="btn-ajouter">+</div>
+				 </div>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+          <?php if (count($produits) > $limite_affichage) : ?>
+            <button class="btn-voir-plus" id="voir-plus">Voir plus</button>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const triSelect = document.getElementById('tri-sous-categories');
+        const liste = document.getElementById('liste-sous-categories');
+
+        triSelect.addEventListener('change', function () {
+          const items = Array.from(liste.querySelectorAll('li'));
+
+          if (this.value === 'alpha') {
+            items.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+          } else if (this.value === 'alpha-desc') {
+            items.sort((a, b) => b.dataset.name.localeCompare(a.dataset.name));
+          } else {
+            return;
+          }
+
+          items.forEach(item => liste.appendChild(item));
+        });
+
+        document.querySelectorAll(".toggle-titre").forEach((title) => {
+          title.addEventListener("click", () => {
+            const section = document.getElementById(title.dataset.target);
+            const arrow = title.querySelector("span");
+            const isOpen = section.style.display === "block";
+            section.style.display = isOpen ? "none" : "block";
+            arrow.textContent = isOpen ? "˅" : "˄";
+          });
+        });
+
+        const cacherFiltres = document.getElementById("cacher-filtres");
+        cacherFiltres?.addEventListener("click", () => {
+          document.querySelectorAll("#form-filtres .filtre-options").forEach(section => {
+            section.style.display = "none";
+          });
+          document.querySelectorAll("#form-filtres .toggle-titre span").forEach(span => {
+            span.textContent = " ˅";
+          });
+        });
+
+        const voirPlusBtn = document.getElementById("voir-plus");
+        if (voirPlusBtn) {
+          voirPlusBtn.addEventListener("click", function () {
+            location.reload(); // simpliste : recharger la page pour tout afficher ou remplacer cette logique avec AJAX si nécessaire
+          });
+        }
+      });
+    </script>
+    <?php
+  } else {
+    echo '<p>Aucun produit trouvé dans la catégorie Freinage.</p>';
+  }
+
+  return ob_get_clean();
+}
+
+function afficher_filtres_freinage() {
+  // Récupère la catégorie parent "freinage"
+  $categorie_freinage = get_term_by('slug', 'freinage', 'product_cat');
+  $modeles = get_terms([
+    'taxonomy' => 'product_cat',
+    'parent' => $categorie_freinage ? $categorie_freinage->term_id : 0,
+    'hide_empty' => false,
+  ]);
+
+  // Récupère la catégorie parent "annees"
+  $categorie_annees = get_term_by('slug', 'annee', 'product_cat');
+  $annees = get_terms([
+    'taxonomy' => 'product_cat',
+    'parent' => $categorie_annees ? $categorie_annees->term_id : 0,
+    'hide_empty' => false,
+  ]);
+
+  $sections = [
+    'Filtres appliqués' => [],
+    'Disponibilité' => ['en-stock'],
+    'Modèles' => $modeles,
+    'Années' => $annees,
+  ];
+
+  $html = '<form id="form-filtres" method="get" action="">';
+
+  foreach ($sections as $titre => $options) {
+    $id = 'section-' . sanitize_title($titre);
+    $html .= '<div class="filtre-groupe" style="margin-bottom: 20px;">';
+    $html .= '<h4 class="toggle-titre" data-target="' . $id . '">' . esc_html($titre) . ' <span>˅</span></h4>';
+    $html .= '<div class="filtre-options" id="' . $id . '" style="display:none;">';
+
+    if ($titre === 'Filtres appliqués') {
+      $html .= '<div id="filtres-appliques" style="margin-bottom: 5px;"></div>';
+      $html .= '<span id="reset">Tout effacer</span>';
+    } else {
+      $filtres_actuels = isset($_GET['filtre']) ? (array)$_GET['filtre'] : [];
+      foreach ($options as $opt) {
+        if (is_object($opt)) {
+          $slug = $opt->slug;
+          $label = $opt->name;
+        } else {
+          $slug = sanitize_title($opt);
+          $label = ucfirst($opt);
+        }
+        $checked = in_array($slug, $filtres_actuels) ? 'checked' : '';
+        $html .= '<label style="display:block; margin-bottom: 5px; font-family: DIN Next LT Pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
+        $html .= '<input type="checkbox" name="filtre[]" value="' . esc_attr($slug) . '" style="margin-right: 6px;" ' . $checked . '>'; 
+        $html .= esc_html($label) . '</label>';
+      }
+    }
+
+    $html .= '</div><hr class="separator-red"></div>';
+  }
+
+  $html .= '<button type="submit" style="margin-top:10px;">Filtrer</button>';
+  $html .= '</form>';
+
+  $html .= "<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const resetBtn = document.getElementById('reset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          document.querySelectorAll('#form-filtres input[type=checkbox]').forEach(cb => cb.checked = false);
+          document.getElementById('form-filtres').dispatchEvent(new Event('change'));
+        });
+      }
+    });
+  </script>";
+
+  return $html;
+}
+
