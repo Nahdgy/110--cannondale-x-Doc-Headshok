@@ -1,8 +1,52 @@
 function header_personnalise_shortcode() {
   ob_start();
   ?>
-	<script>
-	document.addEventListener('DOMContentLoaded', function() {
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				// MENU BURGER MOBILE
+				const burgerDown = document.getElementById('burger-down');
+				const burgerClose = document.getElementById('burger-close');
+				const headerMenu = document.getElementById('header-menu');
+				// Ouvre le menu burger
+				if (burgerDown && headerMenu && burgerClose) {
+					burgerDown.addEventListener('click', function() {
+						burgerClose.classList.remove('hide');
+						burgerDown.classList.add('hide');
+						headerMenu.style.display = 'block';
+					});
+				}
+				// Ferme le menu burger
+				if (burgerClose && headerMenu && burgerDown) {
+					burgerClose.addEventListener('click', function() {
+						burgerDown.classList.remove('hide');
+						burgerClose.classList.add('hide');
+						headerMenu.style.display = 'none';
+						const flags = document.getElementById('flags');
+						if (flags) flags.style.zIndex = '1';
+					});
+				}
+			});
+			// Affichage des sous-titres au clic sur un titre principal
+			document.querySelectorAll('.dropdown-sub > a').forEach(function(link) {
+				link.addEventListener('click', function(e) {
+					// Empêche la navigation si sous-menu
+					const subMenu = link.nextElementSibling;
+					if (subMenu && subMenu.classList.contains('dropdown-content-sub')) {
+						e.preventDefault();
+						// Toggle affichage
+						if (subMenu.style.display === 'grid') {
+							subMenu.style.display = 'none';
+						} else {
+							// Ferme les autres sous-menus
+							document.querySelectorAll('.dropdown-content-sub').forEach(function(sm) {
+								sm.style.display = 'none';
+							});
+							subMenu.style.display = 'grid';
+						}
+					}
+				});
+			});
 		var boutonPanier = document.getElementById('ouvrir-panier');
 		var drawer = document.getElementById('drawer-panier');
 		var fermerDrawer = document.getElementById('fermer-drawer');
@@ -17,39 +61,14 @@ function header_personnalise_shortcode() {
 		}
 		if(boutonPanier && drawer && fermerDrawer && overlay) {
 			boutonPanier.addEventListener('click', function(e) {
-				// Ouvre le drawer uniquement si le lien n'est pas déjà sur la page panier
-				if (window.location.pathname !== '/panier/') {
-					e.preventDefault();
-					ouvrirDrawer();
-				}
+				e.preventDefault();
+				ouvrirDrawer();
 			});
 			fermerDrawer.addEventListener('click', function() {
 				fermerDrawerFn();
 			});
 			overlay.addEventListener('click', function() {
 				fermerDrawerFn();
-			});
-		}
-		// MENU BURGER MOBILE
-		const burgerDown = document.getElementById('burger-down');
-		const burgerClose = document.getElementById('burger-close');
-		const headerMenu = document.getElementById('header-menu');
-		// Ouvre le menu burger
-		if (burgerDown && headerMenu && burgerClose) {
-			burgerDown.addEventListener('click', function() {
-				burgerClose.classList.remove('hide');
-				burgerDown.classList.add('hide');
-				headerMenu.style.display = 'block';
-			});
-		}
-		// Ferme le menu burger
-		if (burgerClose && headerMenu && burgerDown) {
-			burgerClose.addEventListener('click', function() {
-				burgerDown.classList.remove('hide');
-				burgerClose.classList.add('hide');
-				headerMenu.style.display = 'none';
-				const flags = document.getElementById('flags');
-				if (flags) flags.style.zIndex = '1';
 			});
 		}
 
@@ -180,27 +199,6 @@ function header_personnalise_shortcode() {
 			}
 		});
 	}
-
-	function updatePanierCount() {
-		jQuery.post(wc_add_to_cart_params.ajax_url, { action: 'get_mini_panier' }, function(response) {
-			if (response && response.items) {
-			var total = 0;
-			response.items.forEach(function(item){ total += item.qty; });
-			var badge = document.getElementById('panier-count');
-			if (badge) badge.textContent = total;
-			}
-		});
-		}
-		document.addEventListener('DOMContentLoaded', function() {
-		updatePanierCount();
-		// Optionnel : rafraîchir à chaque action panier
-		document.body.addEventListener('panierUpdated', updatePanierCount);
-		});
-		// Pour déclencher la mise à jour du badge après une action AJAX sur le panier
-		window.panierUpdated = function() {
-		var event = new Event('panierUpdated');
-		document.body.dispatchEvent(event);
-		}
 
 	</script>
 
@@ -435,30 +433,43 @@ function header_personnalise_shortcode() {
 	}
 
     .logos {
-      flex: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-	  margin: 0 2vw;  
-	  max-width: 20vw;
-    }
-	.logos img{
-	  height: 30px;
-	 }
-	 
-	  #headshok{
-		  height: 45px;
-	  }
-
-	.actions-header {
+		flex: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 15px;
+		margin: 0 2vw;
+		max-width: 20vw;
+	}
+	.logos img {
+		height: 30px;
+		transition: transform 0.2s;
+	}
+	.logo-home img {
+		height: 35px;
+	}
+	#headshok {
+		height: 45px;
+	}
+	@media screen and (max-width: 530px) {
+	.logos {
+		width: 100%;
+		max-width: 100vw;
+		gap: 8px;
+		justify-content: flex-start;
+	}
+	.logos img, .logo-home img {
+		height: 28px;
+	}
+	}
+	.actions {
 	  display: flex;
 	  align-items: center;
 	  gap: 10%; /* Renforcé pour bien espacer les icônes */
 		height:2rem;
 	}
 	  
-	  .actions-header a{
+	  .actions a{
 	  display: flex;
 	  align-items: flex-end;
 	}
@@ -531,7 +542,7 @@ function header_personnalise_shortcode() {
 			  flex-direction:row;
 			  align-items: flex-end;
 		  }
-		  .actions-header{
+		  .actions{
 			  margin-top:1rem
 		  }
 		  .logos{
@@ -796,28 +807,33 @@ function header_personnalise_shortcode() {
 	  
 	  <div class="header-middle">
 				<div class="search">
-					<?php echo do_shortcode('[wpdreams_ajaxsearchlite]'); ?>
+					<form role="search" method="get" class="search-form" action="<?php echo home_url('/'); ?>">
+						<input type="search" name="s" placeholder="Rechercher…" value="<?= get_search_query(); ?>" autocomplete="off">
+						<button type="submit" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;padding:0;cursor:pointer;">
+							<img src="https://cannonbale.com/wp-content/uploads/2025/06/chercher.png" alt="Rechercher" style="width:16px;height:16px;">
+						</button>
+					</form>
 				</div>
 
       	<div class="logos">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
+			<a href="https://cannonbale.com/" class="logo-home">
+				<img src='https://cannonbale.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
+				<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
+				<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
+				<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
+			</a>
       	</div>
 
-      	<div class="actions-header">
+      	<div class="actions">
 			
         	<div><a href="https://cannonbale.com/mon-compte/">
           		<img src="https://cannonbale.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
         		</a>
 			</div>
-        	<div style="position:relative;">
-  				<a href="https://cannonbale.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
-    				<img src="https://cannonbale.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">
-    				<span id="panier-count" style="position:absolute;top:-7px;right:-7px;background:#FF3F22;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;padding:0 6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);z-index:2;">0</span>
-  				</a>
-			</div>
+        	<div><a href="https://cannonbale.com/panier/" id="ouvrir-panier">
+          <img src="https://cannonbale.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier">
+        </a>
+        </div>
         <!-- Drawer vertical à droite -->
 		<div id="drawer-overlay" class="drawer-overlay"></div>
 			
@@ -979,8 +995,8 @@ function header_personnalise_shortcode() {
       <li><a href="/boutique/composants/?filtre%5B%5D=selles">Selle</a></li>
       <li><a href="/boutique/composants/?filtre%5B%5D=tiges_de_selle">Collier de selle / Tige de selle</a></li>
       <li><a href="/boutique/composants/?filtre%5B%5D=cintres">Cintre / Serrage / Guidoline</a></li>
-      <li><a href="/boutique/composants/?filtre%5B%5D=amortisseurs_arrieres">Amortisseurs arrières</a></li>
-      <li><a href="/boutique/composants/?filtre%5B%5D=electrique">Composants électriques</a></li>	
+      <li><a href="/boutique/composants/?filtre%5B%5D=amortisseurs_arrieres"></a> Amortisseurs arrières</li>
+      <li><a href="/boutique/composants/?filtre%5B%5D=electrique"></a> Composants électriques</li>	
       <li><a href="/boutique/composants/?filtre%5B%5D=direction">Jeu de direction</a></li>
       <li><a href="/boutique/composants/?filtre%5B%5D=potences">Potence</a></li>
     </ul>
@@ -1038,7 +1054,33 @@ function header_personnalise_shortcode() {
       </div>
     </div>
    </div>
+
+
+  
+
 	<?php
+	// Filtrage produits par titre selon la recherche
+	if (isset($_GET['s']) && !empty($_GET['s'])) {
+		$search = strtolower(trim($_GET['s']));
+		// Récupérer les produits (exemple avec WooCommerce)
+		$args = array(
+			'post_type' => 'product',
+			'posts_per_page' => -1,
+			'post_status' => 'publish',
+		);
+		$query = new WP_Query($args);
+		$produits = array();
+		if ($query->have_posts()) {
+			while ($query->have_posts()) {
+				$query->the_post();
+				$titre = strtolower(get_the_title());
+				if (strpos($titre, $search) !== false) {
+					$produits[] = get_post();
+				}
+			}
+			wp_reset_postdata();
+		}
+	}
 	return ob_get_clean();
 }
 add_shortcode('header_personnalise', 'header_personnalise_shortcode');
