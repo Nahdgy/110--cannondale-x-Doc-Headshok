@@ -1,0 +1,216 @@
+
+/*
+ * Plugin Name: Shortcode formulaire connexion personnalisé
+ * Description: Shortcode [mon_formulaire_connexion] affichant un formulaire de connexion avec options Google et Facebook
+ * Version: 1.1
+ * Author: TonNom
+ */
+
+function mon_formulaire_connexion_shortcode() {
+    // ✅ Si l'utilisateur est déjà connecté, on le redirige
+    /*if (is_user_logged_in()) {
+        wp_redirect('https://cannonbale.com/mon-compte/');
+        exit;
+    }*/
+
+    $message = '';
+
+    // 🔐 Traitement du formulaire de connexion
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['connexion_submit'])) {
+        $creds = [
+            'user_login'    => sanitize_email($_POST['user_email']),
+            'user_password' => $_POST['user_password'],
+            'remember'      => isset($_POST['rememberme']),
+        ];
+        $user = wp_signon($creds, false);
+
+        if (is_wp_error($user)) {
+            $message = '<p style="color:red;">Identifiants invalides, veuillez réessayer.</p>';
+        } else {
+            wp_redirect('https://cannonbale.com/mon-compte/');
+            exit;
+        }
+    }
+
+    ob_start();
+    ?>
+    <style>
+        .mon-form-connexion {
+            max-width: 380px;
+            margin: 30px auto;
+            font-family: Arial, sans-serif;
+            border: 1px solid #ddd;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+
+        .mon-form-connexion h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 35px;
+            color: #000000;
+        }
+
+        .mon-form-connexion label {
+            display: block;
+            margin-bottom: 6px;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 300;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .mon-form-connexion label .required {
+            color: red;
+            margin-left: 4px;
+        }
+
+        .mon-form-connexion input[type="email"],
+        .mon-form-connexion input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #F7F7F7;
+        }
+
+        .mon-form-connexion button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #151515;
+            color: #F9F9F9;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .mon-form-connexion button[type="submit"]:hover {
+            background-color: #000000;
+        }
+
+        .mon-form-connexion .texte-inscription {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .mon-form-connexion .texte-inscription a {
+            color: #000000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .mon-form-connexion .separator {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            color: #000000;
+            text-align: center;
+        }
+
+        .mon-form-connexion .separator::before,
+        .mon-form-connexion .separator::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #FF3F22;
+            margin: 0 10px;
+        }
+
+        .mon-form-connexion .btn-social {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mon-form-connexion .btn-social button {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'din-next-lt-pro', sans-serif;
+            background-color: #F7F7F7;
+            color: #000000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mon-form-connexion .btn-social button img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .mon-form-connexion .btn-social button:hover {
+            background-color: #e6e6e6;
+			
+        }
+	
+		.mon-form-connexion .btn-social button:disabled {
+			background: #ccc;
+			color: #666;
+			cursor: not-allowed;
+		}
+    </style>
+
+ <div class="mon-form-connexion">
+        <h2>Me connecter</h2>
+
+        <?php echo $message; ?>
+
+
+        <form method="post" action="">
+            <label for="user_email">Adresse email <span class="required">*</span></label>
+            <input type="email" id="user_email" name="user_email" required placeholder="Votre email">
+
+            <label for="user_password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="user_password" name="user_password" required placeholder="Votre mot de passe">
+
+            <button type="submit" name="connexion_submit">SE CONNECTER</button>
+        </form>
+        <div style="text-align:center; margin-top:10px;">
+            <a href="/mot-de-passe-oublie" style="color:#FF3F22; text-decoration:underline; font-size:14px;">Mot de passe oublié&nbsp;?</a>
+        </div>
+
+        <p class="texte-inscription">
+            Je n’ai pas de compte ? <a href="<?php echo esc_url(wp_registration_url()); ?>">Inscrivez-vous</a>
+        </p>
+
+        <div class="separator">Ou</div>
+
+        <div class="btn-social">
+            <button class="btn-google" onclick="window.location.href='#';" type="button" aria-label="Se connecter avec Google" disabled>
+                <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector3.png" alt="Google logo">
+                Se connecter avec Google
+            </button>
+
+            <button class="btn-facebook" onclick="window.location.href='#';" type="button" aria-label="Se connecter avec Facebook" disabled>
+                <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector4.png" alt="Facebook logo">
+                Se connecter avec Facebook
+            </button>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('mon_formulaire_connexion', 'mon_formulaire_connexion_shortcode');
