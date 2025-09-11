@@ -527,15 +527,18 @@ function header_personnalise_shortcode() {
 	  
 	  @media screen and (max-width: 530px) {
 		  .header-middle{
-			  display:flex;
-			  flex-direction:row;
-			  align-items: flex-end;
+			  display:grid;
+			  grid-template-columns: 2fr auto;
 		  }
 		  .actions-header{
 			  margin-top:1rem
 		  }
 		  .logos{
-			  width:100%;
+			 width:100%;
+			 max-width: 100%;
+		  }
+		  .logos img {
+			  height: 45px;
 		  }
 	}
 	  
@@ -807,11 +810,11 @@ function header_personnalise_shortcode() {
       	</div>
 
       	<div class="actions-header">
-			
-        	<div><a href="https://cannonbale.com/mon-compte/">
-          		<img src="https://cannonbale.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
-        		</a>
-			</div>
+		  <div>
+			  <a href="https://cannonbale.com/mon-compte/">
+			  <img src="https://cannonbale.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
+			  </a>
+		  </div>
         	<div style="position:relative;">
   				<a href="https://cannonbale.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
     				<img src="https://cannonbale.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">
@@ -830,7 +833,7 @@ function header_personnalise_shortcode() {
 			<div class="drawer-content">
 				<?php echo do_shortcode('[mini_panier_text_livraison]'); ?>
 				<?php echo do_shortcode('[mini_panier_produits]'); ?>
-				<?php /*echo do_shortcode('[mini_panier_recommandes]');*/ ?>
+				<?php /*echo do_shortcode('[mini_panier_recommandes]');*/ ?>			
 			</div>
         </div>
 			<div class="burger-icon" id="burger-down">
