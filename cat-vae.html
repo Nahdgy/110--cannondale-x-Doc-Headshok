@@ -21,6 +21,18 @@ function afficher_sous_categories_vae() {
   $html_filtres = afficher_filtres_sous_categories_vae($filtres);
 
   if (!empty($sous_categories) && !is_wp_error($sous_categories)) {
+    // Préparation de l'array JS pour toutes les sous-catégories (comme cat-cadre)
+    $limite_affichage = 18;
+    $all_cats = [];
+    foreach ($sous_categories as $cat) {
+      $thumbnail_id = get_term_meta($cat->term_id, 'thumbnail_id', true);
+      $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : wc_placeholder_img_src('medium');
+      $all_cats[] = [
+        'name' => $cat->name,
+        'permalink' => 'https://cannonbale.com/detail-velo/?pratique=vae&modele=' . sanitize_title($cat->name),
+        'image_url' => $image_url,
+      ];
+    }
     ?>
     <style>
 		ul.liste-categories {
@@ -83,7 +95,7 @@ function afficher_sous_categories_vae() {
         max-height: 180px;
       }
       ul.liste-categories li .titre-categorie {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 700;
         font-size: 18px;
         color: #000000;
@@ -98,7 +110,7 @@ function afficher_sous_categories_vae() {
         margin-bottom: 5px;
       }
       #nombre-produits {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 300;
         font-size: 24px;
         color: black;
@@ -131,7 +143,7 @@ function afficher_sous_categories_vae() {
       }
 		
       .tri-container label {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 300;
         font-size: 16px;
         color: #000;
@@ -141,7 +153,7 @@ function afficher_sous_categories_vae() {
       #tri-sous-categories {
         width: 160px;
         padding: 6px 8px;
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-size: 14px;
       }
 		
@@ -176,22 +188,30 @@ function afficher_sous_categories_vae() {
         </div>
         <div style="flex:1;">
           <ul class="liste-categories" id="liste-sous-categories">
-            <?php foreach ($sous_categories as $cat) :
-              $thumbnail_id = get_term_meta($cat->term_id, 'thumbnail_id', true);
-              $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : wc_placeholder_img_src('medium');
-              ?>
-				<li data-name="<?php echo esc_attr($cat->name); ?>">
-				  <a href="<?php echo esc_url('https://cannonbale.com/detail-velo/?pratique=vae&modele=' . sanitize_title($cat->name)); ?>">
-					<img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($cat->name); ?>">
-					<div class="titre-categorie"><?php echo esc_html($cat->name); ?></div>
-				  </a>
-				</li>
-            <?php endforeach; ?>
+            <?php
+              for ($i = 0; $i < min($limite_affichage, count($all_cats)); $i++) :
+                $c = $all_cats[$i];
+            ?>
+              <li data-name="<?php echo esc_attr($c['name']); ?>">
+                <a href="<?php echo esc_url($c['permalink']); ?>">
+                  <img src="<?php echo esc_url($c['image_url']); ?>" alt="<?php echo esc_attr($c['name']); ?>">
+                  <div class="titre-categorie"><?php echo esc_html($c['name']); ?></div>
+                </a>
+              </li>
+            <?php endfor; ?>
           </ul>
+          <?php if (count($sous_categories) > $limite_affichage) : ?>
+            <button class="btn-voir-plus" id="voir-plus">Voir plus</button>
+          <?php endif; ?>
         </div>
       </div>
     </div>
 
+    <?php if (count($sous_categories) > $limite_affichage) : ?>
+      <script>
+        window.allSousCategoriesVae = <?php echo json_encode($all_cats); ?>;
+      </script>
+    <?php endif; ?>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
       const triSelect = document.getElementById('tri-sous-categories');
@@ -231,6 +251,25 @@ function afficher_sous_categories_vae() {
           span.textContent = " ˅";
         });
       });
+
+      const voirPlusBtn = document.getElementById("voir-plus");
+      if (voirPlusBtn) {
+        voirPlusBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (!window.allSousCategoriesVae) return;
+          liste.innerHTML = '';
+          window.allSousCategoriesVae.forEach(function(c) {
+            const li = document.createElement('li');
+            li.setAttribute('data-name', c.name);
+            li.innerHTML = `<a href="${c.permalink}">
+              <img src="${c.image_url}" alt="${c.name}">
+              <div class=\"titre-categorie\">${c.name}</div>
+            </a>`;
+            liste.appendChild(li);
+          });
+          voirPlusBtn.style.display = 'none';
+        });
+      }
     });
     </script>
 
@@ -284,7 +323,7 @@ function afficher_filtres_sous_categories_vae($filtres_actuels = []) {
           $label = ucfirst($opt);
         }
         $checked = in_array($slug, $filtres_actuels) ? 'checked' : '';
-        $html .= '<label style="display:block; margin-bottom: 5px; font-family: DIN Next LT Pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
+        $html .= '<label style="display:block; margin-bottom: 5px; font-family: din-next-lt-pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
         $html .= '<input type="checkbox" name="filtre[]" value="' . esc_attr($slug) . '" style="margin-right: 6px;" ' . $checked . '>'; 
         $html .= esc_html($label) . '</label>';
       }

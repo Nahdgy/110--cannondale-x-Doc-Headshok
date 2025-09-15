@@ -27,7 +27,15 @@ function mon_formulaire_connexion_shortcode() {
         if (is_wp_error($user)) {
             $message = '<p style="color:red;">Identifiants invalides, veuillez réessayer.</p>';
         } else {
-            wp_redirect('https://cannonbale.com/mon-compte/');
+            // Détecter la provenance
+            $redirect_url = 'https://cannonbale.com/mon-compte/';
+            if (!empty($_SERVER['HTTP_REFERER'])) {
+                $referer = $_SERVER['HTTP_REFERER'];
+                if (strpos($referer, '/panier') !== false) {
+                    $redirect_url = 'https://cannonbale.com/commander/';
+                }
+            }
+            wp_redirect($redirect_url);
             exit;
         }
     }

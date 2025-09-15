@@ -32,6 +32,18 @@ function afficher_produits_composants() {
   $html_filtres = afficher_filtres_composants();
 
   if (!empty($produits)) {
+    // Préparation de l'array JS pour tous les produits (comme cat-cadre)
+    $limite_affichage = 18;
+    $all_produits = [];
+    foreach ($produits as $product) {
+      $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+      $all_produits[] = [
+        'name' => $product->get_name(),
+        'permalink' => get_permalink($product->get_id()),
+        'image_url' => $image_url,
+        'price_html' => $product->get_price_html(),
+      ];
+    }
     ?>
     <style>
       ul.liste-categories {
@@ -98,7 +110,7 @@ function afficher_produits_composants() {
       }
 
       ul.liste-categories li .titre-categorie {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 700;
         font-size: 18px;
         color: #000000;
@@ -129,7 +141,7 @@ function afficher_produits_composants() {
         color: white;
         padding: 10px 20px;
         font-size: 16px;
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         border: none;
         cursor: pointer;
       }
@@ -142,7 +154,7 @@ function afficher_produits_composants() {
       }
 
       #nombre-produits {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 300;
         font-size: 24px;
         color: black;
@@ -175,7 +187,7 @@ function afficher_produits_composants() {
       }
 
       .tri-container label {
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-weight: 300;
         font-size: 16px;
         color: #000;
@@ -185,7 +197,7 @@ function afficher_produits_composants() {
       #tri-sous-categories {
         width: 160px;
         padding: 6px 8px;
-        font-family: 'DIN Next LT Pro', sans-serif;
+        font-family: 'din-next-lt-pro', sans-serif;
         font-size: 14px;
       }
 
@@ -209,7 +221,7 @@ function afficher_produits_composants() {
 
 	/* Prix */
 	.prix-produit {
-	  font-family: 'DIN Next LT Pro', sans-serif;
+	  font-family: 'din-next-lt-pro', sans-serif;
 	  font-size: 16px;
 	  font-weight: 500;
 	  color: #000;
@@ -260,22 +272,20 @@ function afficher_produits_composants() {
         <div style="flex:1;">
           <ul class="liste-categories" id="liste-sous-categories">
             <?php
-              $limite_affichage = 18;
-              $produits_affiches = array_slice($produits, 0, $limite_affichage);
-              foreach ($produits_affiches as $product) :
-                $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+              for ($i = 0; $i < min($limite_affichage, count($all_produits)); $i++) :
+                $p = $all_produits[$i];
             ?>
-              <li data-name="<?php echo esc_attr($product->get_name()); ?>">
-                <a href="<?php echo get_permalink($product->get_id()); ?>">
-                  <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product->get_name()); ?>">
-                 <div class="titre-categorie"><?php echo esc_html($product->get_name()); ?></div>
-				 <div class="prix-ajout-container">
-				  <span class="prix-produit"><?php echo $product->get_price_html(); ?></span>
-				  <div class="btn-ajouter">+</div>
-				 </div>
+              <li data-name="<?php echo esc_attr($p['name']); ?>">
+                <a href="<?php echo esc_url($p['permalink']); ?>">
+                  <img src="<?php echo esc_url($p['image_url']); ?>" alt="<?php echo esc_attr($p['name']); ?>">
+                  <div class="titre-categorie"><?php echo esc_html($p['name']); ?></div>
+                  <div class="prix-ajout-container">
+                    <span class="prix-produit"><?php echo $p['price_html']; ?></span>
+                    <div class="btn-ajouter">+</div>
+                  </div>
                 </a>
               </li>
-            <?php endforeach; ?>
+            <?php endfor; ?>
           </ul>
           <?php if (count($produits) > $limite_affichage) : ?>
             <button class="btn-voir-plus" id="voir-plus">Voir plus</button>
@@ -284,6 +294,11 @@ function afficher_produits_composants() {
       </div>
     </div>
 
+    <?php if (count($produits) > $limite_affichage) : ?>
+      <script>
+        window.allProduitsComposants = <?php echo json_encode($all_produits); ?>;
+      </script>
+    <?php endif; ?>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         const triSelect = document.getElementById('tri-sous-categories');
@@ -325,8 +340,21 @@ function afficher_produits_composants() {
 
         const voirPlusBtn = document.getElementById("voir-plus");
         if (voirPlusBtn) {
-          voirPlusBtn.addEventListener("click", function () {
-            location.reload(); // simpliste : recharger la page pour tout afficher ou remplacer cette logique avec AJAX si nécessaire
+          voirPlusBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (!window.allProduitsComposants) return;
+            liste.innerHTML = '';
+            window.allProduitsComposants.forEach(function(p) {
+              const li = document.createElement('li');
+              li.setAttribute('data-name', p.name);
+              li.innerHTML = `<a href="${p.permalink}">
+                <img src="${p.image_url}" alt="${p.name}">
+                <div class=\"titre-categorie\">${p.name}</div>
+                <div class=\"prix-ajout-container\"><span class=\"prix-produit\">${p.price_html}</span><div class=\"btn-ajouter\">+</div></div>
+              </a>`;
+              liste.appendChild(li);
+            });
+            voirPlusBtn.style.display = 'none';
           });
         }
       });
@@ -381,7 +409,7 @@ function afficher_filtres_composants() {
           $slug = sanitize_title($opt);
           $label = ucfirst($opt);
         }
-        $html .= '<label style="display:block; margin-bottom: 5px; font-family: DIN Next LT Pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
+        $html .= '<label style="display:block; margin-bottom: 5px; font-family: din-next-lt-pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
         $html .= '<input type="checkbox" name="filtre[]" value="' . esc_attr($slug) . '" style="margin-right: 6px;">';
         $html .= esc_html($label) . '</label>';
       }

@@ -14,10 +14,20 @@ function afficher_produits_transmission() {
   if (isset($_GET['filtre']) && is_array($_GET['filtre']) && count($_GET['filtre']) > 0) {
     $filtres = array_map('strtolower', array_map('sanitize_text_field', $_GET['filtre']));
     $produits = array_filter($produits, function($prod) use ($filtres) {
-      $nom = strtolower($prod->get_name());
-      $slug = strtolower($prod->get_slug());
+      $cats = $prod->get_category_ids();
+      $all_slugs = [];
+      foreach ($cats as $cat_id) {
+        $term = get_term($cat_id, 'product_cat');
+        while ($term && $term->parent != 0) {
+          $all_slugs[] = strtolower($term->slug);
+          $term = get_term($term->parent, 'product_cat');
+        }
+        if ($term) {
+          $all_slugs[] = strtolower($term->slug);
+        }
+      }
       foreach ($filtres as $filtre) {
-        if (strpos($nom, $filtre) !== false || strpos($slug, $filtre) !== false) return true;
+        if (in_array($filtre, $all_slugs)) return true;
       }
       return false;
     });
@@ -255,38 +265,41 @@ function afficher_produits_transmission() {
         <div style="flex:1;">
           <ul class="liste-categories" id="liste-sous-categories">
             <?php
-              $limite_affichage = 18;
-              $produits_affiches = array_slice($produits, 0, $limite_affichage);
-              foreach ($produits_affiches as $product) :
-                $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+                $limite_affichage = 18;
+                $all_produits = [];
+                foreach ($produits as $product) {
+                  $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+                  $all_produits[] = [
+                    'name' => $product->get_name(),
+                    'permalink' => get_permalink($product->get_id()),
+                    'image_url' => $image_url,
+                    'price_html' => $product->get_price_html(),
+                  ];
+                }
+                // Affichage initial (limité)
+                for ($i = 0; $i < min($limite_affichage, count($all_produits)); $i++) :
+                  $p = $all_produits[$i];
             ?>
-              <li data-name="<?php echo esc_attr($product->get_name()); ?>">
-                <a href="<?php echo get_permalink($product->get_id()); ?>">
-                  <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product->get_name()); ?>">
-                 <div class="titre-categorie"><?php echo esc_html($product->get_name()); ?></div>
-			 <div class="prix-ajout-container">
-			  <span class="prix-produit"><?php echo $product->get_price_html(); ?></span>
-			  <div class="btn-ajouter">+</div>
-			 </div>
-                </a>
-              </li>
-            <?php endforeach; ?>
+                <li data-name="<?php echo esc_attr($p['name']); ?>">
+                  <a href="<?php echo esc_url($p['permalink']); ?>">
+                    <img src="<?php echo esc_url($p['image_url']); ?>" alt="<?php echo esc_attr($p['name']); ?>">
+                    <div class="titre-categorie"><?php echo esc_html($p['name']); ?></div>
+                    <div class="prix-ajout-container">
+                      <span class="prix-produit"><?php echo $p['price_html']; ?></span>
+                      <div class="btn-ajouter">+</div>
+                    </div>
+                  </a>
+                </li>
+            <?php endfor; ?>
           </ul>
           <?php if (count($produits) > $limite_affichage) : ?>
             <button class="btn-voir-plus" id="voir-plus">Voir plus</button>
           <?php endif; ?>
-          <script>
-            // Injection JS de tous les produits pour le bouton Voir plus
-            window.allProduitsTransmission = <?php echo json_encode(array_map(function($product) {
-              return [
-                'id' => $product->get_id(),
-                'name' => $product->get_name(),
-                'image' => $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium'),
-                'price_html' => $product->get_price_html(),
-                'permalink' => get_permalink($product->get_id()),
-              ];
-            }, $produits)); ?>;
-          </script>
+    <?php if (count($produits) > $limite_affichage) : ?>
+      <script>
+        window.allProduitsTransmission = <?php echo json_encode($all_produits); ?>;
+      </script>
+    <?php endif; ?>
         </div>
       </div>
     </div>
@@ -332,30 +345,22 @@ function afficher_produits_transmission() {
 
         const voirPlusBtn = document.getElementById("voir-plus");
         if (voirPlusBtn) {
-          let produitsAffiches = <?php echo $limite_affichage; ?>;
-          voirPlusBtn.addEventListener("click", function () {
-            const allProduits = window.allProduitsTransmission;
+          voirPlusBtn.addEventListener("click", function (e) {
+            e.preventDefault();
             const liste = document.getElementById('liste-sous-categories');
-            let ajout = 12;
-            let nouveaux = allProduits.slice(produitsAffiches, produitsAffiches + ajout);
-            nouveaux.forEach(prod => {
+            if (!window.allProduitsTransmission) return;
+            liste.innerHTML = '';
+            window.allProduitsTransmission.forEach(function(p) {
               const li = document.createElement('li');
-              li.setAttribute('data-name', prod.name);
-              li.innerHTML = `<a href="${prod.permalink}">
-                <img src="${prod.image}" alt="${prod.name}">
-                <div class="titre-categorie">${prod.name}</div>
-                <div class="prix-ajout-container">
-                  <span class="prix-produit">${prod.price_html}</span>
-                  <div class="btn-ajouter">+</div>
-                </div>
+              li.setAttribute('data-name', p.name);
+              li.innerHTML = `<a href="${p.permalink}">
+                <img src="${p.image_url}" alt="${p.name}">
+                <div class=\"titre-categorie\">${p.name}</div>
+                <div class=\"prix-ajout-container\"><span class=\"prix-produit\">${p.price_html}</span><div class=\"btn-ajouter\">+</div></div>
               </a>`;
               liste.appendChild(li);
             });
-            produitsAffiches += ajout;
-            if (produitsAffiches >= allProduits.length) {
-              voirPlusBtn.style.display = 'none';
-            }
-            document.getElementById('nombre-produits').textContent = allProduits.length + ' résultats';
+            voirPlusBtn.style.display = 'none';
           });
         }
       });

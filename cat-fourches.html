@@ -18,12 +18,23 @@ function afficher_produits_fourches() {
   // Filtrage par titre si filtres actifs
   if (!empty($filtres)) {
     $produits = array_filter($produits, function($product) use ($filtres) {
-      $name = strtolower($product->get_name());
-      foreach ($filtres as $filtre) {
-        if (strpos($name, strtolower($filtre)) !== false) {
-          return true;
+      $cats = $product->get_category_ids();
+      $all_slugs = [];
+      foreach ($cats as $cat_id) {
+        $term = get_term($cat_id, 'product_cat');
+        while ($term && $term->parent != 0) {
+          $all_slugs[] = strtolower($term->slug);
+          $term = get_term($term->parent, 'product_cat');
+        }
+        if ($term) {
+          $all_slugs[] = strtolower($term->slug);
         }
       }
+      foreach ($filtres as $filtre) {
+        if (in_array(strtolower($filtre), $all_slugs)) return true;
+      }
+      return false;
+    });
       return false;
     });
   }

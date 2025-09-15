@@ -27,6 +27,27 @@ function afficher_produits_freinage() {
       return false;
     });
     $produits = array_values($produits);
+      $filtres = array_map('strtolower', array_map('sanitize_text_field', $_GET['filtre']));
+      $produits = array_filter($produits, function($prod) use ($filtres) {
+        $cats = $prod->get_category_ids();
+        $all_slugs = [];
+        foreach ($cats as $cat_id) {
+          $term = get_term($cat_id, 'product_cat');
+          while ($term && $term->parent != 0) {
+            $all_slugs[] = strtolower($term->slug);
+            $term = get_term($term->parent, 'product_cat');
+          }
+          if ($term) {
+            $all_slugs[] = strtolower($term->slug);
+          }
+        }
+        foreach ($filtres as $filtre) {
+          if (in_array($filtre, $all_slugs)) return true;
+        }
+        return false;
+      });
+      $produits = array_values($produits);
+    }
   }
 
   $html_filtres = afficher_filtres_freinage();
