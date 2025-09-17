@@ -494,7 +494,7 @@ function header_personnalise_shortcode() {
       width: 100%;
       height: 100%;
       padding: 10px 40px 10px 20px;
-      background: url('https://cannonbale.com/wp-content/uploads/2025/06/chercher.png') no-repeat right 10px center;
+      background: url('https://doc-headshok.com/wp-content/uploads/2025/06/chercher.png') no-repeat right 10px center;
       background-size: 16px 16px;
       border: 1px solid black;
       border-radius: 30px;
@@ -716,8 +716,15 @@ function header_personnalise_shortcode() {
         border: none;
         font-size: 2rem;
         cursor: pointer;
+		color: #000;
     }
+	.fermer-drawer:hover {
+		background-color: #FF3F22;
+	}
     .drawer-content {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
         padding: 1rem;
         flex: 1;
         overflow-y: auto;
@@ -777,7 +784,24 @@ function header_personnalise_shortcode() {
 	font-size: 18px;
 	font-weight: bold;
 	}
-	  
+	.go-to-cart{
+		display:flex;
+		width: 100%
+			justify-content: center;
+	}
+	.cart-link{
+		background-color: #000;
+		border-radius:10px;
+		color:#fff !important;
+		padding: 14px;
+		font-size: 24px;
+		font-weight: 600;
+		justify-content: center;
+		margin-top: 5%;
+	}
+	.cart-link:hover{
+		background-color: #FF3F22;
+	}
   </style>
 
   <div class="header-custom">
@@ -803,21 +827,21 @@ function header_personnalise_shortcode() {
 				</div>
 
       	<div class="logos">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
-			<img src='https://cannonbale.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
+			<img src='https://doc-headshok.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
+			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
+			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
+			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
       	</div>
 
       	<div class="actions-header">
 		  <div>
-			  <a href="https://cannonbale.com/mon-compte/">
-			  <img src="https://cannonbale.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
+			  <a href="https://doc-headshok.com/mon-compte/">
+			  <img src="https://doc-headshok.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
 			  </a>
 		  </div>
         	<div style="position:relative;">
-  				<a href="https://cannonbale.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
-    				<img src="https://cannonbale.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">
+  				<a href="https://doc-headshok.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
+    				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">
     				<span id="panier-count" style="position:absolute;top:-7px;right:-7px;background:#FF3F22;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;padding:0 6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);z-index:2;">0</span>
   				</a>
 			</div>
@@ -827,13 +851,13 @@ function header_personnalise_shortcode() {
         <div id="drawer-panier" class="drawer-panier">
             <div class="drawer-header">
 				<h2>Votre panier</h2>
-				<a href="https://cannonbale.com/panier/">Voir le panier</a>
                 <button id="fermer-drawer" class="fermer-drawer">&times;</button>	
             </div>
 			<div class="drawer-content">
 				<?php echo do_shortcode('[mini_panier_text_livraison]'); ?>
 				<?php echo do_shortcode('[mini_panier_produits]'); ?>
-				<?php /*echo do_shortcode('[mini_panier_recommandes]');*/ ?>			
+				<?php /*echo do_shortcode('[mini_panier_recommandes]');*/ ?>
+					<a href="https://doc-headshok.com/panier/" class="cart-link">Voir le panier</a>
 			</div>
         </div>
 			<div class="burger-icon" id="burger-down">
@@ -852,9 +876,9 @@ function header_personnalise_shortcode() {
 		</div>
 		  <div class="menu-navbar">
 			<nav>
-          		<a href="https://cannonbale.com/">ACCUEIL</a>
+          		<a href="https://doc-headshok.com/">ACCUEIL</a>
 				<div class="dropdown">
-  					<a href="https://cannonbale.com/boutique">BOUTIQUE</a>
+  					<a href="https://doc-headshok.com/boutique">BOUTIQUE</a>
   					<ul class="dropdown-content">
 						<li class="dropdown-sub">
     <a href="/boutique/vtt">VTT</a><span class="arrow-orange"></span>
@@ -1017,25 +1041,25 @@ function header_personnalise_shortcode() {
   					</ul>
 				</div>
 				<div class="dropdown">
-  					<a href="https://cannonbale.com/entretiens-2/">ATELIER</a>
+  					<a href="https://doc-headshok.com/entretiens-2/">ATELIER</a>
   					<ul class="dropdown-content">
 						<li><a href="/atelier-mecanique/revision-fourches">FOURCHES</a></li>
 						<li><a href="/atelier-mecanique/revision-amortisseur">AMORTISSEUR</a></li>
 						<li><a href="/atelier-mecanique/revision-tige-de-selle">TIGE DE SELLE</a></li>
 						<li><a href="/atelier-mecanique/revision-roue">ROUE</a></li>
-						<li><a href="https://cannonbale.com/atelier-mecanique/">SERVICE ATELIER</a></li>
-						<li><a href="https://cannonbale.com/canyon/">CANYON</a></li>
-						<li><a href="https://cannonbale.com/nos-videos/">NOS VIDÉOS</a></li>
+						<li><a href="https://doc-headshok.com/atelier-mecanique/">SERVICE ATELIER</a></li>
+						<li><a href="https://doc-headshok.com/canyon/">CANYON</a></li>
+						<li><a href="https://doc-headshok.com/nos-videos/">NOS VIDÉOS</a></li>
   					</ul>
 				</div>
-          		<a href="https://cannonbale.com/contact/">CONTACT</a>
-          		<a href="https://cannonbale.com/faq/">FAQ</a>
-          		<a href="https://cannonbale.com/qui-sommes-nous-2/">QUI SOMMES NOUS ?</a>
-          		<a href="https://cannonbale.com/nos-news/">NOS NEWS</a>
+          		<a href="https://doc-headshok.com/contact/">CONTACT</a>
+          		<a href="https://doc-headshok.com/faq/">FAQ</a>
+          		<a href="https://doc-headshok.com/qui-sommes-nous-2/">QUI SOMMES NOUS ?</a>
+          		<a href="https://doc-headshok.com/nos-news/">NOS NEWS</a>
         	</nav>
 		</div>
         <div class="partner">
-			<a href="https://cannonbale.com/devenir-partenaire/" class="btn-prestataire">DEVENIR PARTENAIRE</a>
+			<a href="https://doc-headshok.com/devenir-partenaire/" class="btn-prestataire">DEVENIR PARTENAIRE</a>
 		</div>
 		
       </div>
