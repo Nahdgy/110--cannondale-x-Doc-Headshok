@@ -422,7 +422,7 @@ document.getElementById('next-4').onclick = function() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
     else document.getElementById('modele-annee').focus();
