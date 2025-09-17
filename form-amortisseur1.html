@@ -237,7 +237,7 @@ document.getElementById('next-2').onclick = function() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal ) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
     else if(!modeleVal) document.getElementById('modele-annee').focus();
@@ -283,7 +283,18 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fox', true);
   xhr.onload = function() {
     if (xhr.status === 200) {
-      document.getElementById('form-result').textContent = 'Formulaire envoyé avec succès !';
+      let response;
+      try {
+        response = JSON.parse(xhr.responseText);
+      } catch (e) {
+        response = null;
+      }
+      let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
+      let msg = 'Formulaire envoyé avec succès !';
+      if(orderNumber) {
+        msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
+        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
+      }
       document.getElementById('multi-step-form').reset();
       showStep(0);
       updateNextButtonState('step-1', 'option1', 'next-1');
