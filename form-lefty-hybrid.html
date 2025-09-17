@@ -404,24 +404,23 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name="usage[]"]').forEach(cb => cb.addEventListener('change', updateNext3ButtonState));
   updateNext3ButtonState();
   // Étape 4 : inputs
-  function updateNext4ButtonState() {
-    const dateVal = document.getElementById('date-revision').value;
-    const poidsVal = document.getElementById('poids-pilote').value;
-    const modeleVal = document.getElementById('modele-annee').value;
-    const remarquesVal = document.getElementById('remarques').value;
-    const nextBtn = document.getElementById('next-4');
-    if(dateVal && poidsVal && modeleVal && remarquesVal) {
-      nextBtn.classList.remove('button-disabled');
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.classList.add('button-disabled');
-      nextBtn.disabled = true;
+    function updateNext4ButtonState() {
+      const dateVal = document.getElementById('date-revision').value;
+      const poidsVal = document.getElementById('poids-pilote').value;
+      const modeleVal = document.getElementById('modele-annee').value;
+      const nextBtn = document.getElementById('next-4');
+      if(dateVal && poidsVal && modeleVal) {
+        nextBtn.classList.remove('button-disabled');
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.classList.add('button-disabled');
+        nextBtn.disabled = true;
+      }
     }
-  }
-  ['date-revision','poids-pilote','modele-annee','remarques'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updateNext4ButtonState);
-  });
-  updateNext4ButtonState();
+    ['date-revision','poids-pilote','modele-annee'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateNext4ButtonState);
+    });
+    updateNext4ButtonState();
   updateRadioSelected();
   updateProgressBar(0);
 });
@@ -458,7 +457,7 @@ document.getElementById('prev-4').onclick = function() {
   currentStep = 2; showStep(currentStep);
 };
 document.getElementById('next-4').onclick = function() {
-  // Validation : tous les champs obligatoires
+  // Validation : tous les champs obligatoires sauf remarques
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
@@ -479,7 +478,7 @@ document.getElementById('next-4').onclick = function() {
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
   const total = calculerTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Débattement :</strong> ${prestation}<br><strong>Usage :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestation :</strong> ${prestation}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
   currentStep = 4; showStep(currentStep);
 };
 document.getElementById('multi-step-form').onsubmit = function(e) {

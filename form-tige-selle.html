@@ -171,9 +171,8 @@ function updateNext2ButtonState() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  const remarquesVal = document.getElementById('remarques').value;
   const nextBtn = document.getElementById('next-2');
-  if(dateVal && poidsVal && modeleVal && remarquesVal) {
+  if(dateVal && poidsVal && modeleVal) {
     nextBtn.classList.remove('button-disabled');
     nextBtn.disabled = false;
   } else {
@@ -197,7 +196,7 @@ function updateRadioSelected() {
 document.addEventListener('DOMContentLoaded', function() {
   updateNextButtonState('step-1', 'option1', 'next-1');
   updateNext2ButtonState();
-  ['date-revision','poids-pilote','modele-annee','remarques'].forEach(id => {
+  ['date-revision','poids-pilote','modele-annee'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateNext2ButtonState);
   });
   updateRadioSelected();
@@ -215,11 +214,11 @@ document.getElementById('prev-2').onclick = function() {
   currentStep = 0; showStep(currentStep);
 };
 document.getElementById('next-2').onclick = function() {
-  // Validation : tous les champs obligatoires
+  // Validation : tous les champs obligatoires sauf remarques
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
     else document.getElementById('modele-annee').focus();
