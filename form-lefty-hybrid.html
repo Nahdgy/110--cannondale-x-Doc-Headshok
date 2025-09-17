@@ -1,4 +1,4 @@
- function form_hybrid_shortcode() {
+function form_hybrid_shortcode() {
   ob_start();
   ?>
  <style>
@@ -12,6 +12,7 @@
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  font-family: 'din-next-lt-pro', sans-serif;
 }
 .radio-group {
   margin-bottom: 18px;
@@ -47,6 +48,8 @@
   transition: background 0.2s, color 0.2s, border 0.2s;
   box-shadow: none;
   outline: none;
+  font-family: 'din-next-lt-pro', sans-serif;
+
 }
 .radio-btn input[type="radio"] {
   display: none;
@@ -106,32 +109,20 @@
     <h3>Souhaitez-vous des options supplémentaires ?</h3>
     <div class="radio-group">
       <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Tuning hydraulique"> Tuning hydraulique (+59€)
+        <input type="checkbox" name="usage[]" value="Tuning hydraulique"> Tuning hydraulique (+19€)
         <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Le tuning hydraulique est une modification des clapets des fourches de vélo qui est crucial pour optimiser les performances de la suspension avant, offrant ainsi une meilleure expérience de conduite, une meilleure traction, et un meilleur contrôle sur divers terrains. </span>
         </span>
       </label>
       <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Modification sens du blocage"> Modification sens du blocage (+78€)
-        <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
-            <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">La modification du sens de blocage permet de modifier la position bloquée de votre fourche.
-
-si elle est « fermée par défaut«  au repos, on passe à une position « ouvert par défaut«  au repos, grâce au changement du clapet de blocage qui se trouve à l’intérieur du piston de compression.
-
-En terme de prévention, il est utile de passer par ce système car en cas de casse de votre manette de blocage, votre fourche sera toujours utilisable pour finir votre sortie ou votre course. 
-
-Il n’est pas possible de faire cette modification sur les Scalpel équipés de doubles commandes.</span>
-        </span>
-      </label>
-      <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Blocage sur cintre"> Blocage sur cintre (+157€)
+        <input type="checkbox" name="usage[]" value="Blocage sur cintre"> Blocage sur cintre (+175€)
         <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Remplacement du levier de blocage par une manette de blocage au niveau du cintre.
 Permet une meilleure accessibilité, une manipulation plus aisée car gain de temps et économie d’energie dans des situations compétitives ou lors de sorties avec des parcours techniques.</span>
         </span>
       </label>
       <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Modification du débattement"> Modification du débattement (+149€)
+        <input type="checkbox" name="usage[]" value="Modification du débattement"> Modification du débattement (+10€)
         <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Permet d’avoir un plus grand débattement pour une conduite plus confortable et absorbante des chocs.
 
@@ -139,7 +130,7 @@ Sa modification peut influencer les performances : une meilleure stabitlité et 
         </span>
       </label>
       <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Fourreau carbone"> Fourreau carbone (+399€)
+        <input type="checkbox" name="usage[]" value="Fourreau carbone"> Fourreau carbone (+499€/offert en révision 200h)
         <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Remplacement du fourreau aluminium par un fourreau carbone
 
@@ -150,14 +141,6 @@ Il permet :
 – une meilleure absorption des vibrations qui améliorera le contrôle et le confort de conduite
 
 – meilleure rigidité qui améliore la direction et la réactivité du vélo</span>
-        </span>
-      </label>
-      <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Modification 650 en 700"> Modification 650 en 700 (+159€)
-        <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
-            <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Si vous achetez une Lefty Ocho Oliver sur notre site <a href="https://110cannondale.com">110cannondale.com</a>, cette modification sera faite sans frais supplémentaires. Cette modification vous permet de passer d’une Lefty Ocho Oliver prévue avec une roue de 650 à une roue de 700.
-
-Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
         </span>
       </label>
       <label class="radio-btn" style="position:relative;">
@@ -312,19 +295,17 @@ function updateRadioSelected() {
 // Prix des prestations et options
 const prixPrestations = {
   'Révision 100 heures': 129,
-  'Révision 200 heures': 189,
-  'Révision Full Package': 249,
+  'Révision 200 heures': 239,
+  'Révision Full Package': 279,
   'Optimisation système Headshok': 89,
-  'Réfection système Headshok': 99,
-  'Remplacement filet rapporté (hélicoil)': 39
+  'Réfection système Headshok': 155,
+  'Remplacement filet rapporté (hélicoil)': 17.50
 };
 const prixOptions = {
-  'Tuning hydraulique': 59,
-  'Modification sens du blocage': 78,
-  'Blocage sur cintre': 157,
-  'Modification du débattement': 149,
-  'Fourreau carbone': 399,
-  'Modification 650 en 700': 159,
+  'Tuning hydraulique': 19,
+  'Blocage sur cintre': 175,
+  'Modification du débattement': 10,
+  'Fourreau carbone': 499,
   'Sans option': 0
 };
 
@@ -335,7 +316,7 @@ function calculerTotal() {
   if (prestation && prixPrestations[prestation]) total += prixPrestations[prestation];
   options.forEach(opt => {
     if (opt === 'Fourreau carbone') {
-      total += (prestation === 'Révision 200 heures') ? 0 : 399;
+      total += (prestation === 'Révision 200 heures') ? 0 : 499;
     } else if (prixOptions[opt]) {
       total += prixOptions[opt];
     }
@@ -481,12 +462,10 @@ document.getElementById('next-4').onclick = function() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  const remarquesVal = document.getElementById('remarques').value;
   if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
-    else if(!modeleVal) document.getElementById('modele-annee').focus();
-    else document.getElementById('remarques').focus();
+    else document.getElementById('modele-annee').focus();
     return;
   }
   // Afficher le résumé

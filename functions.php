@@ -189,6 +189,8 @@ if ( ! function_exists( 'hello_elementor_content_width' ) ) {
 		$GLOBALS['content_width'] = apply_filters( 'hello_elementor_content_width', 800 );
 	}
 }
+add_filter( 'woocommerce_order_item_display_meta_key', '__return_false' );
+
 
 add_action('wp_ajax_envoyer_demande_remarque', 'envoyer_demande_remarque');
 add_action('wp_ajax_nopriv_envoyer_demande_remarque', 'envoyer_demande_remarque');
@@ -207,28 +209,79 @@ function envoyer_demande_remarque() {
         }
     }
 
-    wp_mail($admin_email, 'Nouvelle demande via formulaire', $remarque, '', $attachments);
-    wp_send_json_success();
+	// Ajout de l'utilisateur en copie (CC) et infos dans l'objet
+	$user_email = '';
+	$user_nom = '';
+	$user_prenom = '';
+	$user_tel = '';
+	if (is_user_logged_in()) {
+		$current_user = wp_get_current_user();
+		$user_email = $current_user->user_email;
+		$user_nom = $current_user->last_name;
+		$user_prenom = $current_user->first_name;
+		$user_tel = get_user_meta($current_user->ID, 'billing_phone', true);
+	} else {
+		if (!empty($_POST['email'])) $user_email = sanitize_email($_POST['email']);
+		if (!empty($_POST['nom'])) $user_nom = sanitize_text_field($_POST['nom']);
+		if (!empty($_POST['prenom'])) $user_prenom = sanitize_text_field($_POST['prenom']);
+		if (!empty($_POST['telephone'])) $user_tel = sanitize_text_field($_POST['telephone']);
+	}
+	$headers = '';
+	if ($user_email) {
+		$headers = array('Cc: ' . $user_email);
+	}
+	// Ajout infos utilisateur dans l'objet
+	$subject = 'Nouvelle demande via formulaire';
+	$infos = [];
+	if ($user_email) $infos[] = 'Email: ' . $user_email;
+	if ($user_nom) $infos[] = 'Nom: ' . $user_nom;
+	if ($user_prenom) $infos[] = 'Prénom: ' . $user_prenom;
+	if ($user_tel) $infos[] = 'Tel: ' . $user_tel;
+	if (!empty($infos)) $subject .= ' | ' . implode(' | ', $infos);
+
+	wp_mail($admin_email, $subject, $remarque, $headers, $attachments);
+	wp_send_json_success();
 }
 add_action('wp_ajax_envoyer_form_fox', 'envoyer_form_fox');
 add_action('wp_ajax_nopriv_envoyer_form_fox', 'envoyer_form_fox');
 
 //Formulaire d'amortisseur/tige selle
 function envoyer_form_fox() {
-    // Récupération des données
-    $url = sanitize_text_field($_POST['url']);
-    $prestation = sanitize_text_field($_POST['option1']);
-    $date_revision = sanitize_text_field($_POST['date_revision']);
-    $poids_pilote = sanitize_text_field($_POST['poids_pilote']);
-    $modele_annee = sanitize_text_field($_POST['modele_annee']);
-    $remarques = sanitize_textarea_field($_POST['remarques']);
+	// Récupération des données
+	$url = sanitize_text_field($_POST['url']);
+	$prestation = sanitize_text_field($_POST['option1']);
+	$date_revision = sanitize_text_field($_POST['date_revision']);
+	$poids_pilote = sanitize_text_field($_POST['poids_pilote']);
+	$modele_annee = sanitize_text_field($_POST['modele_annee']);
+	$remarques = sanitize_textarea_field($_POST['remarques']);
+	// Champs utilisateur additionnels
+	$user_email = '';
+	$user_nom = '';
+	$user_prenom = '';
+	$user_tel = '';
+	if (is_user_logged_in()) {
+		$current_user = wp_get_current_user();
+		$user_email = $current_user->user_email;
+		$user_nom = $current_user->last_name;
+		$user_prenom = $current_user->first_name;
+		$user_tel = get_user_meta($current_user->ID, 'billing_phone', true);
+	} else {
+		if (!empty($_POST['email'])) $user_email = sanitize_email($_POST['email']);
+		if (!empty($_POST['nom'])) $user_nom = sanitize_text_field($_POST['nom']);
+		if (!empty($_POST['prenom'])) $user_prenom = sanitize_text_field($_POST['prenom']);
+		if (!empty($_POST['telephone'])) $user_tel = sanitize_text_field($_POST['telephone']);
+	}
 
-    // Construction du message
-    $message = "Prestation : $prestation\n";
-    $message .= "Date de la dernière révision : $date_revision\n";
-    $message .= "Poids du pilote : $poids_pilote kg\n";
-    $message .= "Modèle et année du vélo : $modele_annee\n";
-    $message .= "Remarques : $remarques\n";
+	// Génération du numéro de commande unique
+	$order_number = 'CMD-' . date('Ymd-His') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
+
+	// Construction du message
+	$message = "Numéro de commande : $order_number\n";
+	$message .= "Prestation : $prestation\n";
+	$message .= "Date de la dernière révision : $date_revision\n";
+	$message .= "Poids du pilote : $poids_pilote kg\n";
+	$message .= "Modèle et année du vélo : $modele_annee\n";
+	$message .= "Remarques : $remarques\n";
 
     // Destinataire
     $admin_email = get_option('admin_email');
@@ -243,58 +296,86 @@ function envoyer_form_fox() {
         }
     }
 
-    // Envoi à l'admin
-    $subject = 'Nouvelle demande de prestation';
-    // Ajout du type d'amortisseur selon l'URL
-    
-    $current_url = $url;
-    if (strpos($current_url, 'amortiseur-fox') !== false) {
-        $subject .= ' - amortisseur fox';
-    } elseif (strpos($current_url, 'amortiseur-rockshox') !== false) {
-        $subject .= ' - amortisseur rockshox';
-    } elseif (strpos($current_url, 'amortiseur-dt-swiss') !== false) {
-        $subject .= ' - amortisseur-dt-swiss';
-    } elseif (strpos($current_url, 'amortiseur-manitou') !== false) {
-        $subject .= ' - amortisseur-manitou';
-    } elseif (strpos($current_url, 'tige-de-selle-downlow') !== false) {
-        $subject .= ' - tige-de-selle-downlow';
-    } elseif (strpos($current_url, 'tige-de-selle-oneup') !== false) {
-        $subject .= ' - tige-de-selle-oneup';
-    } else {
-        $subject .= $current_url;
-    }
-    wp_mail($admin_email, $subject, $message, '', $attachments);
+    // Envoi à l'admin avec l'utilisateur en copie (CC)
+	$subject = 'Nouvelle demande de prestation';
+	// Ajout du type d'amortisseur selon l'URL
+	$current_url = $url;
+	if (strpos($current_url, 'amortiseur-fox') !== false) {
+		$subject .= ' - amortisseur fox';
+	} elseif (strpos($current_url, 'amortiseur-rockshox') !== false) {
+		$subject .= ' - amortisseur rockshox';
+	} elseif (strpos($current_url, 'amortiseur-dt-swiss') !== false) {
+		$subject .= ' - amortisseur-dt-swiss';
+	} elseif (strpos($current_url, 'amortiseur-manitou') !== false) {
+		$subject .= ' - amortisseur-manitou';
+	} elseif (strpos($current_url, 'tige-de-selle-downlow') !== false) {
+		$subject .= ' - tige-de-selle-downlow';
+	} elseif (strpos($current_url, 'tige-de-selle-oneup') !== false) {
+		$subject .= ' - tige-de-selle-oneup';
+	} else {
+		$subject .= $current_url;
+	}
+	// Ajout infos utilisateur dans l'objet
+	$infos = [];
+	if ($user_email) $infos[] = 'Email: ' . $user_email;
+	if ($user_nom) $infos[] = 'Nom: ' . $user_nom;
+	if ($user_prenom) $infos[] = 'Prénom: ' . $user_prenom;
+	if ($user_tel) $infos[] = 'Tel: ' . $user_tel;
+	if (!empty($infos)) $subject .= ' | ' . implode(' | ', $infos);
 
-    // Envoi à l'utilisateur connecté (optionnel)
+    $headers = '';
     if ($user_email) {
-        wp_mail($user_email, 'Copie de votre demande de prestation', $message, '', $attachments);
+        $headers = array('Cc: ' . $user_email);
     }
+	wp_mail($admin_email, $subject, $message, $headers, $attachments);
 
-    wp_send_json_success('Formulaire envoyé avec succès !');
+	// Retourne le numéro de commande dans la réponse AJAX
+	wp_send_json_success(['message' => 'Formulaire envoyé avec succès !', 'order_number' => $order_number]);
 }
 add_action('wp_ajax_envoyer_form_fourche', 'envoyer_form_fourche');
 add_action('wp_ajax_nopriv_envoyer_form_fourche', 'envoyer_form_fourche');
 
 //Formulaire de fourche
 function envoyer_form_fourche() {
-    // Récupération des données
-    $url = isset($_POST['url']) ? sanitize_text_field($_POST['url']) : '';
-    $type_fourche = isset($_POST['type_fourche']) ? sanitize_text_field($_POST['type_fourche']) : '';
-    $prestation = isset($_POST['prestation']) ? sanitize_text_field($_POST['prestation']) : '';
-    $usages = isset($_POST['usage']) ? $_POST['usage'] : [];
-    $date_revision = isset($_POST['date_revision']) ? sanitize_text_field($_POST['date_revision']) : '';
-    $poids_pilote = isset($_POST['poids_pilote']) ? sanitize_text_field($_POST['poids_pilote']) : '';
-    $modele_annee = isset($_POST['modele_annee']) ? sanitize_text_field($_POST['modele_annee']) : '';
-    $remarques = isset($_POST['remarques']) ? sanitize_textarea_field($_POST['remarques']) : '';
+	// Récupération des données
+	$url = isset($_POST['url']) ? sanitize_text_field($_POST['url']) : '';
+	$type_fourche = isset($_POST['type_fourche']) ? sanitize_text_field($_POST['type_fourche']) : '';
+	$prestation = isset($_POST['prestation']) ? sanitize_text_field($_POST['prestation']) : '';
+	$usages = isset($_POST['usage']) ? $_POST['usage'] : [];
+	$date_revision = isset($_POST['date_revision']) ? sanitize_text_field($_POST['date_revision']) : '';
+	$poids_pilote = isset($_POST['poids_pilote']) ? sanitize_text_field($_POST['poids_pilote']) : '';
+	$modele_annee = isset($_POST['modele_annee']) ? sanitize_text_field($_POST['modele_annee']) : '';
+	$remarques = isset($_POST['remarques']) ? sanitize_textarea_field($_POST['remarques']) : '';
+	// Champs utilisateur additionnels
+	$user_email = '';
+	$user_nom = '';
+	$user_prenom = '';
+	$user_tel = '';
+	if (is_user_logged_in()) {
+		$current_user = wp_get_current_user();
+		$user_email = $current_user->user_email;
+		$user_nom = $current_user->last_name;
+		$user_prenom = $current_user->first_name;
+		$user_tel = get_user_meta($current_user->ID, 'billing_phone', true);
+	} else {
+		if (!empty($_POST['email'])) $user_email = sanitize_email($_POST['email']);
+		if (!empty($_POST['nom'])) $user_nom = sanitize_text_field($_POST['nom']);
+		if (!empty($_POST['prenom'])) $user_prenom = sanitize_text_field($_POST['prenom']);
+		if (!empty($_POST['telephone'])) $user_tel = sanitize_text_field($_POST['telephone']);
+	}
 
-    // Construction du message
-    $message = "Type de fourche : $type_fourche\n";
-    $message .= "Prestation : $prestation\n";
-    $message .= "Options supplémentaires : ".(is_array($usages) ? implode(', ', array_map('sanitize_text_field', $usages)) : '')."\n";
-    $message .= "Date de la dernière révision : $date_revision\n";
-    $message .= "Poids du pilote : $poids_pilote kg\n";
-    $message .= "Modèle et année du vélo : $modele_annee\n";
-    $message .= "Remarques : $remarques\n";
+	// Génération du numéro de commande unique
+	$order_number = 'CMD-' . date('Ymd-His') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
+
+	// Construction du message
+	$message = "Numéro de commande : $order_number\n";
+	$message .= "Type de fourche : $type_fourche\n";
+	$message .= "Prestation : $prestation\n";
+	$message .= "Options supplémentaires : ".(is_array($usages) ? implode(', ', array_map('sanitize_text_field', $usages)) : '')."\n";
+	$message .= "Date de la dernière révision : $date_revision\n";
+	$message .= "Poids du pilote : $poids_pilote kg\n";
+	$message .= "Modèle et année du vélo : $modele_annee\n";
+	$message .= "Remarques : $remarques\n";
 
     // Destinataire
     $admin_email = get_option('admin_email');
@@ -309,29 +390,37 @@ function envoyer_form_fourche() {
         }
     }
 
-    // Envoi à l'admin
-    $subject = 'Nouvelle demande de prestation fourche';
-    // Ajout du contexte selon l'URL
-    $current_url = $url;
-    if (strpos($current_url, 'fourche-lefty-ocho') !== false) {
-        $subject .= ' - Lefty Ocho/Oliver';
-    } elseif (strpos($current_url, 'fourche-lefty-hybrid') !== false) {
-        $subject .= ' - Lefty Hybrid';
-    } elseif (strpos($current_url, 'fourche-fatty') !== false) {
-        $subject .= ' - Fatty';
-    } elseif (strpos($current_url, 'fourche-lefty-a-soufflet') !== false) {
-        $subject .= ' - Lefty A Soufflet';
-    }  else {
-        $subject .= ' - '. $current_url;
-    }
-    wp_mail($admin_email, $subject, $message, '', $attachments);
+    // Envoi à l'admin avec l'utilisateur en copie (CC)
+	$subject = 'Nouvelle demande de prestation fourche';
+	// Ajout du contexte selon l'URL
+	$current_url = $url;
+	if (strpos($current_url, 'fourche-lefty-ocho') !== false) {
+		$subject .= ' - Lefty Ocho/Oliver';
+	} elseif (strpos($current_url, 'fourche-lefty-hybrid') !== false) {
+		$subject .= ' - Lefty Hybrid';
+	} elseif (strpos($current_url, 'fourche-fatty') !== false) {
+		$subject .= ' - Fatty';
+	} elseif (strpos($current_url, 'fourche-lefty-a-soufflet') !== false) {
+		$subject .= ' - Lefty A Soufflet';
+	}  else {
+		$subject .= ' - '. $current_url;
+	}
+	// Ajout infos utilisateur dans l'objet
+	$infos = [];
+	if ($user_email) $infos[] = 'Email: ' . $user_email;
+	if ($user_nom) $infos[] = 'Nom: ' . $user_nom;
+	if ($user_prenom) $infos[] = 'Prénom: ' . $user_prenom;
+	if ($user_tel) $infos[] = 'Tel: ' . $user_tel;
+	if (!empty($infos)) $subject .= ' | ' . implode(' | ', $infos);
 
-    // Envoi à l'utilisateur connecté (optionnel)
+    $headers = '';
     if ($user_email) {
-        wp_mail($user_email, 'Copie de votre demande de prestation fourche', $message, '', $attachments);
+        $headers = array('Cc: ' . $user_email);
     }
+	wp_mail($admin_email, $subject, $message, $headers, $attachments);
 
-    wp_send_json_success('Formulaire envoyé avec succès !');
+	// Retourne le numéro de commande dans la réponse AJAX
+	wp_send_json_success(['message' => 'Formulaire envoyé avec succès !', 'order_number' => $order_number]);
 }
 add_action( 'after_setup_theme', 'hello_elementor_content_width', 0 );
 
@@ -358,17 +447,30 @@ if ( ! function_exists( 'hello_elementor_add_description_meta_tag' ) ) {
 		echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $post->post_excerpt ) ) . '">' . "\n";
 	}
 }
-add_action( 'wp_head', 'hello_elementor_add_description_meta_tag' );
+// //JS du fil d'ariane dans le header
+// add_action( 'wp_head', 'hello_elementor_add_description_meta_tag' );
+// function ajouter_fil_ariane_js() {
+//     wp_enqueue_script(
+//         'fil-d-arriane-js',
+//         get_template_directory_uri() . '/assets/js/fil-d-arriane.js',
+//         array(), // dépendances éventuelles
+//         null, // version
+//         false // false = dans le header, true = dans le footer
+//     );
+// }
+// add_action('wp_enqueue_scripts', 'ajouter_fil_ariane_js');
+
+//Photo par défeaut
+add_filter( 'woocommerce_placeholder_img_src', 'custom_woocommerce_placeholder_img_src' );
+function custom_woocommerce_placeholder_img_src( $src ) {
+    return 'https://doc-headshok.com/wp-content/uploads/2025/09/Photo-indisponible.png';
+}
 
 // Settings page
 require get_template_directory() . '/includes/settings-functions.php';
 
 // Header & footer styling option, inside Elementor
 require get_template_directory() . '/includes/elementor-functions.php';
-
-//Search method
-// require_once get_template_directory() . '/search.php';
-
 
 if ( ! function_exists( 'hello_elementor_customizer' ) ) {
 	// Customizer controls

@@ -1,3 +1,5 @@
+function form_tige_selle_shortcode(){
+	ob_start(); ?>
  <style>
 .form-step {
   display: none;
@@ -9,6 +11,8 @@
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  font-family: 'din-next-lt-pro', sans-serif;
+
 }
 .radio-group {
   margin-bottom: 18px;
@@ -44,6 +48,7 @@
   transition: background 0.2s, color 0.2s, border 0.2s;
   box-shadow: none;
   outline: none;
+  font-family: 'din-next-lt-pro', sans-serif;
 }
 .radio-btn input[type="radio"] {
   display: none;
@@ -72,8 +77,8 @@
   <div class="form-step active" id="step-1">
     <h3>Quelles prestations souhaitez-vous ?</h3>
     <div class="radio-group">
-      <label class="radio-btn"><input type="radio" name="option1" value="Révision 100h" required> Révision standard</label>
-      <label class="radio-btn"><input type="radio" name="option1" value="Révision 200h"> Révision complète</label>
+      <label class="radio-btn"><input type="radio" name="option1" value="Révision standard" required> Révision standard</label>
+      <label class="radio-btn"><input type="radio" name="option1" value="Révision complète"> Révision complète</label>
     </div>
     <div class="form-pagination">
       <span></span>
@@ -214,12 +219,10 @@ document.getElementById('next-2').onclick = function() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  const remarquesVal = document.getElementById('remarques').value;
   if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
-    else if(!modeleVal) document.getElementById('modele-annee').focus();
-    else document.getElementById('remarques').focus();
+    else document.getElementById('modele-annee').focus();
     return;
   }
   // Afficher le résumé
@@ -257,7 +260,20 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fox', true);
   xhr.onload = function() {
     if (xhr.status === 200) {
-      document.getElementById('form-result').textContent = 'Formulaire envoyé avec succès !';
+      let response;
+      try {
+        response = JSON.parse(xhr.responseText);
+      } catch (e) {
+        response = null;
+      }
+      let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
+      let msg = 'Formulaire envoyé avec succès !';
+      if(orderNumber) {
+        msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
+        // Affiche aussi le numéro dans le résumé (step 3)
+        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
+      }
+      document.getElementById('form-result').innerHTML = msg;
       document.getElementById('multi-step-form').reset();
       showStep(0);
       updateNextButtonState('step-1', 'option1', 'next-1');
@@ -277,3 +293,8 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   <a href="<?php echo wp_login_url(); ?>" class="button" style="background:#FF3F22;color:#fff;padding:12px 32px;border-radius:8px;font-weight:600;text-decoration:none;">Se connecter</a>
 </div>
 <?php endif; ?>
+
+<?php
+  return ob_get_clean();
+}
+add_shortcode('form_tige_selle', 'form_tige_selle_shortcode');

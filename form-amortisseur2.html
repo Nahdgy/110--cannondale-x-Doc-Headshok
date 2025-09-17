@@ -11,6 +11,7 @@ function form_amortisseur_2choices_shortcode(){
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  font-family: 'din-next-lt-pro', sans-serif
 }
 .radio-group {
   margin-bottom: 18px;
@@ -46,6 +47,7 @@ function form_amortisseur_2choices_shortcode(){
   transition: background 0.2s, color 0.2s, border 0.2s;
   box-shadow: none;
   outline: none;
+  font-family: 'din-next-lt-pro', sans-serif
 }
 .radio-btn input[type="radio"] {
   display: none;
@@ -236,12 +238,10 @@ document.getElementById('next-2').onclick = function() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  const remarquesVal = document.getElementById('remarques').value;
-  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal ) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
-    else if(!modeleVal) document.getElementById('modele-annee').focus();
-    else document.getElementById('remarques').focus();
+    else document.getElementById('modele-annee').focus();
     return;
   }
   // Afficher le résumé
