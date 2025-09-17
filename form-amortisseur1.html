@@ -187,9 +187,8 @@ function updateNext2ButtonState() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-annee').value;
-  const remarquesVal = document.getElementById('remarques').value;
   const nextBtn = document.getElementById('next-2');
-  if(dateVal && poidsVal && modeleVal && remarquesVal) {
+  if(dateVal && poidsVal && modeleVal) {
     nextBtn.classList.remove('button-disabled');
     nextBtn.disabled = false;
   } else {
@@ -252,7 +251,7 @@ document.getElementById('next-2').onclick = function() {
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
   const prixTotal = calculerPrixTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Prestation :</strong> ${r1}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><strong>Prix estimé :</strong> ${prixTotal} €`;
+  document.getElementById('resume-content').innerHTML = `<strong>Prestation :</strong> ${r1}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br>` + (remarques ? `<strong>Remarques :</strong> ${remarques}<br>` : '') + `<strong>Fichier joint :</strong> ${fileName}<br><strong>Prix estimé :</strong> ${prixTotal} €`;
   currentStep = 2; showStep(currentStep);
   afficherPrixTotal();
 };
