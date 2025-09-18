@@ -53,23 +53,43 @@ function header_personnalise_shortcode() {
 			});
 		}
 
-		// Timeout hover sous-menus BOUTIQUE
-		document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
-			let timerShow, timerHide;
-			const submenu = sub.querySelector('.dropdown-content-sub');
-			sub.addEventListener('mouseenter', function() {
-				clearTimeout(timerHide);
-				timerShow = setTimeout(function() {
-					submenu && (submenu.style.display = 'grid');
-				}, 500);
+			// Gestion fluide des sous-dropdowns Boutique
+			let currentSubMenu = null;
+			let timerHideSub = null;
+			document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
+				const submenu = sub.querySelector('.dropdown-content-sub');
+				// Affichage au survol du titre
+				sub.addEventListener('mouseenter', function() {
+					// Ferme le précédent si différent
+					if (currentSubMenu && currentSubMenu !== submenu) {
+						currentSubMenu.style.display = 'none';
+					}
+					clearTimeout(timerHideSub);
+					submenu.style.display = 'grid';
+					currentSubMenu = submenu;
+				});
+				// Temporisation à la sortie du titre
+				sub.addEventListener('mouseleave', function(e) {
+					clearTimeout(timerHideSub);
+					timerHideSub = setTimeout(function() {
+						// Vérifie si la souris n'est pas sur le sous-menu
+						if (!submenu.matches(':hover')) {
+							submenu.style.display = 'none';
+							if (currentSubMenu === submenu) currentSubMenu = null;
+						}
+					}, 350);
+				});
+				// Empêche la fermeture immédiate si on va sur le sous-menu
+				submenu.addEventListener('mouseenter', function() {
+					clearTimeout(timerHideSub);
+				});
+				submenu.addEventListener('mouseleave', function() {
+					timerHideSub = setTimeout(function() {
+						submenu.style.display = 'none';
+						if (currentSubMenu === submenu) currentSubMenu = null;
+					}, 350);
+				});
 			});
-			sub.addEventListener('mouseleave', function() {
-				clearTimeout(timerShow);
-				timerHide = setTimeout(function() {
-					submenu && (submenu.style.display = 'none');
-				}, 500);
-			});
-		});
 
 		// Timeout hover menu déroulant principal BOUTIQUE
 		var dropdownBoutique = document.querySelector('.dropdown');
@@ -966,7 +986,18 @@ function header_personnalise_shortcode() {
       <li><a href="/boutique/fourches/?filtre%5B%5D=fatty">Fatty/Super Fatty/Fatty DD/Pbone</a></li>
       <li><a href="/boutique/fourches/?filtre%5B%5D=lefty">Lefty</a></li>
 	  <li><a href="/boutique/fourches/?filtre%5B%5D=Olaf">Olaf</a></li>
-      <li><a href="/boutique/fourches/?filtre%5B%5D=Occasion">Fourche d'occasion</a></li>
+      <li><a href="/boutique/fourches/?filtre%5B%5D=Occasion">Fourche occasion</a></li>
+    </ul>
+  </li>
+	<li class="dropdown-sub">
+    <a href="/boutique/pieces-de-cadre/">PIECES DE CADRE </a><span class="arrow-orange"></span>
+    <ul class="dropdown-content-sub">
+      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=guide-cable">Guide-câble</a></li>
+	  <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=jeu-direction">Jeu de direction</a></li>
+      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=patte-derailleur">Patte de dérailleur</a></li>
+      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=protection-cadres-et-fourches-cannondale">Protections</a></li>
+      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=emboutspasse-durites">Embouts - passe-durite</a></li>
+      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=roulements">Roulement</a></li>
     </ul>
   </li>
   <li class="dropdown-sub">
@@ -1025,17 +1056,6 @@ function header_personnalise_shortcode() {
       <li><a href="/boutique/equipements/?filtre%5B%5D=produits_connectes">Produits connectés</a></li>
 	  <li><a href="/boutique/equipements/?filtre%5B%5D=pompes">Pompes</a></li>
 	  <li><a href="/boutique/equipements/?filtre%5B%5D=bagagerie">Bagagerie</a></li>
-    </ul>
-  </li>
-  <li class="dropdown-sub">
-    <a href="/boutique/pieces-de-cadre/">PIECES DE CADRE </a><span class="arrow-orange"></span>
-    <ul class="dropdown-content-sub">
-      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=guide-cable">Guide-câble</a></li>
-	  <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=jeu-direction">Jeu de direction</a></li>
-      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=patte-derailleur">Patte de dérailleur</a></li>
-      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=protection-cadres-et-fourches-cannondale">Protections</a></li>
-      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=emboutspasse-durites">Embouts - passe-durite</a></li>
-      <li><a href="/boutique/pieces-de-cadre/?filtre%5B%5D=roulements">Roulement</a></li>
     </ul>
   </li>
   					</ul>
