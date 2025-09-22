@@ -453,6 +453,9 @@ function header_personnalise_shortcode() {
 	  justify-content: flex-start;
 		height:2rem;
 	}
+	.search-mobile{
+		display: none;
+	}
 
     .logos {
       flex: 2;
@@ -591,6 +594,9 @@ function header_personnalise_shortcode() {
 		}
 		  .search{
 			  display:none;
+		  }
+		  .search-mobile{
+			  display:flex;
 		  }
 	  	.logos-en-ligne{
 			  display:none;
@@ -893,6 +899,9 @@ function header_personnalise_shortcode() {
       <div class="conteneur-reduit">
 		  <div class="cross" id="burger-close" onclick="document.getElementById('burger-down').classList.remove('hide'); document.getElementById('burger-close').classList.add('hide');document.getElementById('header-menu').style.display = 'none';document.getElementById('flags').style.zIndex = '1'">
 			<strong>X</strong>
+		</div>
+		<div class="search-mobile">
+			<?php echo do_shortcode('[wpdreams_ajaxsearchlite]'); ?>
 		</div>
 		  <div class="menu-navbar">
 			<nav>
