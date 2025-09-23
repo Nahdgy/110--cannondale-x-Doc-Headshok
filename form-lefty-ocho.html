@@ -48,7 +48,7 @@
   box-shadow: none;
   outline: none;
 }
-.radio-btn input[type="radio"] {
+.radio-btn input[type="radio"], .radio-btn input[type="checkbox"] {
   display: none;
 }
 .radio-btn.selected {
@@ -91,13 +91,13 @@
   <div class="form-step" id="step-2">
     <h3>Quelles prestations souhaitez-vous ?</h3>
     <div class="radio-group">
-      <label class="radio-btn"><input type="radio" name="prestation" value="Révision 100 heures" required> Révision 100 heures</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Révision 200 heures"> Révision 200 heures</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Révision Full Package"> Révision Full Package</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Optimisation système Headshok"> Optimisation système Headshok</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Réfection système Headshok"> Réfection système Headshok</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Garantie Cannondale"> Garantie Cannondale</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Remplacement filet rapporté (hélicoil)"> Remplacement filet rapporté (hélicoil)</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision 100 heures"> Révision 100 heures</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision 200 heures"> Révision 200 heures</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision Full Package"> Révision Full Package</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Optimisation système Headshok"> Optimisation système Headshok</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Réfection système Headshok"> Réfection système Headshok</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Garantie Cannondale"> Garantie Cannondale</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Remplacement filet rapporté (hélicoil)"> Remplacement filet rapporté (hélicoil)</label>
     </div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
@@ -253,13 +253,21 @@ const prixOptions = {
 };
 
 function calculerTotal() {
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
   const options = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
   let total = 0;
-  if (prestation && prixPrestations[prestation]) total += prixPrestations[prestation];
+  
+  prestations.forEach(prestation => {
+    if (prixPrestations[prestation.value]) {
+      total += prixPrestations[prestation.value];
+    }
+  });
+  
   options.forEach(opt => {
     if (opt === 'Fourreau carbone') {
-      total += (prestation === 'Révision 200 heures') ? 0 : 399;
+      // Vérifier si "Révision 200 heures" est sélectionnée
+      const revision200Selected = prestations.some(p => p.value === 'Révision 200 heures');
+      total += revision200Selected ? 0 : 399;
     } else if (prixOptions[opt]) {
       total += prixOptions[opt];
     }
@@ -274,8 +282,8 @@ function afficherTotalStep3() {
 
 // Mettre à jour le total à chaque changement de prestation ou option
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[name="prestation"]').forEach(function(radio) {
-    radio.addEventListener('change', afficherTotalStep3);
+  document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', afficherTotalStep3);
   });
   document.querySelectorAll('input[name="usage[]"]').forEach(function(cb) {
     cb.addEventListener('change', afficherTotalStep3);
@@ -360,14 +368,14 @@ function updateNext2ButtonState() {
 function updateRadioSelected() {
   document.querySelectorAll('.radio-group').forEach(group => {
     group.querySelectorAll('.radio-btn').forEach(label => {
-      const input = label.querySelector('input');
+      const input = label.querySelector('input[type="radio"], input[type="checkbox"]');
       if (!input) return;
       // On retire tous les listeners précédents pour éviter les doublons
       input.onchange = function() {
         if(input.type === 'radio') {
           group.querySelectorAll('.radio-btn').forEach(l => l.classList.remove('selected'));
           if(input.checked) label.classList.add('selected');
-        } else {
+        } else if(input.type === 'checkbox') {
           if(input.checked) label.classList.add('selected');
           else label.classList.remove('selected');
         }
@@ -382,7 +390,7 @@ function updateRadioSelected() {
   // Désactivation dynamique des options supplémentaires selon modèle et prestation
   function updateOptionsState() {
     // Récupérer les valeurs sélectionnées
-    const prestation = document.querySelector('input[name="prestation"]:checked')?.value || '';
+    const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
     const modele = document.querySelector('input[name="type_fourche"]:checked')?.value || '';
     // Mapping des options
     const options = {
@@ -402,7 +410,8 @@ function updateRadioSelected() {
       'Garantie Cannondale',
       'Remplacement filet rapporté (hélicoil)'
     ];
-    if (prestationsSansOptions.includes(prestation)) {
+    const hasPrestationSansOptions = prestations.some(p => prestationsSansOptions.includes(p));
+    if (hasPrestationSansOptions) {
       Object.keys(options).forEach(opt => {
         const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
         if (cb) {
@@ -417,8 +426,8 @@ function updateRadioSelected() {
     // Règle 2 : Désactiver "Tuning CFR joints spi SKF" pour "Révision 100 heures"
     const cbCFR = document.querySelector('input[name="usage[]"][value="Tuning Team CFR joints spi SKF"]');
     if (cbCFR) {
-      cbCFR.disabled = (prestation === 'Révision 100 heures');
-      cbCFR.parentElement.classList.toggle('button-disabled', prestation === 'Révision 100 heures');
+      cbCFR.disabled = prestations.includes('Révision 100 heures');
+      cbCFR.parentElement.classList.toggle('button-disabled', prestations.includes('Révision 100 heures'));
     }
     // Règle 3 : Désactiver "Modification 650 en 700" sauf pour modèle "Lefty Oliver"
     const cb650700 = document.querySelector('input[name="usage[]"][value="Modification 650 en 700"]');
@@ -459,8 +468,8 @@ function updateRadioSelected() {
 
   // Écouteurs sur prestation et modèle
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input[name="prestation"]').forEach(function(radio) {
-      radio.addEventListener('change', updateOptionsState);
+    document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
+      checkbox.addEventListener('change', updateOptionsState);
     });
     document.querySelectorAll('input[name="type_fourche"]').forEach(function(radio) {
       radio.addEventListener('change', updateOptionsState);
@@ -469,7 +478,22 @@ function updateRadioSelected() {
   });
 document.addEventListener('DOMContentLoaded', function() {
   updateNextButtonState('step-1', 'type_fourche', 'next-1');
-  updateNextButtonState('step-2', 'prestation', 'next-2');
+  // Pour les checkboxes de prestations, on active le bouton suivant si au moins une est cochée
+  function updateNext2ButtonState() {
+    const checkboxes = document.querySelectorAll('input[name="prestations[]"]');
+    const nextBtn = document.getElementById('next-2');
+    let checked = false;
+    checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+    if (checked) {
+      nextBtn.classList.remove('button-disabled');
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.classList.add('button-disabled');
+      nextBtn.disabled = true;
+    }
+  }
+  document.querySelectorAll('input[name="prestations[]"]').forEach(cb => cb.addEventListener('change', updateNext2ButtonState));
+  updateNext2ButtonState();
   // Pour les checkboxes, on active le bouton suivant si au moins une est cochée
   function updateNext3ButtonState() {
     const checkboxes = document.querySelectorAll('input[name="usage[]"]');
@@ -523,7 +547,8 @@ document.getElementById('prev-2').onclick = function() {
   currentStep = 0; showStep(currentStep);
 };
 document.getElementById('next-2').onclick = function() {
-  if(document.querySelector('input[name="prestation"]:checked')) {
+  const prestationsChecked = document.querySelectorAll('input[name="prestations[]"]:checked');
+  if(prestationsChecked.length > 0) {
     currentStep = 2; showStep(currentStep);
   }
 };
@@ -558,7 +583,7 @@ document.getElementById('next-4').onclick = function() {
   }
   // Afficher le résumé
   const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
   const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value).join(', ');
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -567,13 +592,13 @@ document.getElementById('next-4').onclick = function() {
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
   const total = calculerTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Débattement :</strong> ${prestation}<br><strong>Usage :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
   currentStep = 4; showStep(currentStep);
 };
 document.getElementById('multi-step-form').onsubmit = function(e) {
   e.preventDefault();
   const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
   const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -583,7 +608,7 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   const prix_total = calculerTotal();
   var formData = new FormData();
   formData.append('type_fourche', type_fourche);
-  formData.append('prestation', prestation);
+  prestations.forEach(prestation => formData.append('prestations[]', prestation));
   usages.forEach(u => formData.append('usage[]', u));
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);

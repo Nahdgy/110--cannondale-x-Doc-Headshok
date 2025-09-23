@@ -51,7 +51,7 @@
   outline: none;
   font-family: 'din-next-lt-pro', sans-serif;
 }
-.radio-btn input[type="radio"] {
+.radio-btn input[type="radio"], .radio-btn input[type="checkbox"] {
   display: none;
 }
 .radio-btn.selected {
@@ -96,10 +96,10 @@
   <div class="form-step" id="step-2">
     <h3>Quelles prestations souhaitez-vous ?</h3>
     <div class="radio-group">
-      <label class="radio-btn"><input type="radio" name="prestation" value="Révision 100 heures" required> Révision 100 heures</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Révision 200 heures"> Révision 200 heures</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Réfection système Headshok"> Réfection système Headshok</label>
-      <label class="radio-btn"><input type="radio" name="prestation" value="Système DL50"> Système DL50</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision 100 heures" required> Révision 100 heures</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision 200 heures"> Révision 200 heures</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Réfection système Headshok"> Réfection système Headshok</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Système DL50"> Système DL50</label>
     </div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
@@ -276,13 +276,16 @@ const prixOptions = {
 };
 
 function calculerTotal() {
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
   const options = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
   let total = 0;
-  if (prestation && prixPrestations[prestation]) total += prixPrestations[prestation];
+  prestations.forEach(prestation => {
+    if (prixPrestations[prestation]) total += prixPrestations[prestation];
+  });
   options.forEach(opt => {
     if (opt === 'Fourreau carbone') {
-      total += (prestation === 'Révision 200 heures') ? 0 : 399;
+      // Gratuit si Révision 200 heures est sélectionnée
+      total += prestations.includes('Révision 200 heures') ? 0 : 399;
     } else if (prixOptions[opt]) {
       total += prixOptions[opt];
     }
@@ -297,8 +300,8 @@ function afficherTotalStep3() {
 
 // Mettre à jour le total à chaque changement de prestation ou option
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[name="prestation"]').forEach(function(radio) {
-    radio.addEventListener('change', afficherTotalStep3);
+  document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', afficherTotalStep3);
   });
   document.querySelectorAll('input[name="usage[]"]').forEach(function(cb) {
     cb.addEventListener('change', afficherTotalStep3);
@@ -307,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 	// Désactivation dynamique des options supplémentaires selon la prestation sélectionnée
   function updateOptionsState() {
-    const prestation = document.querySelector('input[name="prestation"]:checked')?.value || '';
+    const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
     const options = [
       'Tuning hydraulique',
       'Sans option'
@@ -317,7 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
       'Réfection système Headshok',
       'Système DL50'
     ];
-    if (prestationsSansOptions.includes(prestation)) {
+    // Si une prestation sans options est sélectionnée
+    const hasNoOptionsPrestation = prestations.some(p => prestationsSansOptions.includes(p));
+    if (hasNoOptionsPrestation) {
       options.forEach(opt => {
         const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
         if (cb) {
@@ -327,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       return;
     }
-    // Réactiver toutes les options si prestation n'est pas dans la liste
+    // Réactiver toutes les options si aucune prestation sans option n'est sélectionnée
     options.forEach(opt => {
       const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
       if (cb) {
@@ -339,14 +344,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Écouteurs sur prestation
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input[name="prestation"]').forEach(function(radio) {
-      radio.addEventListener('change', updateOptionsState);
+    document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
+      checkbox.addEventListener('change', updateOptionsState);
     });
     updateOptionsState();
   });
 document.addEventListener('DOMContentLoaded', function() {
   updateNextButtonState('step-1', 'type_fourche', 'next-1');
-  updateNextButtonState('step-2', 'prestation', 'next-2');
+  // Pour les prestations (checkboxes), on active le bouton suivant si au moins une est cochée
+  function updateNext2ButtonState() {
+    const checkboxes = document.querySelectorAll('input[name="prestations[]"]');
+    const nextBtn = document.getElementById('next-2');
+    let checked = false;
+    checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+    if (checked) {
+      nextBtn.classList.remove('button-disabled');
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.classList.add('button-disabled');
+      nextBtn.disabled = true;
+    }
+  }
+  document.querySelectorAll('input[name="prestations[]"]').forEach(cb => cb.addEventListener('change', updateNext2ButtonState));
+  updateNext2ButtonState();
   // Pour les checkboxes, on active le bouton suivant si au moins une est cochée
   function updateNext3ButtonState() {
     const checkboxes = document.querySelectorAll('input[name="usage[]"]');
@@ -396,9 +416,12 @@ document.getElementById('prev-2').onclick = function() {
   currentStep = 0; showStep(currentStep);
 };
 document.getElementById('next-2').onclick = function() {
-  if(document.querySelector('input[name="prestation"]:checked')) {
-    currentStep = 2; showStep(currentStep);
+  const checkedPrestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
+  if(checkedPrestations.length === 0) {
+    checkedPrestations[0]?.focus();
+    return;
   }
+  currentStep = 2; showStep(currentStep);
 };
 document.getElementById('prev-3').onclick = function() {
   currentStep = 1;
@@ -429,7 +452,7 @@ document.getElementById('next-4').onclick = function() {
   }
   // Afficher le résumé
   const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
   const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value).join(', ');
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -438,13 +461,13 @@ document.getElementById('next-4').onclick = function() {
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
   const total = calculerTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestation :</strong> ${prestation}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
   currentStep = 4; showStep(currentStep);
 };
 document.getElementById('multi-step-form').onsubmit = function(e) {
   e.preventDefault();
   const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestation = document.querySelector('input[name="prestation"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
   const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -454,7 +477,7 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   const prix_total = calculerTotal();
   var formData = new FormData();
   formData.append('type_fourche', type_fourche);
-  formData.append('prestation', prestation);
+  prestations.forEach(p => formData.append('prestations[]', p));
   usages.forEach(u => formData.append('usage[]', u));
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);
@@ -482,7 +505,7 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
       document.getElementById('multi-step-form').reset();
       showStep(0);
       updateNextButtonState('step-1', 'type_fourche', 'next-1');
-      updateNextButtonState('step-2', 'prestation', 'next-2');
+      updateNext2ButtonState();
       updateNext3ButtonState();
       updateNext4ButtonState();
       updateRadioSelected();

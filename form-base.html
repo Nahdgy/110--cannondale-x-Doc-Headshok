@@ -45,7 +45,7 @@
   box-shadow: none;
   outline: none;
 }
-.radio-btn input[type="radio"] {
+.radio-btn input[type="radio"], .radio-btn input[type="checkbox"] {
   display: none;
 }
 .radio-btn.selected {
@@ -70,11 +70,11 @@
   </div>
   <!-- Étape 1 -->
   <div class="form-step active" id="step-1">
-    <h3>Étape 1 : Choisissez une option</h3>
+    <h3>Étape 1 : Choisissez vos prestations</h3>
     <div class="radio-group">
-      <label class="radio-btn"><input type="radio" name="option1" value="A" required> Option A</label>
-      <label class="radio-btn"><input type="radio" name="option1" value="B"> Option B</label>
-      <label class="radio-btn"><input type="radio" name="option1" value="C"> Option C</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Option A" required> Option A</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Option B"> Option B</label>
+      <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Option C"> Option C</label>
     </div>
     <div class="form-pagination">
       <span></span>
@@ -193,10 +193,15 @@ function updateNext3ButtonState() {
 function updateRadioSelected() {
   document.querySelectorAll('.radio-group').forEach(group => {
     group.querySelectorAll('.radio-btn').forEach(label => {
-      const input = label.querySelector('input[type="radio"]');
+      const input = label.querySelector('input');
       input.addEventListener('change', function() {
-        group.querySelectorAll('.radio-btn').forEach(l => l.classList.remove('selected'));
-        if(input.checked) label.classList.add('selected');
+        if(input.type === 'radio') {
+          group.querySelectorAll('.radio-btn').forEach(l => l.classList.remove('selected'));
+          if(input.checked) label.classList.add('selected');
+        } else {
+          if(input.checked) label.classList.add('selected');
+          else label.classList.remove('selected');
+        }
       });
       if(input.checked) label.classList.add('selected');
       else label.classList.remove('selected');
@@ -204,7 +209,22 @@ function updateRadioSelected() {
   });
 }
 document.addEventListener('DOMContentLoaded', function() {
-  updateNextButtonState('step-1', 'option1', 'next-1');
+  // Pour les prestations (checkboxes), on active le bouton suivant si au moins une est cochée
+  function updateNext1ButtonState() {
+    const checkboxes = document.querySelectorAll('input[name="prestations[]"]');
+    const nextBtn = document.getElementById('next-1');
+    let checked = false;
+    checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+    if (checked) {
+      nextBtn.classList.remove('button-disabled');
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.classList.add('button-disabled');
+      nextBtn.disabled = true;
+    }
+  }
+  document.querySelectorAll('input[name="prestations[]"]').forEach(cb => cb.addEventListener('change', updateNext1ButtonState));
+  updateNext1ButtonState();
   updateNextButtonState('step-2', 'option2', 'next-2');
   updateNextButtonState('step-3', 'option3', 'next-3');
   updateNext3ButtonState();
@@ -218,9 +238,12 @@ document.querySelectorAll('input[type="radio"]').forEach(input => {
   input.addEventListener('change', updateRadioSelected);
 });
 document.getElementById('next-1').onclick = function() {
-  if(document.querySelector('input[name="option1"]:checked')) {
-    currentStep = 1; showStep(currentStep);
+  const checkedPrestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
+  if(checkedPrestations.length === 0) {
+    checkedPrestations[0]?.focus();
+    return;
   }
+  currentStep = 1; showStep(currentStep);
 };
 document.getElementById('prev-2').onclick = function() {
   currentStep = 0; showStep(currentStep);
@@ -247,7 +270,7 @@ document.getElementById('next-3').onclick = function() {
     return;
   }
   // Afficher le résumé
-  const r1 = document.querySelector('input[name="option1"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
   const r2 = document.querySelector('input[name="option2"]:checked')?.value;
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -255,7 +278,7 @@ document.getElementById('next-3').onclick = function() {
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
-  document.getElementById('resume-content').innerHTML = `<strong>Option choisie :</strong> ${r1}<br><strong>Réponse :</strong> ${r2}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
+  document.getElementById('resume-content').innerHTML = `<strong>Prestations choisies :</strong> ${prestations}<br><strong>Réponse :</strong> ${r2}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
   currentStep = 3; showStep(currentStep);
 };
 document.getElementById('prev-4').onclick = function() {
@@ -263,7 +286,7 @@ document.getElementById('prev-4').onclick = function() {
 };
 document.getElementById('multi-step-form').onsubmit = function(e) {
   e.preventDefault();
-  const r1 = document.querySelector('input[name="option1"]:checked')?.value;
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
   const r2 = document.querySelector('input[name="option2"]:checked')?.value;
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
@@ -271,7 +294,7 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   var formData = new FormData();
-  formData.append('option1', r1);
+  prestations.forEach(p => formData.append('prestations[]', p));
   formData.append('option2', r2);
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);
@@ -285,7 +308,7 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
       document.getElementById('form-result').textContent = 'Formulaire envoyé avec succès !';
       document.getElementById('multi-step-form').reset();
       showStep(0);
-      updateNextButtonState('step-1', 'option1', 'next-1');
+      updateNext1ButtonState();
       updateNextButtonState('step-2', 'option2', 'next-2');
       updateRadioSelected();
       updateProgressBar(0);
