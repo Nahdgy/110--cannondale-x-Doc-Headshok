@@ -53,45 +53,47 @@ function header_personnalise_shortcode() {
 			});
 		}
 
-			// Gestion fluide des sous-dropdowns Boutique
-			let currentSubMenu = null;
-			let timerHideSub = null;
-			document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
-				const submenu = sub.querySelector('.dropdown-content-sub');
-				// Affichage au survol du titre
-				sub.addEventListener('mouseenter', function() {
-					// Ferme le précédent si différent
+		// Gestion des sous-dropdowns Boutique au clic sur la flèche
+		let currentSubMenu = null;
+		document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
+			const submenu = sub.querySelector('.dropdown-content-sub');
+			const arrow = sub.querySelector('.arrow-orange');
+			
+			if (arrow) {
+				// Gestion du clic sur la flèche
+				arrow.addEventListener('click', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					
+					// Ferme le sous-menu actuellement ouvert s'il est différent
 					if (currentSubMenu && currentSubMenu !== submenu) {
 						currentSubMenu.style.display = 'none';
 					}
-					clearTimeout(timerHideSub);
-					submenu.style.display = 'grid';
-					currentSubMenu = submenu;
-				});
-				// Temporisation à la sortie du titre
-				sub.addEventListener('mouseleave', function(e) {
-					clearTimeout(timerHideSub);
-					timerHideSub = setTimeout(function() {
-						// Vérifie si la souris n'est pas sur le sous-menu
-						if (!submenu.matches(':hover')) {
-							submenu.style.display = 'none';
-							if (currentSubMenu === submenu) currentSubMenu = null;
-						}
-					}, 350);
-				});
-				// Empêche la fermeture immédiate si on va sur le sous-menu
-				submenu.addEventListener('mouseenter', function() {
-					clearTimeout(timerHideSub);
-				});
-				submenu.addEventListener('mouseleave', function() {
-					timerHideSub = setTimeout(function() {
+					
+					// Toggle du sous-menu cliqué
+					if (submenu.style.display === 'grid') {
 						submenu.style.display = 'none';
-						if (currentSubMenu === submenu) currentSubMenu = null;
-					}, 350);
+						currentSubMenu = null;
+					} else {
+						submenu.style.display = 'grid';
+						currentSubMenu = submenu;
+					}
 				});
-			});
-
-		// Timeout hover menu déroulant principal BOUTIQUE
+				
+				// Empêche la propagation du clic sur le sous-menu pour éviter sa fermeture
+				submenu.addEventListener('click', function(e) {
+					e.stopPropagation();
+				});
+			}
+		});
+		
+		// Ferme tous les sous-menus si on clique ailleurs
+		document.addEventListener('click', function() {
+			if (currentSubMenu) {
+				currentSubMenu.style.display = 'none';
+				currentSubMenu = null;
+			}
+		});		// Timeout hover menu déroulant principal BOUTIQUE
 		var dropdownBoutique = document.querySelector('.dropdown');
 		if (dropdownBoutique) {
 			var menuContent = dropdownBoutique.querySelector('.dropdown-content');
@@ -301,6 +303,8 @@ function header_personnalise_shortcode() {
 						left: 100%;
 						top: 0;
 						min-width: 760px;
+						max-height: 400px;
+						overflow-y: auto;
 						background: #f9f9f9;
 						box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
 						padding: 10px 18px;
@@ -312,10 +316,7 @@ function header_personnalise_shortcode() {
 						white-space: normal;
 						display: none;
 				}
-				/* L'affichage au hover est géré par JS, donc on retire le display direct ici */
-				.header-menu .dropdown-sub:hover > .dropdown-content-sub {
-					/* display: grid; */
-				}
+				/* L'affichage est maintenant géré par JavaScript au clic */
 				.header-menu .dropdown-content-sub li {
 						margin: 6px 0;
 				}
@@ -362,6 +363,8 @@ function header_personnalise_shortcode() {
 				left: 100%;
 				top: 0;
 				width: 760px;
+				max-height: 400px;
+				overflow-y: auto;
 				background: #f9f9f9;
 				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
 				padding: 10px 18px;
@@ -372,16 +375,21 @@ function header_personnalise_shortcode() {
 				word-break: break-word;
 				white-space: normal;
 			}
-		.dropdown-sub:hover > .dropdown-content-sub {
-			word-break: break-word;
-			white-space: normal;
-			display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				grid-auto-rows: minmax(28px, auto);
-				align-items: start;
-				max-height: 350px;
-				overflow-y: auto;
-			opacity: 1;
+		/* L'affichage des sous-menus est maintenant géré par JavaScript au clic */
+		/* Style de la barre de défilement pour les sous-menus */
+		.dropdown-content-sub::-webkit-scrollbar {
+			width: 8px;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 4px;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-thumb {
+			background: #FF3F22;
+			border-radius: 4px;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-thumb:hover {
+			background: #e6381e;
 		}
 		.dropdown-content-sub li {
 			margin: 6px 0;
@@ -764,6 +772,11 @@ function header_personnalise_shortcode() {
 	height: 18px;
 	background: none;
 	position: relative;
+	cursor: pointer;
+	transition: transform 0.2s ease;
+	}
+	.arrow-orange:hover {
+		transform: scale(1.1);
 	}
 	.arrow-orange::after {
 	content: '';
@@ -812,8 +825,8 @@ function header_personnalise_shortcode() {
 	}
 	.go-to-cart{
 		display:flex;
-		width: 100%
-			justify-content: center;
+		width: 100%;
+		justify-content: center;
 	}
 	.cart-link{
 		background-color: #000;
@@ -907,7 +920,7 @@ function header_personnalise_shortcode() {
 			<nav>
           		<a href="https://doc-headshok.com/">ACCUEIL</a>
 				<div class="dropdown">
-  					<a href="https://doc-headshok.com/boutique">BOUTIQUE</a>
+  					<a href="https://doc-headshok.com/boutique-produits">BOUTIQUE</a>
   					<ul class="dropdown-content">
 						<li class="dropdown-sub">
     <a href="/boutique/vtt">VTT</a><span class="arrow-orange"></span>
