@@ -92,8 +92,12 @@
       <input type="number" id="poids-pilote" name="poids_pilote" min="0" step="1" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:180px;">
     </div>
     <div style="margin-bottom:18px;">
-      <label for="modele-annee" style="font-weight:600;display:block;margin-bottom:6px;">Modèle et année du vélo</label>
-      <input type="text" id="modele-annee" name="modele_annee" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:320px;">
+      <label for="modele-velo" style="font-weight:600;display:block;margin-bottom:6px;">Modèle du vélo</label>
+      <input type="text" id="modele-velo" name="modele_velo" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:250px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="annee-velo" style="font-weight:600;display:block;margin-bottom:6px;">Année du vélo</label>
+      <input type="number" id="annee-velo" name="annee_velo" min="1990" max="2030" step="1" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
     </div>
     <div style="margin-bottom:18px;">
       <label for="remarques" style="font-weight:600;display:block;margin-bottom:6px;">Remarques</label>
@@ -165,10 +169,11 @@ function updateNextButtonState(step, inputName, nextBtnId) {
 function updateNext2ButtonState() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
-  const modeleVal = document.getElementById('modele-annee').value;
+  const modeleVal = document.getElementById('modele-velo').value;
+  const anneeVal = document.getElementById('annee-velo').value;
   const remarquesVal = document.getElementById('remarques').value;
   const nextBtn = document.getElementById('next-2');
-  if(dateVal && poidsVal && modeleVal && remarquesVal) {
+  if(dateVal && poidsVal && modeleVal && anneeVal && remarquesVal) {
     nextBtn.classList.remove('button-disabled');
     nextBtn.disabled = false;
   } else {
@@ -198,7 +203,7 @@ function updateRadioSelected() {
 document.addEventListener('DOMContentLoaded', function() {
   updateNextButtonState('step-1', 'prestations[]', 'next-1');
   updateNext2ButtonState();
-  ['date-revision','poids-pilote','modele-annee','remarques'].forEach(id => {
+  ['date-revision','poids-pilote','modele-velo','annee-velo','remarques'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateNext2ButtonState);
   });
   updateRadioSelected();
@@ -220,12 +225,14 @@ document.getElementById('next-2').onclick = function() {
   // Validation : tous les champs obligatoires
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
-  const modeleVal = document.getElementById('modele-annee').value;
+  const modeleVal = document.getElementById('modele-velo').value;
+  const anneeVal = document.getElementById('annee-velo').value;
   const remarquesVal = document.getElementById('remarques').value;
-  if(!dateVal || !poidsVal || !modeleVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal || !anneeVal || !remarquesVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
-    else if(!modeleVal) document.getElementById('modele-annee').focus();
+    else if(!modeleVal) document.getElementById('modele-velo').focus();
+    else if(!anneeVal) document.getElementById('annee-velo').focus();
     else document.getElementById('remarques').focus();
     return;
   }
@@ -233,11 +240,12 @@ document.getElementById('next-2').onclick = function() {
   const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
-  const modele_annee = document.getElementById('modele-annee').value;
+  const modele_velo = document.getElementById('modele-velo').value;
+  const annee_velo = document.getElementById('annee-velo').value;
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
-  document.getElementById('resume-content').innerHTML = `<strong>Prestations :</strong> ${prestations}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
+  document.getElementById('resume-content').innerHTML = `<strong>Prestations :</strong> ${prestations}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_velo} ${annee_velo}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
   currentStep = 2; showStep(currentStep);
 };
 document.getElementById('prev-3').onclick = function() {
@@ -248,14 +256,15 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
   const date_revision = document.getElementById('date-revision').value;
   const poids_pilote = document.getElementById('poids-pilote').value;
-  const modele_annee = document.getElementById('modele-annee').value;
+  const modele_velo = document.getElementById('modele-velo').value;
+  const annee_velo = document.getElementById('annee-velo').value;
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   var formData = new FormData();
   prestations.forEach(prestation => formData.append('prestations[]', prestation));
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);
-  formData.append('modele_annee', modele_annee);
+  formData.append('modele_annee', modele_velo + ' ' + annee_velo); // Combine les deux champs pour la compatibilité
   formData.append('remarques', remarques);
   if(fichier) formData.append('fichier', fichier);
   var xhr = new XMLHttpRequest();
