@@ -730,11 +730,26 @@ function mon_compte_personnalise_shortcode() {
 							echo '<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 10px;">';
 							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . '</div>';
 
+							// Calculer le prix total de la commande avec livraison
+							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
+							
+							// Récupérer le mode de livraison
+							$shipping_methods = $order->get_shipping_methods();
+							$shipping_method_name = '';
+							if (!empty($shipping_methods)) {
+								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
+								$shipping_method_name = $shipping_method->get_method_title();
+							}
+							
 							foreach ($order->get_items() as $item) {
 								$product = $item->get_product();
 								if ($product) {
 									$product_name = $item->get_name();
-									$product_price = wc_price($product->get_price());
+									// Afficher le prix total de la commande avec le mode de livraison
+									$price_display = wc_price($total_order_price);
+									if ($shipping_method_name) {
+										$price_display .= ' (' . esc_html($shipping_method_name) . ')';
+									}
 									$product_image = $product->get_image(array(50, 50));
 
 									echo '<div class="produit-item">';
@@ -742,7 +757,7 @@ function mon_compte_personnalise_shortcode() {
 									echo $product_image;
 									echo '<div class="produit-texte">';
 									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
-									echo '<div class="produit-prix">' . $product_price . '</div>';
+									echo '<div class="produit-prix">' . $price_display . '</div>';
 									echo '</div>';
 									echo '</div>';
 									echo '<div class="boutons-actions">';
@@ -750,6 +765,7 @@ function mon_compte_personnalise_shortcode() {
 									echo '<a class="bouton-commande" target="_blank">SUIVRE LA LIVRAISON</a>';
 									echo '</div>';
 									echo '</div>';
+									break; // On ne montre qu'une fois le prix total pour toute la commande
 								}
 							}
 
@@ -780,11 +796,26 @@ function mon_compte_personnalise_shortcode() {
 							echo '<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 10px;">';
 							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . '</div>';
 
+							// Calculer le prix total de la commande avec livraison
+							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
+							
+							// Récupérer le mode de livraison
+							$shipping_methods = $order->get_shipping_methods();
+							$shipping_method_name = '';
+							if (!empty($shipping_methods)) {
+								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
+								$shipping_method_name = $shipping_method->get_method_title();
+							}
+							
 							foreach ($order->get_items() as $item) {
 								$product = $item->get_product();
 								if ($product) {
 									$product_name = $item->get_name();
-									$product_price = wc_price($product->get_price());
+									// Afficher le prix total de la commande avec le mode de livraison
+									$price_display = wc_price($total_order_price);
+									if ($shipping_method_name) {
+										$price_display .= '<p style="font-size: 12px; color: #666;">' . esc_html($shipping_method_name) . '</p>';
+									}
 									$product_image = $product->get_image(array(50, 50));
 
 									echo '<div class="produit-item">';
@@ -792,7 +823,7 @@ function mon_compte_personnalise_shortcode() {
 									echo $product_image;
 									echo '<div class="produit-texte">';
 									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
-									echo '<div class="produit-prix">' . $product_price . '</div>';
+									echo '<div class="produit-prix">' . $price_display . '</div>';
 									echo '</div>';
 									echo '</div>';
 									echo '<div class="boutons-actions">';
@@ -800,6 +831,7 @@ function mon_compte_personnalise_shortcode() {
 									echo '<a class="bouton-commande" target="_blank">SUIVRE LA LIVRAISON</a>';
 									echo '</div>';
 									echo '</div>';
+									break; // On ne montre qu'une fois le prix total pour toute la commande
 								}
 							}
 
