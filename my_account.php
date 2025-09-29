@@ -1,5 +1,109 @@
-<?php
-// Fonction pour générer un PDF de facture
+// Fonction pour sauvegarder l'historique des prestations
+function sauvegarder_demande_prestation($user_id, $data) {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'demandes_prestations';
+    
+    // Créer la table si elle n'existe pas
+    $charset_collate = $wpdb->get_charset_collate();
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id int(11) NOT NULL AUTO_INCREMENT,
+        user_id int(11) NOT NULL,
+        type_prestation varchar(255) NOT NULL,
+        prestations text,
+        options_supplementaires text,
+        date_revision date,
+        poids_pilote int(11),
+        modele_velo varchar(255),
+        annee_velo varchar(50),
+        remarques text,
+        prix_total decimal(10,2),
+        fichier_joint varchar(255),
+        numero_suivi varchar(50),
+        date_creation datetime DEFAULT CURRENT_TIMESTAMP,
+        statut varchar(50) DEFAULT 'en_attente',
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+    
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+    
+    // Insérer la nouvelle demande
+    $result = $wpdb->insert(
+        $table_name,
+        array(
+            'user_id' => $user_id,
+            'type_prestation' => $data['type_prestation'] ?? '',
+            'prestations' => is_array($data['prestations']) ? implode(', ', $data['prestations']) : $data['prestations'],
+            'options_supplementaires' => is_array($data['options']) ? implode(', ', $data['options']) : $data['options'],
+            'date_revision' => $data['date_revision'] ?? null,
+            'poids_pilote' => $data['poids_pilote'] ?? null,
+            'modele_velo' => $data['modele_velo'] ?? '',
+            'annee_velo' => $data['annee_velo'] ?? '',
+            'remarques' => $data['remarques'] ?? '',
+            'prix_total' => $data['prix_total'] ?? 0,
+            'fichier_joint' => $data['fichier_joint'] ?? '',
+            'numero_suivi' => $data['numero_suivi'] ?? '',
+            'statut' => 'en_attente'
+        ),
+        array('%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%f', '%s', '%s', '%s')
+    );
+    
+    return $wpdb->insert_id;
+}
+
+// Fonction pour récupérer l'historique des prestations d'un utilisateur
+function obtenir_historique_prestations($user_id) {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'demandes_prestations';
+    
+    $results = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE user_id = %d ORDER BY date_creation DESC",
+        $user_id
+    ));
+    
+    return $results;
+}
+
+// Action AJAX pour sauvegarder une demande de prestation
+add_action('wp_ajax_sauvegarder_prestation', 'sauvegarder_prestation_ajax');
+add_action('wp_ajax_nopriv_sauvegarder_prestation', 'sauvegarder_prestation_ajax');
+
+function sauvegarder_prestation_ajax() {
+    // Vérifier le nonce pour la sécurité
+    if (!wp_verify_nonce($_POST['nonce'], 'prestation_nonce')) {
+        wp_die('Erreur de sécurité');
+    }
+    
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        wp_die('Utilisateur non connecté');
+    }
+    
+    $data = array(
+        'type_prestation' => sanitize_text_field($_POST['type_prestation']),
+        'prestations' => $_POST['prestations'],
+        'options' => $_POST['options'] ?? array(),
+        'date_revision' => sanitize_text_field($_POST['date_revision']),
+        'poids_pilote' => intval($_POST['poids_pilote']),
+        'modele_velo' => sanitize_text_field($_POST['modele_velo']),
+        'annee_velo' => sanitize_text_field($_POST['annee_velo']),
+        'remarques' => sanitize_textarea_field($_POST['remarques']),
+        'prix_total' => floatval($_POST['prix_total']),
+        'numero_suivi' => sanitize_text_field($_POST['numero_suivi'])
+    );
+    
+    $demande_id = sauvegarder_demande_prestation($user_id, $data);
+    
+    if ($demande_id) {
+        wp_send_json_success(array('demande_id' => $demande_id));
+    } else {
+        wp_send_json_error('Erreur lors de la sauvegarde');
+    }
+}
+
+// Fonction pour générer un PDF de facture pour les prestations
 function generer_pdf_facture($order_id) {
     // Vérifier que l'utilisateur a le droit d'accéder à cette commande
     if (!current_user_can('administrator') && !wc_customer_bought_product(get_current_user_id(), $order_id, '')) {
@@ -578,6 +682,140 @@ function mon_compte_personnalise_shortcode() {
                 width: 100%;
             }
         }
+
+        /* Styles pour les prestations */
+        .prestations-container {
+            margin-top: 20px;
+        }
+
+        .prestations-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .prestation-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .prestation-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .prestation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        .prestation-type {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #000;
+        }
+
+        .prestation-date {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .prestation-statut {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .statut-attente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .statut-cours {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .statut-terminee {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .prestation-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .prestation-info {
+            flex: 1;
+        }
+
+        .prestation-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .prestation-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .prestation-prix {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: #FF3F22;
+        }
+
+        .bouton-prestation {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            transition: background 0.2s ease;
+        }
+
+        .bouton-prestation:hover {
+            background: #333;
+        }
+
+        @media (max-width: 768px) {
+            .prestation-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .prestation-details {
+                flex-direction: column;
+            }
+
+            .prestation-actions {
+                align-items: flex-start;
+            }
+        }
     </style>
 
     <script>
@@ -626,6 +864,18 @@ function mon_compte_personnalise_shortcode() {
             link.click();
             document.body.removeChild(link);
         };
+
+        // Fonction pour télécharger la facture de prestation
+        window.telechargerFacturePrestation = function(prestationId) {
+            const link = document.createElement('a');
+            link.href = '<?php echo admin_url('admin-ajax.php'); ?>?action=telecharger_facture_prestation&prestation_id=' + prestationId + '&nonce=<?php echo wp_create_nonce('telecharger_facture_prestation_nonce'); ?>';
+            link.style.display = 'none';
+            link.target = '_blank';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
     });
     </script>
 
@@ -635,6 +885,7 @@ function mon_compte_personnalise_shortcode() {
             <div class="menu-compte">
                 <a href="#infos" class="active">Mes informations</a>
                 <a href="#commandes">Mes commandes</a>
+                <a href="#prestations">Historique des prestations</a>
                 <a href="#parametres">Paramètres</a>
                <a href="<?php echo esc_url(wp_logout_url('https://doc-headshok.com/login/')); ?>" class="deconnexion">Se déconnecter</a>
             </div>
@@ -845,6 +1096,89 @@ function mon_compte_personnalise_shortcode() {
 				?>
             </div>
 
+            <!-- Section Historique des prestations -->
+            <div id="prestations" class="section-compte">
+                <h2>Historique des prestations</h2>
+                <div class="prestations-container">
+                    <?php
+                    $prestations = obtenir_historique_prestations($user->ID);
+                    
+                    if (!empty($prestations)) {
+                        echo '<div class="prestations-liste">';
+                        
+                        foreach ($prestations as $prestation) {
+                            $statut_class = '';
+                            $statut_text = '';
+                            
+                            switch($prestation->statut) {
+                                case 'en_attente':
+                                    $statut_class = 'statut-attente';
+                                    $statut_text = 'En attente';
+                                    break;
+                                case 'en_cours':
+                                    $statut_class = 'statut-cours';
+                                    $statut_text = 'En cours';
+                                    break;
+                                case 'terminee':
+                                    $statut_class = 'statut-terminee';
+                                    $statut_text = 'Terminée';
+                                    break;
+                                default:
+                                    $statut_class = 'statut-attente';
+                                    $statut_text = 'En attente';
+                            }
+                            
+                            echo '<div class="prestation-item">';
+                            echo '<div class="prestation-header">';
+                            echo '<div class="prestation-type">' . esc_html($prestation->type_prestation) . '</div>';
+                            echo '<div class="prestation-date">' . date('d/m/Y', strtotime($prestation->date_creation)) . '</div>';
+                            echo '<div class="prestation-statut ' . $statut_class . '">' . $statut_text . '</div>';
+                            echo '</div>';
+                            
+                            echo '<div class="prestation-details">';
+                            echo '<div class="prestation-info">';
+                            
+                            if ($prestation->prestations) {
+                                echo '<p><strong>Prestations :</strong> ' . esc_html($prestation->prestations) . '</p>';
+                            }
+                            
+                            if ($prestation->options_supplementaires) {
+                                echo '<p><strong>Options :</strong> ' . esc_html($prestation->options_supplementaires) . '</p>';
+                            }
+                            
+                            if ($prestation->modele_velo || $prestation->annee_velo) {
+                                $modele_annee = trim($prestation->modele_velo . ' (' . $prestation->annee_velo . ')');
+                                echo '<p><strong>Vélo :</strong> ' . esc_html($modele_annee) . '</p>';
+                            }
+                            
+                            if ($prestation->numero_suivi) {
+                                echo '<p><strong>N° de suivi :</strong> ' . esc_html($prestation->numero_suivi) . '</p>';
+                            }
+                            
+                            echo '</div>';
+                            
+                            echo '<div class="prestation-actions">';
+                            if ($prestation->prix_total > 0) {
+                                echo '<div class="prestation-prix">' . wc_price($prestation->prix_total) . '</div>';
+                            }
+                            
+                            if ($prestation->statut == 'terminee') {
+                                echo '<button class="bouton-prestation" onclick="telechargerFacturePrestation(' . $prestation->id . ')">TÉLÉCHARGER LA FACTURE</button>';
+                            }
+                            echo '</div>';
+                            
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                        
+                        echo '</div>';
+                    } else {
+                        echo '<p>Aucune prestation demandée.</p>';
+                    }
+                    ?>
+                </div>
+            </div>
+            
             <div id="parametres" class="section-compte">
                 <h2>Paramètres</h2>
                 <p class="texte-newsletter">S’inscrire à la newsletter</p>
@@ -857,3 +1191,138 @@ function mon_compte_personnalise_shortcode() {
     return ob_get_clean();
 }
 add_shortcode('mon_compte_personnalise', 'mon_compte_personnalise_shortcode');
+
+// Handler AJAX pour télécharger les factures de prestations
+add_action('wp_ajax_telecharger_facture_prestation', 'telecharger_facture_prestation');
+add_action('wp_ajax_nopriv_telecharger_facture_prestation', 'telecharger_facture_prestation');
+
+function telecharger_facture_prestation() {
+    // Vérifier le nonce
+    if (!wp_verify_nonce($_GET['nonce'], 'telecharger_facture_prestation_nonce')) {
+        wp_die('Accès non autorisé');
+    }
+
+    // Vérifier que l'utilisateur est connecté
+    if (!is_user_logged_in()) {
+        wp_die('Vous devez être connecté');
+    }
+
+    $prestation_id = intval($_GET['prestation_id']);
+    $user_id = get_current_user_id();
+
+    // Récupérer la prestation
+    global $wpdb;
+    $table_prestations = $wpdb->prefix . 'demandes_prestations';
+    
+    $prestation = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_prestations WHERE id = %d AND user_id = %d AND statut = 'terminee'",
+        $prestation_id,
+        $user_id
+    ));
+
+    if (!$prestation) {
+        wp_die('Prestation non trouvée ou non accessible');
+    }
+
+    // Générer le PDF
+    generer_pdf_facture_prestation($prestation);
+}
+
+function generer_pdf_facture_prestation($prestation) {
+    // Vérifier si TCPDF est disponible
+    if (!class_exists('TCPDF')) {
+        require_once(ABSPATH . 'wp-content/plugins/woocommerce/packages/woocommerce-admin/vendor/tecnickcom/tcpdf/tcpdf.php');
+    }
+
+    // Créer une nouvelle instance TCPDF
+    $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+    // Configurer le document
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('Cannondale Service');
+    $pdf->SetTitle('Facture Prestation #' . $prestation->id);
+    $pdf->SetSubject('Facture de prestation');
+
+    // Supprimer l'en-tête et le pied de page par défaut
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
+    // Ajouter une page
+    $pdf->AddPage();
+
+    // Définir la police
+    $pdf->SetFont('helvetica', '', 12);
+
+    // Contenu de la facture
+    $html = '
+    <style>
+        .header { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        .section { margin-bottom: 15px; }
+        .label { font-weight: bold; }
+        .total { font-size: 16px; font-weight: bold; color: #FF3F22; }
+    </style>
+    
+    <div class="header">
+        FACTURE DE PRESTATION #' . $prestation->id . '
+    </div>
+    
+    <div class="section">
+        <div class="label">Date de demande :</div>
+        ' . date('d/m/Y', strtotime($prestation->date_demande)) . '
+    </div>
+    
+    <div class="section">
+        <div class="label">Type de prestation :</div>
+        ' . esc_html($prestation->type_prestation) . '
+    </div>
+    
+    <div class="section">
+        <div class="label">Modèle du vélo :</div>
+        ' . esc_html($prestation->modele_velo) . '
+    </div>
+    
+    <div class="section">
+        <div class="label">Année du vélo :</div>
+        ' . esc_html($prestation->annee_velo) . '
+    </div>';
+
+    if ($prestation->description) {
+        $html .= '
+        <div class="section">
+            <div class="label">Description :</div>
+            ' . nl2br(esc_html($prestation->description)) . '
+        </div>';
+    }
+
+    if ($prestation->numero_suivi) {
+        $html .= '
+        <div class="section">
+            <div class="label">Numéro de suivi :</div>
+            ' . esc_html($prestation->numero_suivi) . '
+        </div>';
+    }
+
+    $html .= '
+    <div class="section">
+        <div class="label">Statut :</div>
+        ' . ucfirst($prestation->statut) . '
+    </div>';
+
+    if ($prestation->prix_total > 0) {
+        $html .= '
+        <hr>
+        <div class="section total">
+            TOTAL : ' . number_format($prestation->prix_total, 2) . ' €
+        </div>';
+    }
+
+    // Écrire le HTML dans le PDF
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    // Générer le nom du fichier
+    $filename = 'facture_prestation_' . $prestation->id . '_' . date('Y-m-d') . '.pdf';
+
+    // Sortir le PDF
+    $pdf->Output($filename, 'D');
+    exit;
+}

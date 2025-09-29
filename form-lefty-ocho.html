@@ -202,11 +202,12 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
       <input type="number" id="poids-pilote" name="poids_pilote" min="0" step="1" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:180px;">
     </div>
     <div style="margin-bottom:18px;">
-      <label style="font-weight:600;display:block;margin-bottom:6px;">Modèle et année du vélo</label>
-      <div style="display:flex;gap:12px;align-items:center;">
-        <input type="text" id="modele-velo" name="modele_velo" placeholder="Modèle" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:200px;">
-        <input type="text" id="annee-velo" name="annee_velo" placeholder="Année" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
-      </div>
+      <label for="modele-velo" style="font-weight:600;display:block;margin-bottom:6px;">Modèle du vélo</label>
+      <input type="text" id="modele-velo" name="modele" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:250px;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label for="annee-velo" style="font-weight:600;display:block;margin-bottom:6px;">Année du vélo</label>
+      <input type="number" id="annee-velo" name="annee" min="1990" max="2030" step="1" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
     </div>
     <div style="margin-bottom:18px;">
       <label for="remarques" style="font-weight:600;display:block;margin-bottom:6px;">Remarques</label>
@@ -234,6 +235,64 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
   <div id="form-result" style="margin-top:20px; color:green;"></div>
 </form>
 <script>
+ // === VARIABLES AJAX PRESTATIONS ===
+<?php 
+// Utiliser la fonction du functions.php
+$ajax_vars = get_ajax_prestations_vars();
+?>
+window.ajax_object = window.ajax_object || {
+    ajax_url: '<?php echo esc_js($ajax_vars['ajax_url']); ?>',
+    nonce: '<?php echo esc_js($ajax_vars['nonce']); ?>',
+    user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
+};
+
+// === FONCTION SYNCHRONISATION ===
+function synchroniserPrestation(formData, typePrestation) {
+    if (!window.ajax_object.user_logged_in) {
+        console.log('👤 Utilisateur non connecté, synchronisation ignorée');
+        return Promise.resolve();
+    }
+
+    const modele = formData.get('modele') || '';
+    const annee = formData.get('annee') || '';
+    const prestations = formData.getAll('prestations[]').join(', ');
+    
+    const prestationData = {
+        action: 'sauvegarder_prestation_ajax',
+        nonce: window.ajax_object.nonce,
+        type_prestation: typePrestation,
+        modele_velo: modele,
+        annee_velo: annee,
+        description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
+        statut: 'attente'
+    };
+
+    console.log('🔄 Envoi synchronisation:', prestationData);
+
+    return fetch(window.ajax_object.ajax_url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(prestationData)
+    })
+    .then(response => {
+        console.log('📡 Réponse HTTP:', response.status, response.statusText);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📄 Données reçues:', data);
+        if (data.success) {
+            console.log('✅ Prestation synchronisée:', typePrestation);
+        } else {
+            console.error('❌ Erreur synchronisation:', data);
+        }
+        return data;
+    })
+    .catch(error => {
+        console.error('❌ Erreur réseau:', error);
+    });
+}
 // Prix des prestations et options
 const prixPrestations = {
   'Révision 100 heures': 129,
@@ -601,7 +660,13 @@ document.getElementById('next-4').onclick = function() {
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
   const total = calculerTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  let resumeContent = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle du vélo :</strong> ${modele_velo}<br><strong>Année du vélo :</strong> ${annee_velo}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  
+  if (remarques) {
+    resumeContent = resumeContent.replace('<br><strong>Fichier joint:', '<br><strong>Remarques :</strong> ' + remarques + '<br><strong>Fichier joint:');
+  }
+  
+  document.getElementById('resume-content').innerHTML = resumeContent;
   currentStep = 4; showStep(currentStep);
 };
 document.getElementById('multi-step-form').onsubmit = function(e) {
@@ -623,6 +688,8 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   usages.forEach(u => formData.append('usage[]', u));
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);
+  formData.append('modele', modele_velo);
+  formData.append('annee', annee_velo);
   formData.append('modele_annee', modele_annee);
   formData.append('remarques', remarques);
   formData.append('prix_total', prix_total);
@@ -631,7 +698,22 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fourche', true);
   xhr.onload = function() {
     if (xhr.status === 200) {
-      document.getElementById('form-result').textContent = 'Formulaire envoyé avec succès !';
+      let response;
+      try {
+        response = JSON.parse(xhr.responseText);
+      } catch (e) {
+        response = null;
+      }
+      let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
+      let msg = 'Formulaire envoyé avec succès !';
+      if (typeof synchroniserPrestation !== 'undefined') {
+        synchroniserPrestation(formData, 'Fourche Lefty Ocho');
+      }
+      if(orderNumber) {
+        msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
+        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
+      }
+      document.getElementById('form-result').innerHTML = msg;
       document.getElementById('multi-step-form').reset();
       showStep(0);
       updateNextButtonState('step-1', 'type_fourche', 'next-1');

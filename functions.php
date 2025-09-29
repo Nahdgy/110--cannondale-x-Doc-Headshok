@@ -23,6 +23,445 @@ define( 'HELLO_THEME_STYLE_URL', HELLO_THEME_ASSETS_URL . 'css/' );
 define( 'HELLO_THEME_IMAGES_PATH', HELLO_THEME_ASSETS_PATH . 'images/' );
 define( 'HELLO_THEME_IMAGES_URL', HELLO_THEME_ASSETS_URL . 'images/' );
 
+// Configuration optimisée pour snippets Elementor avec code inline
+// Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
+
+// Fonction utilitaire pour générer les variables AJAX dans les snippets
+function get_ajax_prestations_vars() {
+    if (!is_user_logged_in()) {
+        return array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => '',
+            'user_logged_in' => false
+        );
+    }
+    
+    return array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('sauvegarder_prestation_nonce'),
+        'user_logged_in' => true
+    );
+}
+
+// Fonction pour afficher les variables AJAX en JavaScript (à utiliser dans les snippets)
+function render_ajax_prestations_vars() {
+    $vars = get_ajax_prestations_vars();
+    ?>
+    <script>
+    window.ajax_object = window.ajax_object || {
+        ajax_url: '<?php echo esc_js($vars['ajax_url']); ?>',
+        nonce: '<?php echo esc_js($vars['nonce']); ?>',
+        user_logged_in: <?php echo $vars['user_logged_in'] ? 'true' : 'false'; ?>
+    };
+    </script>
+    <?php
+}
+
+// Handler AJAX pour sauvegarder une prestation (compatible avec my_account.php)
+add_action('wp_ajax_sauvegarder_prestation_ajax', 'sauvegarder_prestation_ajax_handler');
+add_action('wp_ajax_nopriv_sauvegarder_prestation_ajax', 'sauvegarder_prestation_ajax_handler');
+
+function sauvegarder_prestation_ajax_handler() {
+    // Vérifier le nonce pour la sécurité
+    if (!wp_verify_nonce($_POST['nonce'], 'sauvegarder_prestation_nonce')) {
+        wp_send_json_error('Erreur de sécurité');
+        return;
+    }
+    
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        wp_send_json_error('Utilisateur non connecté');
+        return;
+    }
+    
+    // Créer la table si nécessaire
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'demandes_prestations';
+    
+    $charset_collate = $wpdb->get_charset_collate();
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id int(11) NOT NULL AUTO_INCREMENT,
+        user_id int(11) NOT NULL,
+        type_prestation varchar(255) NOT NULL,
+        description text,
+        modele_velo varchar(255),
+        annee_velo varchar(50),
+        statut varchar(50) DEFAULT 'attente',
+        date_creation datetime DEFAULT CURRENT_TIMESTAMP,
+        prix_total decimal(10,2) DEFAULT 0,
+        numero_suivi varchar(50),
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+    
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+    
+    // Préparer les données
+    $data = array(
+        'user_id' => $user_id,
+        'type_prestation' => sanitize_text_field($_POST['type_prestation']),
+        'description' => sanitize_textarea_field($_POST['description']),
+        'modele_velo' => sanitize_text_field($_POST['modele_velo']),
+        'annee_velo' => sanitize_text_field($_POST['annee_velo']),
+        'statut' => sanitize_text_field($_POST['statut']),
+        'date_creation' => current_time('mysql')
+    );
+    
+    // Insérer dans la base de données
+    $result = $wpdb->insert($table_name, $data);
+    
+    if ($result !== false) {
+        $prestation_id = $wpdb->insert_id;
+        wp_send_json_success(array(
+            'message' => 'Prestation sauvegardée avec succès',
+            'prestation_id' => $prestation_id
+        ));
+    } else {
+        wp_send_json_error('Erreur lors de la sauvegarde en base de données');
+    }
+}
+
+// ====================================
+// ADMINISTRATION DES PRESTATIONS
+// ====================================
+
+// Ajouter le menu d'administration des prestations
+add_action('admin_menu', 'ajouter_menu_prestations_admin');
+
+function ajouter_menu_prestations_admin() {
+    add_menu_page(
+        'Gestion des Prestations',           // Titre de la page
+        'Prestations',                       // Titre du menu
+        'manage_options',                    // Capacité requise
+        'gestion-prestations',               // Slug de la page
+        'afficher_page_prestations_admin',   // Fonction callback
+        'dashicons-tools',                   // Icône
+        30                                   // Position dans le menu
+    );
+}
+
+// Afficher la page d'administration des prestations
+function afficher_page_prestations_admin() {
+    global $wpdb;
+    $table_prestations = $wpdb->prefix . 'demandes_prestations';
+    
+    // Traitement des actions
+    if (isset($_POST['action']) && $_POST['action'] === 'changer_statut') {
+        $prestation_id = intval($_POST['prestation_id']);
+        $nouveau_statut = sanitize_text_field($_POST['nouveau_statut']);
+        
+        $result = $wpdb->update(
+            $table_prestations,
+            array('statut' => $nouveau_statut),
+            array('id' => $prestation_id),
+            array('%s'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            echo '<div class="notice notice-success"><p>Statut mis à jour avec succès !</p></div>';
+        } else {
+            echo '<div class="notice notice-error"><p>Erreur lors de la mise à jour du statut.</p></div>';
+        }
+    }
+    
+    // Filtres
+    $filtre_statut = isset($_GET['statut']) ? sanitize_text_field($_GET['statut']) : '';
+    $filtre_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+    $recherche = isset($_GET['recherche']) ? sanitize_text_field($_GET['recherche']) : '';
+    
+    // Construire la requête avec filtres
+    $where_conditions = array();
+    $where_values = array();
+    
+    if (!empty($filtre_statut)) {
+        $where_conditions[] = "statut = %s";
+        $where_values[] = $filtre_statut;
+    }
+    
+    if (!empty($filtre_type)) {
+        $where_conditions[] = "type_prestation = %s";
+        $where_values[] = $filtre_type;
+    }
+    
+    if (!empty($recherche)) {
+        $where_conditions[] = "(modele_velo LIKE %s OR description LIKE %s)";
+        $where_values[] = '%' . $recherche . '%';
+        $where_values[] = '%' . $recherche . '%';
+    }
+    
+    $where_clause = '';
+    if (!empty($where_conditions)) {
+        $where_clause = ' WHERE ' . implode(' AND ', $where_conditions);
+    }
+    
+    $query = "SELECT * FROM $table_prestations" . $where_clause . " ORDER BY date_creation DESC";
+    
+    if (!empty($where_values)) {
+        $prestations = $wpdb->get_results($wpdb->prepare($query, $where_values));
+    } else {
+        $prestations = $wpdb->get_results($query);
+    }
+    
+    // Récupérer les types de prestations pour le filtre
+    $types_prestations = $wpdb->get_col("SELECT DISTINCT type_prestation FROM $table_prestations ORDER BY type_prestation");
+    
+    ?>
+    <div class="wrap">
+        <h1>Gestion des Prestations</h1>
+        
+        <!-- Filtres -->
+        <div class="tablenav top">
+            <form method="get" style="display: inline-block;">
+                <input type="hidden" name="page" value="gestion-prestations">
+                
+                <select name="statut">
+                    <option value="">Tous les statuts</option>
+                    <option value="attente" <?php selected($filtre_statut, 'attente'); ?>>En attente</option>
+                    <option value="en_cours" <?php selected($filtre_statut, 'en_cours'); ?>>En cours</option>
+                    <option value="terminee" <?php selected($filtre_statut, 'terminee'); ?>>Terminée</option>
+                </select>
+                
+                <select name="type">
+                    <option value="">Tous les types</option>
+                    <?php foreach ($types_prestations as $type) : ?>
+                        <option value="<?php echo esc_attr($type); ?>" <?php selected($filtre_type, $type); ?>>
+                            <?php echo esc_html($type); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <input type="text" name="recherche" placeholder="Rechercher..." value="<?php echo esc_attr($recherche); ?>">
+                
+                <input type="submit" class="button" value="Filtrer">
+                
+                <?php if (!empty($filtre_statut) || !empty($filtre_type) || !empty($recherche)) : ?>
+                    <a href="?page=gestion-prestations" class="button">Effacer les filtres</a>
+                <?php endif; ?>
+            </form>
+        </div>
+        
+        <!-- Tableau des prestations -->
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Utilisateur</th>
+                    <th>Type</th>
+                    <th>Modèle</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($prestations)) : ?>
+                    <?php foreach ($prestations as $prestation) : ?>
+                        <?php
+                        $user = get_userdata($prestation->user_id);
+                        $user_name = $user ? $user->display_name . ' (' . $user->user_email . ')' : 'Utilisateur supprimé';
+                        
+                        $statut_colors = array(
+                            'attente' => '#f39c12',
+                            'en_cours' => '#3498db',
+                            'terminee' => '#27ae60'
+                        );
+                        
+                        $statut_color = isset($statut_colors[$prestation->statut]) ? $statut_colors[$prestation->statut] : '#95a5a6';
+                        ?>
+                        <tr>
+                            <td><strong>#<?php echo $prestation->id; ?></strong></td>
+                            <td><?php echo esc_html($user_name); ?></td>
+                            <td><?php echo esc_html($prestation->type_prestation); ?></td>
+                            <td><?php echo esc_html($prestation->modele_velo . ' (' . $prestation->annee_velo . ')'); ?></td>
+                            <td>
+                                <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                    <?php echo esc_html(substr($prestation->description, 0, 100)); ?>
+                                    <?php if (strlen($prestation->description) > 100) echo '...'; ?>
+                                </div>
+                            </td>
+                            <td><?php echo date('d/m/Y H:i', strtotime($prestation->date_creation)); ?></td>
+                            <td>
+                                <span style="color: <?php echo $statut_color; ?>; font-weight: bold;">
+                                    <?php 
+                                    $statut_labels = array(
+                                        'attente' => 'En attente',
+                                        'en_cours' => 'En cours',
+                                        'terminee' => 'Terminée'
+                                    );
+                                    echo $statut_labels[$prestation->statut] ?? ucfirst($prestation->statut);
+                                    ?>
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" style="display: inline-block;">
+                                    <input type="hidden" name="action" value="changer_statut">
+                                    <input type="hidden" name="prestation_id" value="<?php echo $prestation->id; ?>">
+                                    
+                                    <select name="nouveau_statut" onchange="this.form.submit()">
+                                        <option value="">Changer statut</option>
+                                        <option value="attente" <?php echo $prestation->statut === 'attente' ? 'disabled' : ''; ?>>
+                                            En attente
+                                        </option>
+                                        <option value="en_cours" <?php echo $prestation->statut === 'en_cours' ? 'disabled' : ''; ?>>
+                                            En cours
+                                        </option>
+                                        <option value="terminee" <?php echo $prestation->statut === 'terminee' ? 'disabled' : ''; ?>>
+                                            Terminée
+                                        </option>
+                                    </select>
+                                </form>
+                                
+                                <button class="button button-small" onclick="voirDetails(<?php echo $prestation->id; ?>)">
+                                    Détails
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px;">
+                            Aucune prestation trouvée.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        
+        <p><strong>Total : <?php echo count($prestations); ?> prestation(s)</strong></p>
+    </div>
+    
+    <!-- Modal pour les détails -->
+    <div id="modal-details" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; max-width: 600px; width: 90%;">
+            <h3>Détails de la prestation</h3>
+            <div id="contenu-details"></div>
+            <button onclick="fermerModal()" class="button">Fermer</button>
+        </div>
+    </div>
+    
+    <script>
+    function voirDetails(prestationId) {
+        // Récupérer les détails via AJAX
+        jQuery.post(ajaxurl, {
+            action: 'obtenir_details_prestation',
+            prestation_id: prestationId,
+            nonce: '<?php echo wp_create_nonce('details_prestation_nonce'); ?>'
+        }, function(response) {
+            if (response.success) {
+                document.getElementById('contenu-details').innerHTML = response.data;
+                document.getElementById('modal-details').style.display = 'block';
+            } else {
+                alert('Erreur lors du chargement des détails');
+            }
+        });
+    }
+    
+    function fermerModal() {
+        document.getElementById('modal-details').style.display = 'none';
+    }
+    
+    // Fermer le modal en cliquant en dehors
+    document.getElementById('modal-details').onclick = function(e) {
+        if (e.target === this) {
+            fermerModal();
+        }
+    }
+    </script>
+    
+    <style>
+    .wrap h1 {
+        margin-bottom: 20px;
+    }
+    
+    .tablenav {
+        margin: 10px 0;
+        padding: 10px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+    }
+    
+    .tablenav select, .tablenav input[type="text"] {
+        margin-right: 10px;
+    }
+    
+    .wp-list-table th {
+        font-weight: bold;
+    }
+    
+    .wp-list-table td {
+        vertical-align: middle;
+    }
+    
+    .button-small {
+        font-size: 11px;
+        padding: 3px 8px;
+        height: auto;
+        margin-left: 5px;
+    }
+    </style>
+    <?php
+}
+
+// Action AJAX pour obtenir les détails d'une prestation
+add_action('wp_ajax_obtenir_details_prestation', 'obtenir_details_prestation_ajax');
+
+function obtenir_details_prestation_ajax() {
+    if (!wp_verify_nonce($_POST['nonce'], 'details_prestation_nonce')) {
+        wp_send_json_error('Erreur de sécurité');
+        return;
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Permissions insuffisantes');
+        return;
+    }
+    
+    global $wpdb;
+    $table_prestations = $wpdb->prefix . 'demandes_prestations';
+    $prestation_id = intval($_POST['prestation_id']);
+    
+    $prestation = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_prestations WHERE id = %d",
+        $prestation_id
+    ));
+    
+    if (!$prestation) {
+        wp_send_json_error('Prestation non trouvée');
+        return;
+    }
+    
+    $user = get_userdata($prestation->user_id);
+    $user_info = $user ? $user->display_name . ' (' . $user->user_email . ')' : 'Utilisateur supprimé';
+    
+    $details = '<table style="width: 100%; border-collapse: collapse;">';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">#' . $prestation->id . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Utilisateur:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($user_info) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_prestation) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Modèle:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->modele_velo) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Année:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->annee_velo) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Statut:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->statut) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Date création:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . date('d/m/Y H:i:s', strtotime($prestation->date_creation)) . '</td></tr>';
+    
+    if ($prestation->description) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; vertical-align: top;">Description:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . nl2br(esc_html($prestation->description)) . '</td></tr>';
+    }
+    
+    if ($prestation->prix_total > 0) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Prix total:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . wc_price($prestation->prix_total) . '</td></tr>';
+    }
+    
+    if ($prestation->numero_suivi) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">N° suivi:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->numero_suivi) . '</td></tr>';
+    }
+    
+    $details .= '</table>';
+    
+    wp_send_json_success($details);
+}
+
 if ( ! isset( $content_width ) ) {
 	$content_width = 800; // Pixels.
 }

@@ -80,6 +80,7 @@ function form_tige_selle_shortcode(){
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision standard" required> Révision standard</label>
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Révision complète"> Révision complète</label>
     </div>
+    <div id="prix-total-step1" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <span></span>
       <button type="button" id="next-1">Suivant</button>
@@ -98,11 +99,11 @@ function form_tige_selle_shortcode(){
     </div>
     <div style="margin-bottom:18px;">
       <label for="modele-velo" style="font-weight:600;display:block;margin-bottom:6px;">Modèle du vélo</label>
-      <input type="text" id="modele-velo" name="modele_velo" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:250px;">
+      <input type="text" id="modele-velo" name="modele" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:250px;">
     </div>
     <div style="margin-bottom:18px;">
       <label for="annee-velo" style="font-weight:600;display:block;margin-bottom:6px;">Année du vélo</label>
-      <input type="number" id="annee-velo" name="annee_velo" min="1990" max="2030" step="1" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
+      <input type="number" id="annee-velo" name="annee" min="1990" max="2030" step="1" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
     </div>
     <div style="margin-bottom:18px;">
       <label for="remarques" style="font-weight:600;display:block;margin-bottom:6px;">Remarques</label>
@@ -129,7 +130,92 @@ function form_tige_selle_shortcode(){
   </div>
   <div id="form-result" style="margin-top:20px; color:green;"></div>
 </form>
-<script>
+<script> // === VARIABLES AJAX PRESTATIONS ===
+<?php 
+// Utiliser la fonction du functions.php
+$ajax_vars = get_ajax_prestations_vars();
+?>
+window.ajax_object = window.ajax_object || {
+    ajax_url: '<?php echo esc_js($ajax_vars['ajax_url']); ?>',
+    nonce: '<?php echo esc_js($ajax_vars['nonce']); ?>',
+    user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
+};
+
+// === FONCTION SYNCHRONISATION ===
+function synchroniserPrestation(formData, typePrestation) {
+    if (!window.ajax_object.user_logged_in) {
+        console.log('👤 Utilisateur non connecté, synchronisation ignorée');
+        return Promise.resolve();
+    }
+
+    const modele = formData.get('modele') || '';
+    const annee = formData.get('annee') || '';
+    const prestations = formData.getAll('prestations[]').join(', ');
+    
+    const prestationData = {
+        action: 'sauvegarder_prestation_ajax',
+        nonce: window.ajax_object.nonce,
+        type_prestation: typePrestation,
+        modele_velo: modele,
+        annee_velo: annee,
+        description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
+        statut: 'attente'
+    };
+
+    console.log('🔄 Envoi synchronisation:', prestationData);
+
+    return fetch(window.ajax_object.ajax_url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(prestationData)
+    })
+    .then(response => {
+        console.log('📡 Réponse HTTP:', response.status, response.statusText);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📄 Données reçues:', data);
+        if (data.success) {
+            console.log('✅ Prestation synchronisée:', typePrestation);
+        } else {
+            console.error('❌ Erreur synchronisation:', data);
+        }
+        return data;
+    })
+    .catch(error => {
+        console.error('❌ Erreur réseau:', error);
+    });
+}
+
+// Prix des prestations
+const prixPrestations = {
+  'Révision standard': 53,
+  'Révision complète': 133
+};
+
+function calculerTotal() {
+  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
+  let total = 0;
+  
+  prestations.forEach(prestation => {
+    if (prixPrestations[prestation.value]) {
+      total += prixPrestations[prestation.value];
+    }
+  });
+  
+  return total;
+}
+
+function afficherTotalStep1() {
+  const total = calculerTotal();
+  const element = document.getElementById('prix-total-step1');
+  if (element) {
+    element.textContent = total > 0 ? 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC' : '';
+  }
+}
+
 const steps = [
   document.getElementById('step-1'),
   document.getElementById('step-2'),
@@ -217,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
       nextBtn.classList.add('button-disabled');
       nextBtn.disabled = true;
     }
+    afficherTotalStep1(); // Mettre à jour le prix affiché
   }
   document.querySelectorAll('input[name="prestations[]"]').forEach(cb => cb.addEventListener('change', updateNext1ButtonState));
   updateNext1ButtonState();
@@ -226,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   updateRadioSelected();
   updateProgressBar(0);
+  afficherTotalStep1(); // Initialiser l'affichage du prix
 });
 document.querySelectorAll('input[type="radio"]').forEach(input => {
   input.addEventListener('change', updateRadioSelected);
@@ -263,7 +351,15 @@ document.getElementById('next-2').onclick = function() {
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   let fileName = fichier ? fichier.name : 'Aucun';
-  document.getElementById('resume-content').innerHTML = `<strong>Prestations :</strong> ${prestations}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_velo} ${annee_velo}<br><strong>Remarques :</strong> ${remarques}<br><strong>Fichier joint :</strong> ${fileName}`;
+  const total = calculerTotal();
+  
+  let resumeContent = `<strong>Prestations :</strong> ${prestations}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle du vélo :</strong> ${modele_velo}<br><strong>Année du vélo :</strong> ${annee_velo}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+  
+  if (remarques) {
+    resumeContent = resumeContent.replace('<br><strong>Fichier joint:', '<br><strong>Remarques :</strong> ' + remarques + '<br><strong>Fichier joint:');
+  }
+  
+  document.getElementById('resume-content').innerHTML = resumeContent;
   currentStep = 2; showStep(currentStep);
 };
 document.getElementById('prev-3').onclick = function() {
@@ -279,12 +375,17 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   const remarques = document.getElementById('remarques').value;
   const fichier = document.getElementById('fichier').files[0];
   const url = document.querySelector('input[name="url"]:checked').value;
+  const prix_total = calculerTotal();
+  
   var formData = new FormData();
   prestations.forEach(p => formData.append('prestations[]', p));
   formData.append('date_revision', date_revision);
   formData.append('poids_pilote', poids_pilote);
+  formData.append('modele', modele_velo);
+  formData.append('annee', annee_velo);
   formData.append('modele_annee', modele_velo + ' ' + annee_velo); // Combine les deux champs pour la compatibilité
   formData.append('remarques', remarques);
+  formData.append('prix_total', prix_total);
   formData.append('url', url);
   if(fichier) formData.append('fichier', fichier);
   var xhr = new XMLHttpRequest();
@@ -299,6 +400,9 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
       }
       let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
       let msg = 'Formulaire envoyé avec succès !';
+      if (typeof synchroniserPrestation !== 'undefined') {
+        synchroniserPrestation(formData, 'Tige de Selle');
+      }
       if(orderNumber) {
         msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
         // Affiche aussi le numéro dans le résumé (step 3)
