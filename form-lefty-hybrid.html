@@ -12,7 +12,45 @@ function form_hybrid_shortcode() {
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
-  font-family: 'din-next-lt-pro', sans-serif;
+  font-famil  <div id="form-result" style="margin-top:20px; color:green;"></div>
+</form>
+
+<!-- Page de remerciement (cachée par défaut) -->
+<div id="thank-you-page" style="display:none; text-align:center; background:#f8f9fa; padding:40px 20px; border-radius:12px; margin:20px 0;">
+  <div style="background:#fff; max-width:600px; margin:0 auto; padding:40px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <div style="margin-bottom:30px;">
+      <span style="color:#22C55E; font-size:48px;">✓</span>
+    </div>
+    <h2 style="color:#1f2937; margin-bottom:20px; font-size:32px; font-weight:700;">Formulaire envoyé avec succès</h2>
+    
+    <div id="reservation-number" style="background:#f3f4f6; border:2px solid #22C55E; border-radius:8px; padding:20px; margin:30px 0;">
+      <p style="margin:0; font-size:18px; color:#374151; font-weight:600;">Réservation n°</p>
+      <p id="order-number-display" style="margin:10px 0 0 0; font-size:24px; color:#1f2937; font-weight:700;"></p>
+    </div>
+    
+    <p style="color:#6b7280; font-size:16px; margin:30px 0; line-height:1.6;">
+      Merci de noter votre numéro de réservation sur le carton d'envoi de votre suspension<br>
+      <span style="font-size:14px;">(le numéro est également noté dans votre mail de confirmation de réservation)</span>
+    </p>
+    
+    <button id="nouvelle-demande-btn" style="
+      background:#1f2937; 
+      color:#fff; 
+      border:none; 
+      padding:15px 30px; 
+      border-radius:8px; 
+      font-size:16px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:background 0.3s;
+      font-family:'din-next-lt-pro', sans-serif;
+    " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1f2937'">
+      NOUVELLE DEMANDE
+    </button>
+  </div>
+</div>
+
+<script>'din-next-lt-pro', sans-serif;
 }
 .radio-group {
   margin-bottom: 18px;
@@ -49,7 +87,6 @@ function form_hybrid_shortcode() {
   box-shadow: none;
   outline: none;
   font-family: 'din-next-lt-pro', sans-serif;
-
 }
 .radio-btn input[type="radio"], .radio-btn input[type="checkbox"] {
   display: none;
@@ -70,25 +107,27 @@ function form_hybrid_shortcode() {
 
 <form id="multi-step-form">
   <div style="margin-bottom:8px;">
-    <span style="font-weight:600;">Étape <span id="progress-step">1</span>/4</span>
+    <span style="font-weight:600;">Étape <span id="progress-step">1</span>/7</span>
     <div class="progress-bar-container">
       <div class="progress-bar" id="progress-bar"></div>
     </div>
   </div>
-  <!-- Étape 1 -->
+  
+  <!-- Étape 1 : Type de fourche -->
   <div class="form-step active" id="step-1">
     <h3>Quel est le modèle de votre fourche ?</h3>
     <div class="radio-group">
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Hybrid 1/2" required> Hybrid 1/2</label>
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Super Max"> Super Max</label>
-		<label class="radio-btn"><input type="radio" name="type_fourche" value="Olaf"> Olaf</label>
+      <label class="radio-btn"><input type="radio" name="type_fourche" value="Olaf"> Olaf</label>
     </div>
     <div class="form-pagination">
       <span></span>
-      <button type="button" id="next-1">Suivant</button>
+      <button type="button" id="next-1" class="button-disabled" disabled>Suivant</button>
     </div>
   </div>
-  <!-- Étape 2 -->
+
+  <!-- Étape 2 : Prestations -->
   <div class="form-step" id="step-2">
     <h3>Quelles prestations souhaitez-vous ?</h3>
     <div class="radio-group">
@@ -101,11 +140,25 @@ function form_hybrid_shortcode() {
     </div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
-      <button type="button" id="next-2">Suivant</button>
+      <button type="button" id="next-2" class="button-disabled" disabled>Suivant</button>
     </div>
   </div>
-  <!-- Étape 3 -->
+
+  <!-- Étape 3 : Type de prestation -->
   <div class="form-step" id="step-3">
+    <h3>Quel type de prestation souhaitez-vous ?</h3>
+    <div class="radio-group">
+      <label class="radio-btn"><input type="radio" name="type_prestation" value="Express 24H-48H ouvrés"> Express 24H-48H ouvrés (+25€)</label>
+      <label class="radio-btn"><input type="radio" name="type_prestation" value="Normal 5 à 7 jours"> Normal 5 à 7 jours (sans frais)</label>
+    </div>
+    <div class="form-pagination">
+      <button type="button" id="prev-3">Précédent</button>
+      <button type="button" id="next-3" class="button-disabled" disabled>Suivant</button>
+    </div>
+  </div>
+
+  <!-- Étape 4 : Options -->
+  <div class="form-step" id="step-4">
     <h3>Souhaitez-vous des options supplémentaires ?</h3>
     <div class="radio-group">
       <label class="radio-btn" style="position:relative;">
@@ -153,12 +206,46 @@ Il permet :
 
     </div>
     <div class="form-pagination">
-      <button type="button" id="prev-3">Précédent</button>
-      <button type="button" id="next-3">Suivant</button>
+      <button type="button" id="prev-4">Précédent</button>
+      <button type="button" id="next-4" class="button-disabled" disabled>Suivant</button>
     </div>
   </div>
-  <!-- Étape 4 : Inputs -->
-  <div class="form-step" id="step-4">
+
+  <!-- Étape 5 : Pratique -->
+  <div class="form-step" id="step-5">
+    <h3>Quelle est votre pratique principale ?</h3>
+    <div class="radio-group">
+      <label class="radio-btn"><input type="radio" name="pratique" value="XC compétition"> XC compétition</label>
+      <label class="radio-btn"><input type="radio" name="pratique" value="XC rando"> XC rando</label>
+      <label class="radio-btn"><input type="radio" name="pratique" value="Marathon"> Marathon</label>
+      <label class="radio-btn"><input type="radio" name="pratique" value="Gravel"> Gravel</label>
+      <label class="radio-btn"><input type="radio" name="pratique" value="Autres"> Autres</label>
+    </div>
+    <div class="form-pagination">
+      <button type="button" id="prev-5">Précédent</button>
+      <button type="button" id="next-5" class="button-disabled" disabled>Suivant</button>
+    </div>
+  </div>
+
+  <!-- Étape 6 : Symptômes -->
+  <div class="form-step" id="step-6">
+    <h3>Quels symptômes rencontrez-vous ?</h3>
+    <div class="radio-group">
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Fuite d'huile"> Fuite d'huile</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Jeu"> Jeu</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Perte d'air en statique"> Perte d'air en statique</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Perte d'air à l'utilisation"> Perte d'air à l'utilisation</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Claquement"> Claquement</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Aucun symptôme"> Aucun symptôme</label>
+    </div>
+    <div class="form-pagination">
+      <button type="button" id="prev-6">Précédent</button>
+      <button type="button" id="next-6">Suivant</button>
+    </div>
+  </div>
+
+  <!-- Étape 7 : Informations personnelles -->
+  <div class="form-step" id="step-7">
     <h3>Informations complémentaires</h3>
     <div style="margin-bottom:18px;">
       <label for="date-revision" style="font-weight:600;display:block;margin-bottom:6px;">Date de la dernière révision</label>
@@ -174,7 +261,7 @@ Il permet :
     </div>
     <div style="margin-bottom:18px;">
       <label for="annee-velo" style="font-weight:600;display:block;margin-bottom:6px;">Année du vélo</label>
-      <input type="number" id="annee-velo" name="annee" min="1990" max="2030" step="1" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
+      <input type="number" id="annee-velo" name="annee" min="1900" max="2100" step="1" required style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:120px;">
     </div>
     <div style="margin-bottom:18px;">
       <label for="remarques" style="font-weight:600;display:block;margin-bottom:6px;">Remarques</label>
@@ -186,23 +273,60 @@ Il permet :
       <input type="hidden" name="url" value="<?php echo home_url( add_query_arg( null, null ) ); ?>">
     </div>
     <div class="form-pagination">
-      <button type="button" id="prev-4">Précédent</button>
-      <button type="button" id="next-4">Suivant</button>
+      <button type="button" id="prev-7">Précédent</button>
+      <button type="button" id="next-7" class="button-disabled" disabled>Voir le résumé</button>
     </div>
   </div>
-  <!-- Étape 5 : Résumé -->
-  <div class="form-step" id="step-5">
+
+  <!-- Étape 8 : Résumé -->
+  <div class="form-step" id="step-8">
     <h3>Résumé de votre demande</h3>
-    <div id="resume-content" style="margin-bottom:18px;"></div>
+    <div id="resume-content" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; line-height: 1.6;"></div>
     <div class="form-pagination">
-      <button type="button" id="prev-5">Précédent</button>
+      <button type="button" id="prev-8">Précédent</button>
       <button type="submit">Envoyer</button>
     </div>
   </div>
-  <div id="form-result" style="margin-top:20px; color:green;"></div>
+<div id="form-result" style="margin-top:20px; color:green;"></div>
 </form>
+
+<!-- Page de remerciement (cachée par défaut) -->
+<div id="thank-you-page" style="display:none; text-align:center; background:#f8f9fa; padding:40px 20px; border-radius:12px; margin:20px 0;">
+  <div style="background:#fff; max-width:600px; margin:0 auto; padding:40px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <div style="margin-bottom:30px;">
+      <span style="color:#22C55E; font-size:48px;">✓</span>
+    </div>
+    <h2 style="color:#1f2937; margin-bottom:20px; font-size:32px; font-weight:700;">Formulaire envoyé avec succès</h2>
+    
+    <div id="reservation-number" style="background:#f3f4f6; border:2px solid #22C55E; border-radius:8px; padding:20px; margin:30px 0;">
+      <p style="margin:0; font-size:18px; color:#374151; font-weight:600;">Réservation n°</p>
+      <p id="order-number-display" style="margin:10px 0 0 0; font-size:24px; color:#1f2937; font-weight:700;"></p>
+    </div>
+    
+    <p style="color:#6b7280; font-size:16px; margin:30px 0; line-height:1.6;">
+      Merci de noter votre numéro de réservation sur le carton d'envoi de votre suspension<br>
+      <span style="font-size:14px;">(le numéro est également noté dans votre mail de confirmation de réservation)</span>
+    </p>
+    
+    <button id="nouvelle-demande-btn" style="
+      background:#1f2937; 
+      color:#fff; 
+      border:none; 
+      padding:15px 30px; 
+      border-radius:8px; 
+      font-size:16px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:background 0.3s;
+      font-family:'din-next-lt-pro', sans-serif;
+    " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1f2937'">
+      NOUVELLE DEMANDE
+    </button>
+  </div>
+</div>
+
 <script>
-  // === VARIABLES AJAX PRESTATIONS ===
+// === VARIABLES AJAX PRESTATIONS ===
 <?php 
 // Utiliser la fonction du functions.php
 $ajax_vars = get_ajax_prestations_vars();
@@ -213,34 +337,48 @@ window.ajax_object = window.ajax_object || {
     user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
 };
 
+// Fonction pour afficher la page de remerciement
+function showThankYouPage(numeroCommande) {
+    document.getElementById('dynamic-form').style.display = 'none';
+    document.getElementById('thank-you-page').style.display = 'block';
+    document.getElementById('order-number-display').textContent = numeroCommande;
+}
+
 // === FONCTION SYNCHRONISATION ===
-function synchroniserPrestation(formData, typePrestation) {
+function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
     if (!window.ajax_object.user_logged_in) {
         console.log('👤 Utilisateur non connecté, synchronisation ignorée');
         return Promise.resolve();
     }
 
-    const modele = formData.get('modèle') || '';
-    const annee = formData.get('année') || '';
+    const modele = formData.get('modele') || '';
+    const annee = formData.get('annee') || '';
     const prestations = formData.getAll('prestations[]').join(', ');
+    const typePresta = formData.get('type_prestation') || '';
+    const pratique = formData.get('pratique') || '';
+    const symptomes = formData.getAll('symptomes[]').join(', ');
+    const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value || '';
     
     const prestationData = {
         action: 'sauvegarder_prestation_ajax',
         nonce: window.ajax_object.nonce,
         type_prestation: typePrestation,
+        type_fourche: type_fourche,
         modele_velo: modele,
         annee_velo: annee,
-        description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
+        description: `${typePrestation} - ${prestations} (${typePresta}) - Pratique: ${pratique} - Symptômes: ${symptomes} - ${modele} (${annee})`,
+        prix_total: formData.get('prix_total') || '0',
+        numero_suivi: numeroSuivi, // Utiliser le numéro de commande reçu
         statut: 'attente'
     };
 
     console.log('🔄 Envoi synchronisation:', prestationData);
 
-    return fetch(window.ajax_object.ajax_url, {
+return fetch(window.ajax_object.ajax_url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
+          },
         body: new URLSearchParams(prestationData)
     })
     .then(response => {
@@ -251,6 +389,18 @@ function synchroniserPrestation(formData, typePrestation) {
         console.log('📄 Données reçues:', data);
         if (data.success) {
             console.log('✅ Prestation synchronisée:', typePrestation);
+            // Afficher le numéro de suivi dans le résumé si disponible
+            if (numeroSuivi) {
+                const resumeContent = document.getElementById('resume-content');
+                if (resumeContent) {
+                    const numeroSuiviHTML = `<div style="background:#f0f8ff;border:2px solid #4CAF50;border-radius:8px;padding:15px;margin:15px 0;text-align:center;">
+                        <strong style="color:#2E7D32;font-size:16px;">✅ Demande enregistrée avec succès !</strong><br>
+                        <span style="color:#FF3F22;font-weight:bold;font-size:18px;">Numéro de suivi : ${numeroSuivi}</span><br>
+                        <small style="color:#666;">Conservez ce numéro pour suivre votre demande</small>
+                    </div>`;
+                    resumeContent.innerHTML += numeroSuiviHTML;
+                }
+            }
         } else {
             console.error('❌ Erreur synchronisation:', data);
         }
@@ -260,99 +410,55 @@ function synchroniserPrestation(formData, typePrestation) {
         console.error('❌ Erreur réseau:', error);
     });
 }
-// Info dialogue toggle
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.info-toggle').forEach(function(toggle) {
-    const dialogue = toggle.querySelector('.info-dialogue');
-    toggle.addEventListener('mouseenter', function() {
-      dialogue.style.display = 'block';
-    });
-    toggle.addEventListener('mouseleave', function() {
-      dialogue.style.display = 'none';
-    });
-    toggle.addEventListener('focus', function() {
-      dialogue.style.display = 'block';
-    });
-    toggle.addEventListener('blur', function() {
-      dialogue.style.display = 'none';
-    });
-  });
-});
-const steps = [
-  document.getElementById('step-1'),
-  document.getElementById('step-2'),
-  document.getElementById('step-3'),
-  document.getElementById('step-4'),
-  document.getElementById('step-5')
-];
+
+// === GESTION DE LA NAVIGATION ===
 let currentStep = 0;
-function showStep(index) {
-  steps.forEach((step, i) => step.classList.toggle('active', i === index));
-  updateProgressBar(index);
-  // Focus sur le formulaire pour le centrer à chaque changement d'étape
-  const form = document.getElementById('multi-step-form');
-  if(form) {
-    form.scrollIntoView({behavior: 'smooth', block: 'center'});
-  }
-}
-function updateProgressBar(index) {
-  // 4 étapes de questions, la 5e est le résumé
-  const totalSteps = 4;
-  let stepNum = index + 1;
-  if (stepNum > totalSteps) stepNum = totalSteps;
-  document.getElementById('progress-step').textContent = stepNum > totalSteps ? totalSteps : stepNum;
-  const percent = Math.round((stepNum-1) / totalSteps * 100);
-  document.getElementById('progress-bar').style.width = percent + '%';
-}
-function updateNextButtonState(step, radioName, nextBtnId) {
-  const radios = document.getElementsByName(radioName);
-  const nextBtn = document.getElementById(nextBtnId);
-  function check() {
-    let checked = false;
-    radios.forEach ? radios.forEach(r => { if(r.checked) checked = true; }) : Array.from(radios).forEach(r => { if(r.checked) checked = true; });
-    if (checked) {
-      nextBtn.classList.remove('button-disabled');
-      nextBtn.disabled = false;
+function showStep(step) {
+  const steps = document.querySelectorAll('.form-step');
+  steps.forEach((stepElement, index) => {
+    if (index === step) {
+      stepElement.classList.add('active');
     } else {
-      nextBtn.classList.add('button-disabled');
-      nextBtn.disabled = true;
+      stepElement.classList.remove('active');
     }
-  }
-  radios.forEach ? radios.forEach(r => r.addEventListener('change', check)) : Array.from(radios).forEach(r => r.addEventListener('change', check));
-  check();
+  });
+  updateProgressBar(step);
+  updateRadioSelected();
+  
+  // Mise à jour du numéro d'étape affiché
+  document.getElementById('progress-step').textContent = step + 1;
 }
-function updateNext2ButtonState() {
-  const dateVal = document.getElementById('date-revision').value;
-  const poidsVal = document.getElementById('poids-pilote').value;
-  const modeleVal = document.getElementById('modele-velo').value;
-  const anneeVal = document.getElementById('annee-velo').value;
-  const remarquesVal = document.getElementById('remarques').value;
-  const nextBtn = document.getElementById('next-2');
-  if(dateVal && poidsVal && modeleVal && anneeVal && remarquesVal) {
+
+function updateProgressBar(step) {
+  const progress = ((step + 1) / 8) * 100;
+  document.querySelector('.progress-bar').style.width = progress + '%';
+}
+
+// === GESTION DES STYLES RADIO/CHECKBOX ===
+function updateRadioSelected() {
+  document.querySelectorAll('.radio-btn').forEach(btn => {
+    const input = btn.querySelector('input[type="radio"], input[type="checkbox"]');
+    if (input && input.checked) {
+      btn.classList.add('selected');
+    } else {
+      btn.classList.remove('selected');
+    }
+  });
+}
+
+// === GESTION DES BOUTONS ===
+function updateNextButtonState(stepId, inputName, buttonId) {
+  const nextBtn = document.getElementById(buttonId);
+  const step = document.getElementById(stepId);
+  const input = step.querySelector(`input[name="${inputName}"]:checked`);
+  
+  if (input) {
     nextBtn.classList.remove('button-disabled');
     nextBtn.disabled = false;
   } else {
     nextBtn.classList.add('button-disabled');
     nextBtn.disabled = true;
   }
-}
-function updateRadioSelected() {
-  document.querySelectorAll('.radio-group').forEach(group => {
-    group.querySelectorAll('.radio-btn').forEach(label => {
-      const input = label.querySelector('input');
-      input.addEventListener('change', function() {
-        if(input.type === 'radio') {
-          group.querySelectorAll('.radio-btn').forEach(l => l.classList.remove('selected'));
-          if(input.checked) label.classList.add('selected');
-        } else {
-          if(input.checked) label.classList.add('selected');
-          else label.classList.remove('selected');
-        }
-      });
-      if(input.checked) label.classList.add('selected');
-      else label.classList.remove('selected');
-    });
-  });
 }
 
 // Prix des prestations et options
@@ -372,269 +478,453 @@ const prixOptions = {
   'Sans option': 0
 };
 
+const prixTypePrestation = {
+  "Normal 5 à 7 jours": 0,
+  "Express 24H-48H ouvrés": 25
+};
+
 function calculerTotal() {
-  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
-  const options = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
   let total = 0;
-  prestations.forEach(prestation => {
-    if (prixPrestations[prestation]) total += prixPrestations[prestation];
+  
+  // Prestations
+  const prestationsCheckees = [];
+  document.querySelectorAll('input[name="prestations[]"]:checked').forEach(cb => {
+    prestationsCheckees.push(cb.value);
+    total += prixPrestations[cb.value] || 0;
   });
-  options.forEach(opt => {
-    if (opt === 'Fourreau carbone') {
+  
+  // Options avec logique spéciale pour Fourreau carbone
+  document.querySelectorAll('input[name="usage[]"]:checked').forEach(cb => {
+    if (cb.value === 'Fourreau carbone') {
       // Gratuit si Révision 200 heures est sélectionnée
-      total += prestations.includes('Révision 200 heures') ? 0 : 499;
-    } else if (prixOptions[opt]) {
-      total += prixOptions[opt];
+      total += prestationsCheckees.includes('Révision 200 heures') ? 0 : (prixOptions[cb.value] || 0);
+    } else {
+      total += prixOptions[cb.value] || 0;
     }
   });
+  
+  // Type de prestation (Express)
+  const typePrestation = document.querySelector('input[name="type_prestation"]:checked');
+  if (typePrestation) {
+    total += prixTypePrestation[typePrestation.value] || 0;
+  }
+  
   return total;
 }
 
-function afficherTotalStep3() {
+function afficherTotalStep4() {
   const total = calculerTotal();
-  document.getElementById('prix-total-step3').textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  document.getElementById('prix-total-step3').textContent = `Total estimé : ${total} €`;
 }
 
-// Mettre à jour le total à chaque changement de prestation ou option
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
-    checkbox.addEventListener('change', afficherTotalStep3);
-  });
-  document.querySelectorAll('input[name="usage[]"]').forEach(function(cb) {
-    cb.addEventListener('change', afficherTotalStep3);
-  });
-  afficherTotalStep3();
-});
+// === VALIDATION FUNCTIONS ===
+function updateNext2ButtonState() {
+  const checkboxes = document.querySelectorAll('input[name="prestations[]"]');
+  const nextBtn = document.getElementById('next-2');
+  let checked = false;
+  checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+  if (checked) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
+  }
+}
 
-  // Désactivation dynamique des options supplémentaires selon la prestation sélectionnée
-  function updateOptionsState() {
-    const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
-    const options = [
-      'Tuning hydraulique',
-      'Modification sens du blocage',
-      'Blocage sur cintre',
-      'Modification du débattement',
-      'Fourreau carbone',
-      'Modification 650 en 700',
-      'Sans option'
-    ];
-    const prestationsSansOptions = [
-      'Optimisation système Headshok',
-      'Réfection système Headshok',
-      'Remplacement filet rapporté (hélicoil)'
-    ];
-    // Si une prestation sans options est sélectionnée
-    const hasNoOptionsPrestation = prestations.some(p => prestationsSansOptions.includes(p));
-    if (hasNoOptionsPrestation) {
-      options.forEach(opt => {
-        const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
-        if (cb) {
-          cb.disabled = (opt !== 'Sans option');
-          cb.parentElement.classList.toggle('button-disabled', opt !== 'Sans option');
-        }
-      });
-      return;
-    }
-    // Réactiver toutes les options si aucune prestation sans option n'est sélectionnée
-    options.forEach(opt => {
-      const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
-      if (cb) {
-        cb.disabled = false;
-        cb.parentElement.classList.remove('button-disabled');
-      }
-    });
+function updateNext3ButtonState() {
+  const typePrestation = document.querySelector('input[name="type_prestation"]:checked');
+  const nextBtn = document.getElementById('next-3');
+  if (typePrestation) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
   }
+}
 
-  // Écouteurs sur prestation
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
-      checkbox.addEventListener('change', updateOptionsState);
-    });
-    updateOptionsState();
-  });
-document.addEventListener('DOMContentLoaded', function() {
-  updateNextButtonState('step-1', 'type_fourche', 'next-1');
-  // Pour les prestations (checkboxes), on active le bouton suivant si au moins une est cochée
-  function updateNext2ButtonState() {
-    const checkboxes = document.querySelectorAll('input[name="prestations[]"]');
-    const nextBtn = document.getElementById('next-2');
-    let checked = false;
-    checkboxes.forEach(cb => { if(cb.checked) checked = true; });
-    if (checked) {
-      nextBtn.classList.remove('button-disabled');
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.classList.add('button-disabled');
-      nextBtn.disabled = true;
-    }
+function updateNext4ButtonState() {
+  const checkboxes = document.querySelectorAll('input[name="usage[]"]');
+  const nextBtn = document.getElementById('next-4');
+  let checked = false;
+  checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+  if (checked) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
   }
-  document.querySelectorAll('input[name="prestations[]"]').forEach(cb => cb.addEventListener('change', updateNext2ButtonState));
-  updateNext2ButtonState();
-  // Pour les checkboxes, on active le bouton suivant si au moins une est cochée
-  function updateNext3ButtonState() {
-    const checkboxes = document.querySelectorAll('input[name="usage[]"]');
-    const nextBtn = document.getElementById('next-3');
-    let checked = false;
-    checkboxes.forEach(cb => { if(cb.checked) checked = true; });
-    if (checked) {
-      nextBtn.classList.remove('button-disabled');
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.classList.add('button-disabled');
-      nextBtn.disabled = true;
-    }
+}
+
+function updateNext5ButtonState() {
+  const pratique = document.querySelector('input[name="pratique"]:checked');
+  const nextBtn = document.getElementById('next-5');
+  if (pratique) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
   }
-  document.querySelectorAll('input[name="usage[]"]').forEach(cb => cb.addEventListener('change', updateNext3ButtonState));
-  updateNext3ButtonState();
-  // Étape 4 : inputs
-    function updateNext4ButtonState() {
-      const dateVal = document.getElementById('date-revision').value;
-      const poidsVal = document.getElementById('poids-pilote').value;
-      const modeleVal = document.getElementById('modele-velo').value;
-      const anneeVal = document.getElementById('annee-velo').value;
-      const nextBtn = document.getElementById('next-4');
-      if(dateVal && poidsVal && modeleVal && anneeVal) {
-        nextBtn.classList.remove('button-disabled');
-        nextBtn.disabled = false;
-      } else {
-        nextBtn.classList.add('button-disabled');
-        nextBtn.disabled = true;
-      }
-    }
-    ['date-revision','poids-pilote','modele-velo','annee-velo'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateNext4ButtonState);
-    });
-    updateNext4ButtonState();
-  updateRadioSelected();
-  updateProgressBar(0);
-});
-document.querySelectorAll('input[type="radio"]').forEach(input => {
-  input.addEventListener('change', updateRadioSelected);
-});
-document.getElementById('next-1').onclick = function() {
-  if(document.querySelector('input[name="type_fourche"]:checked')) {
-    currentStep = 1; showStep(currentStep);
+}
+
+function updateNext6ButtonState() {
+  const checkboxes = document.querySelectorAll('input[name="symptomes[]"]');
+  const nextBtn = document.getElementById('next-6');
+  let checked = false;
+  checkboxes.forEach(cb => { if(cb.checked) checked = true; });
+  if (checked) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
   }
-};
-document.getElementById('prev-2').onclick = function() {
-  currentStep = 0; showStep(currentStep);
-};
-document.getElementById('next-2').onclick = function() {
-  const checkedPrestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
-  if(checkedPrestations.length === 0) {
-    checkedPrestations[0]?.focus();
-    return;
-  }
-  currentStep = 2; showStep(currentStep);
-};
-document.getElementById('prev-3').onclick = function() {
-  currentStep = 1;
-  showStep(currentStep);
-};
-document.getElementById('next-3').onclick = function() {
-  const checkedUsages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked'));
-  if(checkedUsages.length === 0) {
-    checkedUsages[0]?.focus();
-    return;
-  }
-  currentStep = 3;
-  showStep(currentStep);
-};
-document.getElementById('prev-4').onclick = function() {
-  currentStep = 2; showStep(currentStep);
-};
-document.getElementById('next-4').onclick = function() {
-  // Validation : tous les champs obligatoires sauf remarques
+}
+
+function updateNext7ButtonState() {
   const dateVal = document.getElementById('date-revision').value;
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-velo').value;
   const anneeVal = document.getElementById('annee-velo').value;
-  if(!dateVal || !poidsVal || !modeleVal || !anneeVal) {
-    if(!dateVal) document.getElementById('date-revision').focus();
-    else if(!poidsVal) document.getElementById('poids-pilote').focus();
-    else if(!modeleVal) document.getElementById('modele-velo').focus();
-    else document.getElementById('annee-velo').focus();
-    return;
+  const nextBtn = document.getElementById('next-7');
+  
+  if(dateVal && poidsVal && modeleVal && anneeVal) {
+    nextBtn.classList.remove('button-disabled');
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.classList.add('button-disabled');
+    nextBtn.disabled = true;
   }
-  // Afficher le résumé
-  const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
-  const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value).join(', ');
-  const date_revision = document.getElementById('date-revision').value;
-  const poids_pilote = document.getElementById('poids-pilote').value;
-  const modele_velo = document.getElementById('modele-velo').value;
-  const annee_velo = document.getElementById('annee-velo').value;
-  const modele_annee = `${modele_velo} (${annee_velo})`;
-  const remarques = document.getElementById('remarques').value;
-  const fichier = document.getElementById('fichier').files[0];
-  let fileName = fichier ? fichier.name : 'Aucun';
-  const total = calculerTotal();
-  document.getElementById('resume-content').innerHTML = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle et année du vélo :</strong> ${modele_annee}<br>` + (remarques ? `<strong>Remarques :</strong> ${remarques}<br>` : '') + `<strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
-  currentStep = 4; showStep(currentStep);
-};
-document.getElementById('multi-step-form').onsubmit = function(e) {
-  e.preventDefault();
-  const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
-  const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
-  const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
-  const date_revision = document.getElementById('date-revision').value;
-  const poids_pilote = document.getElementById('poids-pilote').value;
-  const modele_velo = document.getElementById('modele-velo').value;
-  const annee_velo = document.getElementById('annee-velo').value;
-  const modele_annee = `${modele_velo} (${annee_velo})`;
-  const remarques = document.getElementById('remarques').value;
-  const fichier = document.getElementById('fichier').files[0];
-  const prix_total = calculerTotal();
-  var formData = new FormData();
-  formData.append('type_fourche', type_fourche);
-  prestations.forEach(p => formData.append('prestations[]', p));
-  usages.forEach(u => formData.append('usage[]', u));
-  formData.append('date_revision', date_revision);
-  formData.append('poids_pilote', poids_pilote);
-  // Ajouter les champs séparés pour la synchronisation
-  formData.append('modèle', modele_velo);
-  formData.append('année', annee_velo);
-  // Garder le champ combiné pour la compatibilité email
-  formData.append('modele_annee', modele_annee);
-  formData.append('remarques', remarques);
-  formData.append('prix_total', prix_total);
-  if(fichier) formData.append('fichier', fichier);
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fourche', true);
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      let response;
-      try {
-        response = JSON.parse(xhr.responseText);
-      } catch (e) {
-        response = null;
-      }
-      let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
-      let msg = 'Formulaire envoyé avec succès !';
-      if (typeof synchroniserPrestation !== 'undefined') {
-        // Utiliser le FormData déjà créé au lieu de créer un nouveau
-        synchroniserPrestation(formData, 'Fourche Lefty Hybrid');
-      }
-      if(orderNumber) {
-        msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
-        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
-      }
-      document.getElementById('form-result').innerHTML = msg;
-      document.getElementById('multi-step-form').reset();
-      showStep(0);
-      updateNextButtonState('step-1', 'type_fourche', 'next-1');
+}
+
+// === EVENT LISTENERS ===
+document.addEventListener('DOMContentLoaded', function() {
+  // Gestion des tooltips
+  document.querySelectorAll('.tooltip-toggle').forEach(toggle => {
+    const dialogue = toggle.nextElementSibling;
+    toggle.addEventListener('mouseenter', function() {
+      dialogue.style.display = 'block';
+    });
+    toggle.addEventListener('mouseleave', function() {
+      dialogue.style.display = 'none';
+    });
+    toggle.addEventListener('focus', function() {
+      dialogue.style.display = 'block';
+    });
+    toggle.addEventListener('blur', function() {
+      dialogue.style.display = 'none';
+    });
+  });
+
+  // Validation initiale
+  updateNextButtonState('step-1', 'type_fourche', 'next-1');
+  updateNext2ButtonState();
+  updateNext3ButtonState();
+  updateNext4ButtonState();
+  updateNext5ButtonState();
+  updateNext6ButtonState();
+  updateNext7ButtonState();
+  updateRadioSelected();
+  updateProgressBar(0);
+  afficherTotalStep4();
+  
+  // Event listeners pour validation
+  document.querySelectorAll('input[name="type_fourche"]').forEach(input => {
+    input.addEventListener('change', () => updateNextButtonState('step-1', 'type_fourche', 'next-1'));
+  });
+  
+  document.querySelectorAll('input[name="prestations[]"]').forEach(cb => {
+    cb.addEventListener('change', () => {
       updateNext2ButtonState();
+      afficherTotalStep4();
+    });
+  });
+  
+  document.querySelectorAll('input[name="type_prestation"]').forEach(cb => {
+    cb.addEventListener('change', () => {
       updateNext3ButtonState();
+      afficherTotalStep4();
+    });
+  });
+  
+  document.querySelectorAll('input[name="usage[]"]').forEach(cb => {
+    cb.addEventListener('change', () => {
       updateNext4ButtonState();
-      updateRadioSelected();
-      updateProgressBar(0);
-    } else {
-      document.getElementById('form-result').textContent = 'Erreur lors de l’envoi.';
+      afficherTotalStep4();
+    });
+  });
+  
+  document.querySelectorAll('input[name="pratique"]').forEach(cb => {
+    cb.addEventListener('change', updateNext5ButtonState);
+  });
+  
+  document.querySelectorAll('input[name="symptomes[]"]').forEach(cb => {
+    cb.addEventListener('change', updateNext6ButtonState);
+  });
+  
+  ['date-revision','poids-pilote','modele-velo','annee-velo'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateNext7ButtonState);
+  });
+  
+  // Event listeners pour style radio/checkbox
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+    input.addEventListener('change', updateRadioSelected);
+  });
+
+  // === NAVIGATION BUTTONS ===
+  document.getElementById('next-1').onclick = function() {
+    if(document.querySelector('input[name="type_fourche"]:checked')) {
+      currentStep = 1; 
+      showStep(currentStep);
     }
   };
-  xhr.send(formData);
-};
+
+  document.getElementById('prev-2').onclick = function() {
+    currentStep = 0; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-2').onclick = function() {
+    const prestationsChecked = document.querySelectorAll('input[name="prestations[]"]:checked');
+    if(prestationsChecked.length > 0) {
+      currentStep = 2; 
+      showStep(currentStep);
+    }
+  };
+
+  document.getElementById('prev-3').onclick = function() {
+    currentStep = 1;
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-3').onclick = function() {
+    const typePrestation = document.querySelector('input[name="type_prestation"]:checked');
+    if(!typePrestation) {
+      document.querySelector('input[name="type_prestation"]')?.focus();
+      return;
+    }
+    currentStep = 3;
+    showStep(currentStep);
+  };
+
+  document.getElementById('prev-4').onclick = function() {
+    currentStep = 2; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-4').onclick = function() {
+    const checkedUsages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked'));
+    if(checkedUsages.length === 0) {
+      document.querySelector('input[name="usage[]"]')?.focus();
+      return;
+    }
+    currentStep = 4;
+    showStep(currentStep);
+  };
+
+  document.getElementById('prev-5').onclick = function() {
+    currentStep = 3; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-5').onclick = function() {
+    const pratique = document.querySelector('input[name="pratique"]:checked');
+    if(!pratique) {
+      document.querySelector('input[name="pratique"]')?.focus();
+      return;
+    }
+    currentStep = 5;
+    showStep(currentStep);
+  };
+
+  document.getElementById('prev-6').onclick = function() {
+    currentStep = 4; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-6').onclick = function() {
+    const symptomes = Array.from(document.querySelectorAll('input[name="symptomes[]"]:checked'));
+    if(symptomes.length === 0) {
+      document.querySelector('input[name="symptomes[]"]')?.focus();
+      return;
+    }
+    currentStep = 6;
+    showStep(currentStep);
+  };
+
+  document.getElementById('prev-7').onclick = function() {
+    currentStep = 5; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('next-7').onclick = function() {
+    // Validation : tous les champs obligatoires
+    const dateVal = document.getElementById('date-revision').value;
+    const poidsVal = document.getElementById('poids-pilote').value;
+    const modeleVal = document.getElementById('modele-velo').value;
+    const anneeVal = document.getElementById('annee-velo').value;
+    
+    if(!dateVal || !poidsVal || !modeleVal || !anneeVal) {
+      if(!dateVal) document.getElementById('date-revision').focus();
+      else if(!poidsVal) document.getElementById('poids-pilote').focus();
+      else if(!modeleVal) document.getElementById('modele-velo').focus();
+      else if(!anneeVal) document.getElementById('annee-velo').focus();
+      return;
+    }
+    
+    // Afficher le résumé
+    const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
+    const type_prestation = document.querySelector('input[name="type_prestation"]:checked')?.value;
+    const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value).join(', ');
+    const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value).join(', ');
+    const pratique = document.querySelector('input[name="pratique"]:checked')?.value;
+    const symptomes = Array.from(document.querySelectorAll('input[name="symptomes[]"]:checked')).map(cb => cb.value).join(', ');
+    const date_revision = document.getElementById('date-revision').value;
+    const poids_pilote = document.getElementById('poids-pilote').value;
+    const modele_velo = document.getElementById('modele-velo').value;
+    const annee_velo = document.getElementById('annee-velo').value;
+    const modele_annee = `${modele_velo} (${annee_velo})`;
+    const remarques = document.getElementById('remarques').value;
+    const fichier = document.getElementById('fichier').files[0];
+    let fileName = fichier ? fichier.name : 'Aucun';
+    
+    let total = calculerTotal();
+    
+    let resumeContent = `<strong>Type de fourche :</strong> ${type_fourche}<br><strong>Type de prestation :</strong> ${type_prestation}<br><strong>Prestations :</strong> ${prestations}<br><strong>Options :</strong> ${usages}<br><strong>Pratique :</strong> ${pratique}<br><strong>Symptômes :</strong> ${symptomes}<br><strong>Date de la dernière révision :</strong> ${date_revision}<br><strong>Poids du pilote :</strong> ${poids_pilote} kg<br><strong>Modèle du vélo :</strong> ${modele_velo}<br><strong>Année du vélo :</strong> ${annee_velo}<br><strong>Fichier joint :</strong> ${fileName}<br><span style="color:#FF3F22;font-weight:600;">Total estimé : ${total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'})} TTC</span>`;
+    
+    if (remarques) {
+      resumeContent = resumeContent.replace('<br><strong>Fichier joint:', '<br><strong>Remarques :</strong> ' + remarques + '<br><strong>Fichier joint:');
+    }
+    
+    document.getElementById('resume-content').innerHTML = resumeContent;
+    currentStep = 7; 
+    showStep(currentStep);
+  };
+
+  document.getElementById('prev-8').onclick = function() {
+    currentStep = 6; 
+    showStep(currentStep);
+  };
+
+  // === FORM SUBMISSION ===
+  document.getElementById('multi-step-form').onsubmit = function(e) {
+    e.preventDefault();
+    
+    const type_fourche = document.querySelector('input[name="type_fourche"]:checked')?.value;
+    const type_prestation = document.querySelector('input[name="type_prestation"]:checked')?.value;
+    const prestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked')).map(cb => cb.value);
+    const usages = Array.from(document.querySelectorAll('input[name="usage[]"]:checked')).map(cb => cb.value);
+    const pratique = document.querySelector('input[name="pratique"]:checked')?.value;
+    const symptomes = Array.from(document.querySelectorAll('input[name="symptomes[]"]:checked')).map(cb => cb.value);
+    const date_revision = document.getElementById('date-revision').value;
+    const poids_pilote = document.getElementById('poids-pilote').value;
+    const modele_velo = document.getElementById('modele-velo').value;
+    const annee_velo = document.getElementById('annee-velo').value;
+    const modele_annee = `${modele_velo} (${annee_velo})`;
+    const remarques = document.getElementById('remarques').value;
+    const fichier = document.getElementById('fichier').files[0];
+    
+    let prix_total = calculerTotal();
+    
+    var formData = new FormData();
+    formData.append('type_fourche', type_fourche);
+    formData.append('type_prestation', type_prestation);
+    prestations.forEach(prestation => formData.append('prestations[]', prestation));
+    usages.forEach(u => formData.append('usage[]', u));
+    formData.append('pratique', pratique);
+    symptomes.forEach(s => formData.append('symptomes[]', s));
+    formData.append('date_revision', date_revision);
+    formData.append('poids_pilote', poids_pilote);
+    formData.append('modele', modele_velo);
+    formData.append('annee', annee_velo);
+    formData.append('modele_annee', modele_annee);
+    formData.append('remarques', remarques);
+    formData.append('prix_total', prix_total);
+    if(fichier) formData.append('fichier', fichier);
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_fourche', true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        let response;
+        try {
+          response = JSON.parse(xhr.responseText);
+        } catch (e) {
+          response = null;
+        }
+        
+        let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
+        let msg = 'Formulaire envoyé avec succès !';
+        
+        // Synchronisation avec l'historique
+        if (typeof synchroniserPrestation !== 'undefined') {
+          synchroniserPrestation(formData, 'Fourche Lefty Hybrid', orderNumber).then(prestationData => {
+            if (prestationData && prestationData.success) {
+              console.log('✅ Prestation synchronisée avec numéro:', orderNumber);
+            }
+          }).catch(error => {
+            console.error('Erreur lors de la synchronisation:', error);
+          });
+        }
+        
+        // Afficher la page de remerciement au lieu de reset
+        if (orderNumber) {
+          showThankYouPage(orderNumber);
+        } else {
+          // Fallback si pas de numéro de commande
+          document.getElementById('form-result').innerHTML = msg;
+          document.getElementById('form-result').style.display = 'block';
+          
+          // Reset du formulaire
+          document.getElementById('multi-step-form').reset();
+          showStep(0);
+          currentStep = 0;
+          updateNextButtonState('step-1', 'type_fourche', 'next-1');
+          updateNext2ButtonState();
+          updateNext3ButtonState();
+          updateNext4ButtonState();
+          updateNext5ButtonState();
+          updateNext6ButtonState();
+          updateNext7ButtonState();
+          updateRadioSelected();
+          updateProgressBar(0);
+        }
+        
+      } else {
+        document.getElementById('form-result').textContent = 'Erreur lors de l\'envoi.';
+        document.getElementById('form-result').style.display = 'block';
+      }
+    };
+    xhr.send(formData);
+  };
+
+  // Gestion du bouton "Nouvelle demande"
+  const nouvelleDemandeBtn = document.getElementById('nouvelle-demande-btn');
+  if (nouvelleDemandeBtn) {
+      nouvelleDemandeBtn.addEventListener('click', function() {
+          // Remettre à zéro et afficher le formulaire
+          document.getElementById('thank-you-page').style.display = 'none';
+          document.getElementById('dynamic-form').style.display = 'block';
+          document.getElementById('multi-step-form').reset();
+          showStep(0);
+          currentStep = 0;
+          updateNextButtonState('step-1', 'type_fourche', 'next-1');
+          updateNext2ButtonState();
+          updateNext3ButtonState();
+          updateNext4ButtonState();
+          updateNext5ButtonState();
+          updateNext6ButtonState();
+          updateNext7ButtonState();
+          updateRadioSelected();
+          updateProgressBar(0);
+      });
+  }
+});
 </script>
+
 <?php else : ?>
 <div style="text-align:center; margin:40px 0;">
   <p style="font-size:1.2em; font-weight:600;">Vous devez être connecté pour accéder au formulaire.</p>
@@ -642,8 +932,8 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
 </div>
 <?php endif; ?>
 
-
-  <?php
-	return ob_get_clean();
+<?php
+  return ob_get_clean();
 }
 add_shortcode('form_hybrid', 'form_hybrid_shortcode');
+?>

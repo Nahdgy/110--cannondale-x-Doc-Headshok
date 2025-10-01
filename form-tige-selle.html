@@ -7,12 +7,11 @@ function form_tige_selle_shortcode(){
 .form-step.active {
   display: block;
 }
-.form-pagination {
+.progress-container {
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
   font-family: 'din-next-lt-pro', sans-serif;
-
 }
 .radio-group {
   margin-bottom: 18px;
@@ -130,6 +129,42 @@ function form_tige_selle_shortcode(){
   </div>
   <div id="form-result" style="margin-top:20px; color:green;"></div>
 </form>
+
+<!-- Page de remerciement (cachée par défaut) -->
+<div id="thank-you-page" style="display:none; text-align:center; background:#f8f9fa; padding:40px 20px; border-radius:12px; margin:20px 0;">
+  <div style="background:#fff; max-width:600px; margin:0 auto; padding:40px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <div style="margin-bottom:30px;">
+      <span style="color:#22C55E; font-size:48px;">✓</span>
+    </div>
+    <h2 style="color:#1f2937; margin-bottom:20px; font-size:32px; font-weight:700;">Formulaire envoyé avec succès</h2>
+    
+    <div id="reservation-number" style="background:#f3f4f6; border:2px solid #22C55E; border-radius:8px; padding:20px; margin:30px 0;">
+      <p style="margin:0; font-size:18px; color:#374151; font-weight:600;">Réservation n°</p>
+      <p id="order-number-display" style="margin:10px 0 0 0; font-size:24px; color:#1f2937; font-weight:700;"></p>
+    </div>
+    
+    <p style="color:#6b7280; font-size:16px; margin:30px 0; line-height:1.6;">
+      Merci de noter votre numéro de réservation sur le carton d'envoi de votre suspension<br>
+      <span style="font-size:14px;">(le numéro est également noté dans votre mail de confirmation de réservation)</span>
+    </p>
+    
+    <button id="nouvelle-demande-btn" style="
+      background:#1f2937; 
+      color:#fff; 
+      border:none; 
+      padding:15px 30px; 
+      border-radius:8px; 
+      font-size:16px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:background 0.3s;
+      font-family:'din-next-lt-pro', sans-serif;
+    " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1f2937'">
+      NOUVELLE DEMANDE
+    </button>
+  </div>
+</div>
+
 <script> // === VARIABLES AJAX PRESTATIONS ===
 <?php 
 // Utiliser la fonction du functions.php
@@ -141,8 +176,15 @@ window.ajax_object = window.ajax_object || {
     user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
 };
 
+// Fonction pour afficher la page de remerciement
+function showThankYouPage(numeroCommande) {
+    document.getElementById('dynamic-form').style.display = 'none';
+    document.getElementById('thank-you-page').style.display = 'block';
+    document.getElementById('order-number-display').textContent = numeroCommande;
+}
+
 // === FONCTION SYNCHRONISATION ===
-function synchroniserPrestation(formData, typePrestation) {
+function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
     if (!window.ajax_object.user_logged_in) {
         console.log('👤 Utilisateur non connecté, synchronisation ignorée');
         return Promise.resolve();
@@ -159,6 +201,8 @@ function synchroniserPrestation(formData, typePrestation) {
         modele_velo: modele,
         annee_velo: annee,
         description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
+        prix_total: formData.get('prix_total') || '0',
+        numero_suivi: numeroSuivi, // Utiliser le numéro de commande reçu
         statut: 'attente'
     };
 
@@ -179,6 +223,18 @@ function synchroniserPrestation(formData, typePrestation) {
         console.log('📄 Données reçues:', data);
         if (data.success) {
             console.log('✅ Prestation synchronisée:', typePrestation);
+            // Afficher le numéro de suivi dans le résumé si disponible
+            if (data.data && data.data.numero_suivi) {
+                const resumeContent = document.getElementById('resume-content');
+                if (resumeContent) {
+                    const numeroSuiviHTML = `<div style="background:#f0f8ff;border:2px solid #4CAF50;border-radius:8px;padding:15px;margin:15px 0;text-align:center;">
+                        <strong style="color:#2E7D32;font-size:16px;">✅ Demande enregistrée avec succès !</strong><br>
+                        <span style="color:#FF3F22;font-weight:bold;font-size:18px;">Numéro de suivi : ${data.data.numero_suivi}</span><br>
+                        <small style="color:#666;">Conservez ce numéro pour suivre votre demande</small>
+                    </div>`;
+                    resumeContent.innerHTML += numeroSuiviHTML;
+                }
+            }
         } else {
             console.error('❌ Erreur synchronisation:', data);
         }
@@ -400,27 +456,58 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
       }
       let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
       let msg = 'Formulaire envoyé avec succès !';
-      if (typeof synchroniserPrestation !== 'undefined') {
-        synchroniserPrestation(formData, 'Tige de Selle');
-      }
-      if(orderNumber) {
+      
+      // Ajouter le numéro de suivi reçu au message de succès
+      if (orderNumber) {
         msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
-        // Affiche aussi le numéro dans le résumé (step 3)
-        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
       }
-      document.getElementById('form-result').innerHTML = msg;
-      document.getElementById('multi-step-form').reset();
-      showStep(0);
-      updateNext1ButtonState();
-      updateNext2ButtonState();
-      updateRadioSelected();
-      updateProgressBar(0);
+      
+      // Synchroniser la prestation avec le numéro de suivi
+      if (typeof synchroniserPrestation !== 'undefined') {
+        synchroniserPrestation(formData, 'Tige de Selle', orderNumber).then(prestationData => {
+          console.log('Prestation synchronisée avec succès:', prestationData);
+        }).catch(error => {
+          console.error('Erreur lors de la synchronisation:', error);
+        });
+      }
+      
+      // Afficher la page de remerciement au lieu de reset
+      if (orderNumber) {
+        showThankYouPage(orderNumber);
+      } else {
+        // Fallback si pas de numéro de commande
+        document.getElementById('form-result').innerHTML = msg;
+        document.getElementById('multi-step-form').reset();
+        showStep(0);
+        updateNext1ButtonState();
+        updateNext2ButtonState();
+        updateRadioSelected();
+        updateProgressBar(0);
+      }
     } else {
       document.getElementById('form-result').textContent = 'Erreur lors de l’envoi.';
     }
   };
   xhr.send(formData);
 };
+
+// Gestion du bouton "Nouvelle demande"
+document.addEventListener('DOMContentLoaded', function() {
+    const nouvelleDemandeBtn = document.getElementById('nouvelle-demande-btn');
+    if (nouvelleDemandeBtn) {
+        nouvelleDemandeBtn.addEventListener('click', function() {
+            // Remettre à zéro et afficher le formulaire
+            document.getElementById('thank-you-page').style.display = 'none';
+            document.getElementById('dynamic-form').style.display = 'block';
+            document.getElementById('multi-step-form').reset();
+            showStep(0);
+            updateNext1ButtonState();
+            updateNext2ButtonState();
+            updateRadioSelected();
+            updateProgressBar(0);
+        });
+    }
+});
 </script>
 <?php else : ?>
 <div style="text-align:center; margin:40px 0;">

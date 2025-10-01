@@ -129,6 +129,42 @@ function form_amortisseur_2choices_shortcode(){
   </div>
   <div id="form-result" style="margin-top:20px; color:green;"></div>
 </form>
+
+<!-- Page de remerciement (cachée par défaut) -->
+<div id="thank-you-page" style="display:none; text-align:center; background:#f8f9fa; padding:40px 20px; border-radius:12px; margin:20px 0;">
+  <div style="background:#fff; max-width:600px; margin:0 auto; padding:40px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <div style="margin-bottom:30px;">
+      <span style="color:#22C55E; font-size:48px;">✓</span>
+    </div>
+    <h2 style="color:#1f2937; margin-bottom:20px; font-size:32px; font-weight:700;">Formulaire envoyé avec succès</h2>
+    
+    <div id="reservation-number" style="background:#f3f4f6; border:2px solid #22C55E; border-radius:8px; padding:20px; margin:30px 0;">
+      <p style="margin:0; font-size:18px; color:#374151; font-weight:600;">Réservation n°</p>
+      <p id="order-number-display" style="margin:10px 0 0 0; font-size:24px; color:#1f2937; font-weight:700;"></p>
+    </div>
+    
+    <p style="color:#6b7280; font-size:16px; margin:30px 0; line-height:1.6;">
+      Merci de noter votre numéro de réservation sur le carton d'envoi de votre suspension<br>
+      <span style="font-size:14px;">(le numéro est également noté dans votre mail de confirmation de réservation)</span>
+    </p>
+    
+    <button id="nouvelle-demande-btn" style="
+      background:#1f2937; 
+      color:#fff; 
+      border:none; 
+      padding:15px 30px; 
+      border-radius:8px; 
+      font-size:16px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:background 0.3s;
+      font-family:'din-next-lt-pro', sans-serif;
+    " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1f2937'">
+      NOUVELLE DEMANDE
+    </button>
+  </div>
+</div>
+
 <script>
   // === VARIABLES AJAX PRESTATIONS ===
 <?php 
@@ -142,7 +178,7 @@ window.ajax_object = window.ajax_object || {
 };
 
 // === FONCTION SYNCHRONISATION ===
-function synchroniserPrestation(formData, typePrestation) {
+function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
     if (!window.ajax_object.user_logged_in) {
         console.log('👤 Utilisateur non connecté, synchronisation ignorée');
         return Promise.resolve();
@@ -159,6 +195,8 @@ function synchroniserPrestation(formData, typePrestation) {
         modele_velo: modele,
         annee_velo: annee,
         description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
+        prix_total: formData.get('prix_total') || '0',
+        numero_suivi: numeroSuivi, // Utiliser le numéro de commande reçu
         statut: 'attente'
     };
 
@@ -208,9 +246,42 @@ function afficherPrixTotal() {
   document.getElementById('prix-total-affichage').textContent = prix > 0 ? `Prix estimé : ${prix} €` : 'Prix estimé : 0 €';
 }
 
+// === INITIALISATION AU CHARGEMENT DE LA PAGE ===
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialisation des prix
   document.querySelectorAll('input[name="prestations[]"]').forEach(checkbox => checkbox.addEventListener('change', afficherPrixTotal));
   afficherPrixTotal();
+
+  // Initialisation de la navigation
+  updateNextButtonState('step-1', 'prestations[]', 'next-1');
+  updateNext2ButtonState();
+  ['date-revision','poids-pilote','modele-velo','annee-velo'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateNext2ButtonState);
+  });
+  updateRadioSelected();
+  updateProgressBar(0);
+
+  // Gestionnaire pour le bouton "Nouvelle demande"
+  document.getElementById('nouvelle-demande-btn').onclick = function() {
+    // Cacher la page de remerciement
+    document.getElementById('thank-you-page').style.display = 'none';
+    
+    // Réafficher le formulaire
+    document.getElementById('multi-step-form').style.display = 'block';
+    
+    // Réinitialiser le formulaire
+    document.getElementById('multi-step-form').reset();
+    currentStep = 0;
+    showStep(currentStep);
+    updateNextButtonState('step-1', 'prestations[]', 'next-1');
+    updateNext2ButtonState();
+    updateRadioSelected();
+    updateProgressBar(0);
+    afficherPrixTotal();
+    
+    // Faire défiler vers le formulaire
+    document.getElementById('multi-step-form').scrollIntoView({behavior: 'smooth', block: 'center'});
+  };
 });
 const steps = [
   document.getElementById('step-1'),
@@ -286,15 +357,6 @@ function updateRadioSelected() {
     });
   });
 }
-document.addEventListener('DOMContentLoaded', function() {
-  updateNextButtonState('step-1', 'prestations[]', 'next-1');
-  updateNext2ButtonState();
-  ['date-revision','poids-pilote','modele-velo','annee-velo'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updateNext2ButtonState);
-  });
-  updateRadioSelected();
-  updateProgressBar(0);
-});
 document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
   input.addEventListener('change', updateRadioSelected);
 });
@@ -378,26 +440,42 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
       }
       let orderNumber = response && response.data && response.data.order_number ? response.data.order_number : null;
       let msg = 'Formulaire envoyé avec succès !';
+      
+      // Synchroniser la prestation avec le numéro de suivi
       if (typeof synchroniserPrestation !== 'undefined') {
-          synchroniserPrestation(formData, 'Amortisseur');
+        synchroniserPrestation(formData, 'Amortisseur', orderNumber).then(prestationData => {
+          console.log('Prestation synchronisée avec succès:', prestationData);
+        }).catch(error => {
+          console.error('Erreur lors de la synchronisation:', error);
+        });
       }
-      if(orderNumber) {
-        msg += `<br><span style="color:#FF3F22;font-weight:600;">Numéro de suivi : ${orderNumber}</span>`;
-        document.getElementById('resume-content').innerHTML += `<br><strong>Numéro de suivi :</strong> <span style='color:#FF3F22;'>${orderNumber}</span>`;
-      }
-      document.getElementById('multi-step-form').reset();
-      showStep(0);
-      updateNextButtonState('step-1', 'prestations[]', 'next-1');
-      updateNext2ButtonState();
-      updateRadioSelected();
-      updateProgressBar(0);
-      afficherPrixTotal();
+      
+      // Afficher la page de remerciement
+      showThankYouPage(orderNumber);
     } else {
       document.getElementById('form-result').textContent = 'Erreur lors de l’envoi.';
     }
   };
   xhr.send(formData);
 };
+
+// Fonction pour afficher la page de remerciement
+function showThankYouPage(orderNumber) {
+  // Cacher le formulaire
+  document.getElementById('multi-step-form').style.display = 'none';
+  
+  // Afficher le numéro de commande dans la page de remerciement
+  if (orderNumber) {
+    document.getElementById('order-number-display').textContent = orderNumber;
+  }
+  
+  // Afficher la page de remerciement
+  document.getElementById('thank-you-page').style.display = 'block';
+  
+  // Faire défiler vers la page de remerciement
+  document.getElementById('thank-you-page').scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
 </script>
 <?php else : ?>
 <div style="text-align:center; margin:40px 0;">

@@ -83,6 +83,7 @@ function sauvegarder_prestation_ajax_handler() {
         id int(11) NOT NULL AUTO_INCREMENT,
         user_id int(11) NOT NULL,
         type_prestation varchar(255) NOT NULL,
+        type_fourche varchar(255),
         description text,
         modele_velo varchar(255),
         annee_velo varchar(50),
@@ -96,14 +97,27 @@ function sauvegarder_prestation_ajax_handler() {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
     
+    // Validation des données obligatoires
+    $type_prestation = isset($_POST['type_prestation']) ? sanitize_text_field($_POST['type_prestation']) : '';
+    if (empty($type_prestation)) {
+        wp_send_json_error('Le type de prestation est obligatoire');
+        return;
+    }
+    
     // Préparer les données
+    // Utiliser le numéro de commande existant comme numéro de suivi
+    $numero_suivi = isset($_POST['numero_suivi']) ? sanitize_text_field($_POST['numero_suivi']) : '';
+    
     $data = array(
         'user_id' => $user_id,
-        'type_prestation' => sanitize_text_field($_POST['type_prestation']),
-        'description' => sanitize_textarea_field($_POST['description']),
-        'modele_velo' => sanitize_text_field($_POST['modele_velo']),
-        'annee_velo' => sanitize_text_field($_POST['annee_velo']),
-        'statut' => sanitize_text_field($_POST['statut']),
+        'type_prestation' => $type_prestation,
+        'type_fourche' => isset($_POST['type_fourche']) ? sanitize_text_field($_POST['type_fourche']) : '',
+        'description' => isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '',
+        'modele_velo' => isset($_POST['modele_velo']) ? sanitize_text_field($_POST['modele_velo']) : '',
+        'annee_velo' => isset($_POST['annee_velo']) ? sanitize_text_field($_POST['annee_velo']) : '',
+        'statut' => isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : 'attente',
+        'prix_total' => isset($_POST['prix_total']) ? floatval($_POST['prix_total']) : 0,
+        'numero_suivi' => $numero_suivi,
         'date_creation' => current_time('mysql')
     );
     
@@ -114,10 +128,16 @@ function sauvegarder_prestation_ajax_handler() {
         $prestation_id = $wpdb->insert_id;
         wp_send_json_success(array(
             'message' => 'Prestation sauvegardée avec succès',
-            'prestation_id' => $prestation_id
+            'prestation_id' => $prestation_id,
+            'numero_suivi' => $numero_suivi
         ));
     } else {
-        wp_send_json_error('Erreur lors de la sauvegarde en base de données');
+        // Diagnostic d'erreur plus détaillé
+        $error_message = 'Erreur lors de la sauvegarde en base de données';
+        if ($wpdb->last_error) {
+            $error_message .= ': ' . $wpdb->last_error;
+        }
+        wp_send_json_error($error_message);
     }
 }
 
@@ -168,6 +188,7 @@ function afficher_page_prestations_admin() {
     // Filtres
     $filtre_statut = isset($_GET['statut']) ? sanitize_text_field($_GET['statut']) : '';
     $filtre_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+    $filtre_fourche = isset($_GET['fourche']) ? sanitize_text_field($_GET['fourche']) : '';
     $recherche = isset($_GET['recherche']) ? sanitize_text_field($_GET['recherche']) : '';
     
     // Construire la requête avec filtres
@@ -184,8 +205,14 @@ function afficher_page_prestations_admin() {
         $where_values[] = $filtre_type;
     }
     
+    if (!empty($filtre_fourche)) {
+        $where_conditions[] = "type_fourche = %s";
+        $where_values[] = $filtre_fourche;
+    }
+    
     if (!empty($recherche)) {
-        $where_conditions[] = "(modele_velo LIKE %s OR description LIKE %s)";
+        $where_conditions[] = "(modele_velo LIKE %s OR description LIKE %s OR type_fourche LIKE %s)";
+        $where_values[] = '%' . $recherche . '%';
         $where_values[] = '%' . $recherche . '%';
         $where_values[] = '%' . $recherche . '%';
     }
@@ -203,8 +230,9 @@ function afficher_page_prestations_admin() {
         $prestations = $wpdb->get_results($query);
     }
     
-    // Récupérer les types de prestations pour le filtre
+    // Récupérer les types de prestations et fourches pour les filtres
     $types_prestations = $wpdb->get_col("SELECT DISTINCT type_prestation FROM $table_prestations ORDER BY type_prestation");
+    $types_fourches = $wpdb->get_col("SELECT DISTINCT type_fourche FROM $table_prestations WHERE type_fourche IS NOT NULL AND type_fourche != '' ORDER BY type_fourche");
     
     ?>
     <div class="wrap">
@@ -231,11 +259,20 @@ function afficher_page_prestations_admin() {
                     <?php endforeach; ?>
                 </select>
                 
+                <select name="fourche">
+                    <option value="">Toutes les fourches</option>
+                    <?php foreach ($types_fourches as $fourche) : ?>
+                        <option value="<?php echo esc_attr($fourche); ?>" <?php selected($filtre_fourche, $fourche); ?>>
+                            <?php echo esc_html($fourche); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                
                 <input type="text" name="recherche" placeholder="Rechercher..." value="<?php echo esc_attr($recherche); ?>">
                 
                 <input type="submit" class="button" value="Filtrer">
                 
-                <?php if (!empty($filtre_statut) || !empty($filtre_type) || !empty($recherche)) : ?>
+                <?php if (!empty($filtre_statut) || !empty($filtre_type) || !empty($filtre_fourche) || !empty($recherche)) : ?>
                     <a href="?page=gestion-prestations" class="button">Effacer les filtres</a>
                 <?php endif; ?>
             </form>
@@ -247,8 +284,10 @@ function afficher_page_prestations_admin() {
                 <tr>
                     <th>ID</th>
                     <th>Utilisateur</th>
-                    <th>Type</th>
-                    <th>Modèle</th>
+                    <th>Type de pièce</th>
+                    <th>Modèle précis de pièce</th>
+                    <th>Modèle et année du vélo</th>
+                    <th>N° de suivi</th>
                     <th>Description</th>
                     <th>Date</th>
                     <th>Statut</th>
@@ -274,7 +313,15 @@ function afficher_page_prestations_admin() {
                             <td><strong>#<?php echo $prestation->id; ?></strong></td>
                             <td><?php echo esc_html($user_name); ?></td>
                             <td><?php echo esc_html($prestation->type_prestation); ?></td>
+                            <td><?php echo esc_html($prestation->type_fourche ?: 'Non spécifié'); ?></td>
                             <td><?php echo esc_html($prestation->modele_velo . ' (' . $prestation->annee_velo . ')'); ?></td>
+                            <td>
+                                <?php if ($prestation->numero_suivi): ?>
+                                    <strong style="color: #FF3F22;"><?php echo esc_html($prestation->numero_suivi); ?></strong>
+                                <?php else: ?>
+                                    <em style="color: #999;">Non généré</em>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                                     <?php echo esc_html(substr($prestation->description, 0, 100)); ?>
@@ -440,8 +487,14 @@ function obtenir_details_prestation_ajax() {
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">#' . $prestation->id . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Utilisateur:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($user_info) . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_prestation) . '</td></tr>';
-    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Modèle:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->modele_velo) . '</td></tr>';
-    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Année:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->annee_velo) . '</td></tr>';
+    
+    // Affichage différencié pour type de fourche et modèle
+    if (!empty($prestation->type_fourche)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type de fourche:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_fourche) . '</td></tr>';
+    }
+    
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Modèle vélo:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->modele_velo) . '</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Année vélo:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->annee_velo) . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Statut:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->statut) . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Date création:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . date('d/m/Y H:i:s', strtotime($prestation->date_creation)) . '</td></tr>';
     
@@ -780,11 +833,16 @@ function envoyer_form_fourche() {
 	$url = isset($_POST['url']) ? sanitize_text_field($_POST['url']) : '';
 	$type_fourche = isset($_POST['type_fourche']) ? sanitize_text_field($_POST['type_fourche']) : '';
 	$prestation = isset($_POST['prestation']) ? sanitize_text_field($_POST['prestation']) : '';
+	$prestations = isset($_POST['prestations']) ? $_POST['prestations'] : [];
+	$type_prestation = isset($_POST['type_prestation']) ? sanitize_text_field($_POST['type_prestation']) : '';
+	$pratique = isset($_POST['pratique']) ? sanitize_text_field($_POST['pratique']) : '';
+	$symptomes = isset($_POST['symptomes']) ? $_POST['symptomes'] : [];
 	$usages = isset($_POST['usage']) ? $_POST['usage'] : [];
 	$date_revision = isset($_POST['date_revision']) ? sanitize_text_field($_POST['date_revision']) : '';
 	$poids_pilote = isset($_POST['poids_pilote']) ? sanitize_text_field($_POST['poids_pilote']) : '';
 	$modele_annee = isset($_POST['modele_annee']) ? sanitize_text_field($_POST['modele_annee']) : '';
 	$remarques = isset($_POST['remarques']) ? sanitize_textarea_field($_POST['remarques']) : '';
+	$prix_total = isset($_POST['prix_total']) ? floatval($_POST['prix_total']) : 0;
 	// Champs utilisateur additionnels
 	$user_email = '';
 	$user_nom = '';
@@ -806,15 +864,45 @@ function envoyer_form_fourche() {
 	// Génération du numéro de commande unique
 	$order_number = 'CMD-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
 
-	// Construction du message
+	// Construction du message avec formatage amélioré
 	$message = "Numéro de commande : $order_number\n";
-	$message .= "Type de fourche : $type_fourche\n";
-	$message .= "Prestation : $prestation\n";
+	$message .= "=== INFORMATIONS FOURCHE ===\n";
+	$message .= "Modèle de fourche : $type_fourche\n";
+	$message .= "\n=== INFORMATIONS VÉLO ===\n";
+	$message .= "Modèle et année du vélo : $modele_annee\n";
+	$message .= "\n=== PRESTATIONS DEMANDÉES ===\n";
+	
+	// Prestations (nouveau format avec array)
+	if (!empty($prestations) && is_array($prestations)) {
+		$message .= "Prestations : " . implode(', ', array_map('sanitize_text_field', $prestations)) . "\n";
+	} elseif (!empty($prestation)) {
+		$message .= "Prestation : $prestation\n";
+	}
+	
+	// Nouveaux champs
+	$message .= "Type de prestation : $type_prestation\n";
 	$message .= "Options supplémentaires : ".(is_array($usages) ? implode(', ', array_map('sanitize_text_field', $usages)) : '')."\n";
+	$message .= "Pratique : $pratique\n";
+	
+	// Symptômes
+	if (!empty($symptomes) && is_array($symptomes)) {
+		$message .= "Symptômes : " . implode(', ', array_map('sanitize_text_field', $symptomes)) . "\n";
+	}
+	
+	$message .= "\n=== INFORMATIONS TECHNIQUES ===\n";
 	$message .= "Date de la dernière révision : $date_revision\n";
 	$message .= "Poids du pilote : $poids_pilote kg\n";
-	$message .= "Modèle et année du vélo : $modele_annee\n";
-	$message .= "Remarques : $remarques\n";
+	
+	if (!empty($remarques)) {
+		$message .= "\n=== REMARQUES ===\n";
+		$message .= "$remarques\n";
+	}
+	
+	// Prix total
+	if ($prix_total > 0) {
+		$message .= "\n=== PRIX ===\n";
+		$message .= "Prix total estimé : " . number_format($prix_total, 2, ',', ' ') . " € TTC\n";
+	}
 
     // Destinataire
     $admin_email = get_option('admin_email');
@@ -831,19 +919,12 @@ function envoyer_form_fourche() {
 
     // Envoi à l'admin avec l'utilisateur en copie (CC)
 	$subject = 'Nouvelle demande de prestation fourche';
-	// Ajout du contexte selon l'URL
-	$current_url = $url;
-	if (strpos($current_url, 'fourche-lefty-ocho') !== false) {
-		$subject .= ' - Lefty Ocho/Oliver';
-	} elseif (strpos($current_url, 'fourche-lefty-hybrid') !== false) {
-		$subject .= ' - Lefty Hybrid';
-	} elseif (strpos($current_url, 'fourche-fatty') !== false) {
-		$subject .= ' - Fatty';
-	} elseif (strpos($current_url, 'fourche-lefty-a-soufflet') !== false) {
-		$subject .= ' - Lefty A Soufflet';
-	}  else {
-		$subject .= ' - '. $current_url;
+	
+	// Ajout du modèle de fourche dans le sujet
+	if (!empty($type_fourche)) {
+		$subject .= " - $type_fourche";
 	}
+	
 	// Ajout infos utilisateur dans l'objet
 	$infos = [];
 	if ($user_email) $infos[] = 'Email: ' . $user_email;
