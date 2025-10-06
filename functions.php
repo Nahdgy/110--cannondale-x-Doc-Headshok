@@ -593,6 +593,8 @@ if ( ! function_exists( 'hello_elementor_setup' ) ) {
 }
 add_action( 'after_setup_theme', 'hello_elementor_setup' );
 
+
+
 function hello_maybe_update_theme_version_in_db() {
 	$theme_version_option_name = 'hello_theme_version';
 	// The theme version saved in the database.
@@ -1043,6 +1045,154 @@ add_filter('woocommerce_product_single_add_to_cart_text', 'woo_custom_cart_butto
  
 function woo_custom_cart_button_text() {
 return __('+', 'woocommerce');
+}
+
+// Afficher les pratiques dans le profil utilisateur admin
+add_action('show_user_profile', 'afficher_pratiques_profil');
+add_action('edit_user_profile', 'afficher_pratiques_profil');
+
+function afficher_pratiques_profil($user) {
+    $pratiques = get_user_meta($user->ID, 'pratique', true);
+    $civilite = get_user_meta($user->ID, 'civilite', true);
+    $telephone = get_user_meta($user->ID, 'telephone', true);
+    $dob = get_user_meta($user->ID, 'dob', true);
+    $adresse = get_user_meta($user->ID, 'adresse', true);
+    
+    if (!is_array($pratiques)) {
+        $pratiques = $pratiques ? [$pratiques] : [];
+    }
+    ?>
+    <h3>Informations personnalisées</h3>
+    <table class="form-table">
+        <tr>
+            <th><label>Civilité</label></th>
+            <td>
+                <?php echo !empty($civilite) ? esc_html($civilite) : '<em>Non renseignée</em>'; ?>
+            </td>
+        </tr>
+        <tr>
+            <th><label>Pratiques sportives</label></th>
+            <td>
+                <?php 
+                if (!empty($pratiques)) {
+                    echo '<div style="display: flex; gap: 5px; flex-wrap: wrap;">';
+                    foreach ($pratiques as $pratique) {
+                        echo '<span style="background: #0073aa; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">' . esc_html($pratique) . '</span>';
+                    }
+                    echo '</div>';
+                } else {
+                    echo '<em>Aucune pratique sélectionnée</em>';
+                }
+                ?>
+            </td>
+        </tr>
+        <tr>
+            <th><label>Téléphone</label></th>
+            <td>
+                <?php echo !empty($telephone) ? esc_html($telephone) : '<em>Non renseigné</em>'; ?>
+            </td>
+        </tr>
+        <tr>
+            <th><label>Date de naissance</label></th>
+            <td>
+                <?php echo !empty($dob) ? esc_html(date('d/m/Y', strtotime($dob))) : '<em>Non renseignée</em>'; ?>
+            </td>
+        </tr>
+        <tr>
+            <th><label>Adresse de livraison</label></th>
+            <td>
+                <?php echo !empty($adresse) ? nl2br(esc_html($adresse)) : '<em>Non renseignée</em>'; ?>
+            </td>
+        </tr>
+    </table>
+    
+    <h3>Historique des prestations</h3>
+    <table class="form-table">
+        <tr>
+            <td colspan="2">
+                <?php
+                // Afficher l'historique des prestations de cet utilisateur
+                global $wpdb;
+                $table_prestations = $wpdb->prefix . 'demandes_prestations';
+                
+                $prestations = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM $table_prestations WHERE user_id = %d ORDER BY date_creation DESC LIMIT 10",
+                    $user->ID
+                ));
+                
+                if (!empty($prestations)) {
+                    echo '<table style="width: 100%; border-collapse: collapse;">';
+                    echo '<thead>';
+                    echo '<tr style="background: #f9f9f9;">';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Date</th>';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Modèle</th>';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">N° suivi</th>';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Statut</th>';
+                    echo '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Prix</th>';
+                    echo '</tr>';
+                    echo '</thead>';
+                    echo '<tbody>';
+                    
+                    foreach ($prestations as $prestation) {
+                        echo '<tr>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . date('d/m/Y', strtotime($prestation->date_creation)) . '</td>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($prestation->type_prestation) . '</td>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">' . esc_html($prestation->modele_velo . ' (' . $prestation->annee_velo . ')') . '</td>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">';
+                        if ($prestation->numero_suivi) {
+                            echo '<strong style="color: #FF3F22;">' . esc_html($prestation->numero_suivi) . '</strong>';
+                        } else {
+                            echo '<em>Non généré</em>';
+                        }
+                        echo '</td>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">';
+                        
+                        $statut_colors = array(
+                            'attente' => '#f39c12',
+                            'en_cours' => '#3498db',
+                            'terminee' => '#27ae60'
+                        );
+                        
+                        $statut_color = isset($statut_colors[$prestation->statut]) ? $statut_colors[$prestation->statut] : '#95a5a6';
+                        
+                        echo '<span style="color: ' . $statut_color . '; font-weight: bold;">';
+                        $statut_labels = array(
+                            'attente' => 'En attente',
+                            'en_cours' => 'En cours',
+                            'terminee' => 'Terminée'
+                        );
+                        echo $statut_labels[$prestation->statut] ?? ucfirst($prestation->statut);
+                        echo '</span>';
+                        echo '</td>';
+                        echo '<td style="border: 1px solid #ddd; padding: 8px;">';
+                        if ($prestation->prix_total > 0) {
+                            echo wc_price($prestation->prix_total);
+                        } else {
+                            echo '<em>N/A</em>';
+                        }
+                        echo '</td>';
+                        echo '</tr>';
+                    }
+                    
+                    echo '</tbody>';
+                    echo '</table>';
+                    
+                    // Lien vers la gestion complète
+                    echo '<p style="margin-top: 10px;">';
+                    echo '<a href="' . admin_url('admin.php?page=gestion-prestations&recherche=' . urlencode($user->user_email)) . '" class="button button-secondary">';
+                    echo 'Voir toutes les prestations de cet utilisateur';
+                    echo '</a>';
+                    echo '</p>';
+                    
+                } else {
+                    echo '<p><em>Aucune prestation demandée par cet utilisateur.</em></p>';
+                }
+                ?>
+            </td>
+        </tr>
+    </table>
+    <?php
 }
 
 require HELLO_THEME_PATH . '/theme.php';

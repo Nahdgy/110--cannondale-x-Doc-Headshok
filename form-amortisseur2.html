@@ -176,6 +176,12 @@ window.ajax_object = window.ajax_object || {
     nonce: '<?php echo esc_js($ajax_vars['nonce']); ?>',
     user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
 };
+// Fonction pour afficher la page de remerciement
+function showThankYouPage(numeroCommande) {
+    document.getElementById('dynamic-form').style.display = 'none';
+    document.getElementById('thank-you-page').style.display = 'block';
+    document.getElementById('order-number-display').textContent = numeroCommande;
+}
 
 // === FONCTION SYNCHRONISATION ===
 function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
@@ -458,24 +464,6 @@ document.getElementById('multi-step-form').onsubmit = function(e) {
   };
   xhr.send(formData);
 };
-
-// Fonction pour afficher la page de remerciement
-function showThankYouPage(orderNumber) {
-  // Cacher le formulaire
-  document.getElementById('multi-step-form').style.display = 'none';
-  
-  // Afficher le numéro de commande dans la page de remerciement
-  if (orderNumber) {
-    document.getElementById('order-number-display').textContent = orderNumber;
-  }
-  
-  // Afficher la page de remerciement
-  document.getElementById('thank-you-page').style.display = 'block';
-  
-  // Faire défiler vers la page de remerciement
-  document.getElementById('thank-you-page').scrollIntoView({behavior: 'smooth', block: 'center'});
-}
-
 </script>
 <?php else : ?>
 <div style="text-align:center; margin:40px 0;">
