@@ -66,6 +66,30 @@ function form_amortisseur_1choice_shortcode(){
 }
 </style>
 <?php if (is_user_logged_in()) : ?>
+<?php 
+// Vérification de l'adresse utilisateur
+$user_id = get_current_user_id();
+$adresse_ligne1 = get_user_meta($user_id, 'billing_address_1', true);
+$ville = get_user_meta($user_id, 'billing_city', true);
+$code_postal = get_user_meta($user_id, 'billing_postcode', true);
+$pays = get_user_meta($user_id, 'billing_country', true);
+
+// Si aucune adresse complète n'est renseignée
+if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pays)) : ?>
+<div style="text-align:center; margin:40px 0; background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px; padding:30px;">
+  <h3 style="color:#856404; margin-bottom:15px;">📍 Adresse de livraison requise</h3>
+  <p style="font-size:1.1em; color:#856404; margin-bottom:20px;">
+    Pour utiliser nos services de réparation, nous avons besoin de votre adresse complète pour l'expédition et la facturation.
+  </p>
+  <a href="https://doc-headshok.com/mon-compte/" 
+     style="background:#FF3F22;color:#fff;padding:15px 30px;border-radius:8px;font-weight:600;text-decoration:none;display:inline-block;font-size:1.1em;">
+    📝 Compléter mon adresse
+  </a>
+  <p style="font-size:0.9em; color:#6c757d; margin-top:15px;">
+    Une fois votre adresse renseignée, vous pourrez accéder à tous nos formulaires de demande de prestation.
+  </p>
+</div>
+<?php else : ?>
 <form id="multi-step-form">
   <div style="margin-bottom:8px;">
     <span style="font-weight:600;">Étape <span id="progress-step">1</span>/2</span>
@@ -487,10 +511,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php endif; // Fin de la vérification d'adresse ?>
 <?php else : ?>
 <div style="text-align:center; margin:40px 0;">
   <p style="font-size:1.2em; font-weight:600;">Vous devez être connecté pour accéder au formulaire.</p>
-  <a href="<?php echo wp_login_url(); ?>" class="button" style="background:#FF3F22;color:#fff;padding:12px 32px;border-radius:8px;font-weight:600;text-decoration:none;">Se connecter</a>
+  <a href="https://doc-headshok.com/login/" class="button" style="background:#FF3F22;color:#fff;padding:12px 32px;border-radius:8px;font-weight:600;text-decoration:none;">Se connecter</a>
 </div>
 <?php endif; ?>
 <?php
