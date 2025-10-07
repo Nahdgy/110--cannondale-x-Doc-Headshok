@@ -384,7 +384,32 @@ function mon_compte_personnalise_shortcode() {
 
         update_user_meta($user_id, 'telephone', sanitize_text_field($_POST['telephone']));
         update_user_meta($user_id, 'dob', sanitize_text_field($_POST['dob']));
-        update_user_meta($user_id, 'adresse', sanitize_textarea_field($_POST['adresse']));
+        
+        // Traitement des champs d'adresse séparés
+        $adresse_ligne1 = sanitize_text_field($_POST['adresse_ligne1']);
+        $adresse_ligne2 = sanitize_text_field($_POST['adresse_ligne2']);
+        $ville = sanitize_text_field($_POST['ville']);
+        $code_postal = sanitize_text_field($_POST['code_postal']);
+        $pays = sanitize_text_field($_POST['pays']);
+        
+        // Sauvegarder dans les métadonnées WordPress/WooCommerce standard
+        update_user_meta($user_id, 'billing_address_1', $adresse_ligne1);
+        update_user_meta($user_id, 'billing_address_2', $adresse_ligne2);
+        update_user_meta($user_id, 'billing_city', $ville);
+        update_user_meta($user_id, 'billing_postcode', $code_postal);
+        update_user_meta($user_id, 'billing_country', $pays);
+        update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['telephone']));
+        
+        // Copier pour l'adresse de livraison par défaut
+        update_user_meta($user_id, 'shipping_address_1', $adresse_ligne1);
+        update_user_meta($user_id, 'shipping_address_2', $adresse_ligne2);
+        update_user_meta($user_id, 'shipping_city', $ville);
+        update_user_meta($user_id, 'shipping_postcode', $code_postal);
+        update_user_meta($user_id, 'shipping_country', $pays);
+        
+        // Conserver le champ adresse combiné pour compatibilité
+        $adresse_complete = trim($adresse_ligne1 . "\n" . $adresse_ligne2 . "\n" . $ville . " " . $code_postal . "\n" . $pays);
+        update_user_meta($user_id, 'adresse', $adresse_complete);
         $user = get_userdata($user_id);
     }
 
@@ -396,8 +421,48 @@ function mon_compte_personnalise_shortcode() {
     }
     $telephone = get_user_meta($user->ID, 'telephone', true);
     $dob = get_user_meta($user->ID, 'dob', true);
+    
+    // Récupération des champs d'adresse séparés
+    $adresse_ligne1 = get_user_meta($user->ID, 'billing_address_1', true);
+    $adresse_ligne2 = get_user_meta($user->ID, 'billing_address_2', true);
+    $ville = get_user_meta($user->ID, 'billing_city', true);
+    $code_postal = get_user_meta($user->ID, 'billing_postcode', true);
+    $pays = get_user_meta($user->ID, 'billing_country', true);
+    
+    // Conserver le champ adresse combiné pour compatibilité
     $adresse = get_user_meta($user->ID, 'adresse', true);
+    
     $pratiques_options = ['VTT', 'VAE', 'Route', 'Vélos Urbains'];
+    
+    // Liste des pays (principaux pays européens et autres)
+    $pays_options = [
+        'FR' => 'France',
+        'BE' => 'Belgique',
+        'CH' => 'Suisse',
+        'LU' => 'Luxembourg',
+        'DE' => 'Allemagne',
+        'IT' => 'Italie',
+        'ES' => 'Espagne',
+        'PT' => 'Portugal',
+        'NL' => 'Pays-Bas',
+        'GB' => 'Royaume-Uni',
+        'IE' => 'Irlande',
+        'AT' => 'Autriche',
+        'DK' => 'Danemark',
+        'SE' => 'Suède',
+        'NO' => 'Norvège',
+        'FI' => 'Finlande',
+        'PL' => 'Pologne',
+        'CZ' => 'République tchèque',
+        'HU' => 'Hongrie',
+        'SK' => 'Slovaquie',
+        'SI' => 'Slovénie',
+        'HR' => 'Croatie',
+        'US' => 'États-Unis',
+        'CA' => 'Canada',
+        'AU' => 'Australie',
+        'JP' => 'Japon'
+    ];
 
     // Compteur de commandes WooCommerce
     $customer_orders = wc_get_orders([
@@ -943,9 +1008,36 @@ function mon_compte_personnalise_shortcode() {
                         <input type="date" id="dob" name="dob" value="<?php echo esc_attr($dob); ?>" class="disabled-input" disabled>
                     </div>
 
+                    <div class="full-width">
+                        <label for="adresse_ligne1">Adresse ligne 1</label>
+                        <input type="text" id="adresse_ligne1" name="adresse_ligne1" value="<?php echo esc_attr($adresse_ligne1); ?>" class="disabled-input" disabled placeholder="Numéro et nom de rue">
+                    </div>
+
+                    <div class="full-width">
+                        <label for="adresse_ligne2">Adresse ligne 2</label>
+                        <input type="text" id="adresse_ligne2" name="adresse_ligne2" value="<?php echo esc_attr($adresse_ligne2); ?>" class="disabled-input" disabled placeholder="Complément d'adresse (optionnel)">
+                    </div>
+
                     <div>
-                        <label for="adresse">Adresse de livraison</label>
-                        <textarea id="adresse" name="adresse" rows="3" class="disabled-input" disabled><?php echo esc_textarea($adresse); ?></textarea>
+                        <label for="ville">Ville</label>
+                        <input type="text" id="ville" name="ville" value="<?php echo esc_attr($ville); ?>" class="disabled-input" disabled placeholder="Votre ville">
+                    </div>
+
+                    <div>
+                        <label for="code_postal">Code postal</label>
+                        <input type="text" id="code_postal" name="code_postal" value="<?php echo esc_attr($code_postal); ?>" class="disabled-input" disabled placeholder="Code postal">
+                    </div>
+
+                    <div class="full-width">
+                        <label for="pays">Pays</label>
+                        <select id="pays" name="pays" class="disabled-input" disabled>
+                            <option value="">Sélectionner un pays</option>
+                            <?php foreach ($pays_options as $code => $nom): ?>
+                                <option value="<?php echo esc_attr($code); ?>" <?php selected($pays, $code); ?>>
+                                    <?php echo esc_html($nom); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <div class="form-row-password">
