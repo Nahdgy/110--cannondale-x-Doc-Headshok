@@ -1,0 +1,489 @@
+/*
+ * Plugin Name: Shortcode formulaire inscription personnalisé
+ * Description: Shortcode [mon_formulaire_inscription] affichant un formulaire d'inscription avec validation
+ * Version: 1.0
+ * Author: TonNom
+ */
+
+function mon_formulaire_inscription_shortcode() {
+    // ✅ Si l'utilisateur est déjà connecté, on le redirige
+    if (is_user_logged_in()) {
+        wp_redirect('https://doc-headshok.com/mon-compte/');
+        exit;
+    }
+
+    $message = '';
+    $message_type = '';
+
+    // 📝 Traitement du formulaire d'inscription
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inscription_submit'])) {
+        $errors = [];
+
+        // Validation des champs obligatoires
+        $nom = sanitize_text_field($_POST['nom']);
+        $prenom = sanitize_text_field($_POST['prenom']);
+        $email = sanitize_email($_POST['email']);
+        $telephone = sanitize_text_field($_POST['telephone']);
+        $adresse_ligne1 = sanitize_text_field($_POST['adresse_ligne1']);
+        $adresse_ligne2 = sanitize_text_field($_POST['adresse_ligne2']);
+        $ville = sanitize_text_field($_POST['ville']);
+        $code_postal = sanitize_text_field($_POST['code_postal']);
+        $pays = sanitize_text_field($_POST['pays']);
+        $password = $_POST['password'];
+        $civilite = sanitize_text_field($_POST['civilite']);
+        $pratiques = isset($_POST['pratique']) && is_array($_POST['pratique']) ? array_map('sanitize_text_field', $_POST['pratique']) : [];
+
+        // Validation
+        if (empty($nom)) $errors[] = 'Le nom est obligatoire.';
+        if (empty($prenom)) $errors[] = 'Le prénom est obligatoire.';
+        if (empty($email) || !is_email($email)) $errors[] = 'Une adresse email valide est obligatoire.';
+        if (empty($telephone)) $errors[] = 'Le téléphone est obligatoire.';
+        if (empty($adresse_ligne1)) $errors[] = 'L\'adresse ligne 1 est obligatoire.';
+        if (empty($ville)) $errors[] = 'La ville est obligatoire.';
+        if (empty($code_postal)) $errors[] = 'Le code postal est obligatoire.';
+        if (empty($pays)) $errors[] = 'Le pays est obligatoire.';
+        if (empty($password) || strlen($password) < 6) $errors[] = 'Le mot de passe doit contenir au moins 6 caractères.';
+        if (empty($pratiques)) $errors[] = 'Veuillez sélectionner au moins une pratique.';
+
+        // Vérifier si l'email existe déjà
+        if (email_exists($email)) {
+            $errors[] = 'Cette adresse email est déjà utilisée.';
+        }
+
+        if (empty($errors)) {
+            // Créer l'utilisateur
+            $user_id = wp_create_user($email, $password, $email);
+            
+            if (!is_wp_error($user_id)) {
+                // Mettre à jour les informations utilisateur
+                wp_update_user([
+                    'ID' => $user_id,
+                    'first_name' => $prenom,
+                    'last_name' => $nom,
+                ]);
+
+                // Ajouter les métadonnées
+                update_user_meta($user_id, 'civilite', $civilite);
+                update_user_meta($user_id, 'pratique', $pratiques);
+                update_user_meta($user_id, 'telephone', $telephone);
+                
+                // Métadonnées d'adresse WordPress standard
+                update_user_meta($user_id, 'billing_address_1', $adresse_ligne1);
+                update_user_meta($user_id, 'billing_address_2', $adresse_ligne2);
+                update_user_meta($user_id, 'billing_city', $ville);
+                update_user_meta($user_id, 'billing_postcode', $code_postal);
+                update_user_meta($user_id, 'billing_country', $pays);
+                update_user_meta($user_id, 'billing_phone', $telephone);
+                
+                // Copier pour l'adresse de livraison par défaut
+                update_user_meta($user_id, 'shipping_address_1', $adresse_ligne1);
+                update_user_meta($user_id, 'shipping_address_2', $adresse_ligne2);
+                update_user_meta($user_id, 'shipping_city', $ville);
+                update_user_meta($user_id, 'shipping_postcode', $code_postal);
+                update_user_meta($user_id, 'shipping_country', $pays);
+
+                // Métadonnées d'adresse personnalisée (pour compatibilité)
+                $adresse_complete = trim($adresse_ligne1 . "\n" . $adresse_ligne2 . "\n" . $ville . " " . $code_postal . "\n" . $pays);
+                update_user_meta($user_id, 'adresse', $adresse_complete);
+
+                // Connecter automatiquement l'utilisateur
+                $creds = [
+                    'user_login'    => $email,
+                    'user_password' => $password,
+                    'remember'      => true,
+                ];
+                $user = wp_signon($creds, false);
+
+                if (!is_wp_error($user)) {
+                    wp_redirect('https://doc-headshok.com/mon-compte/');
+                    exit;
+                }
+            } else {
+                $message = '<p style="color:red;">Erreur lors de la création du compte. Veuillez réessayer.</p>';
+                $message_type = 'error';
+            }
+        } else {
+            $message = '<div style="color:red;"><ul>';
+            foreach ($errors as $error) {
+                $message .= '<li>' . esc_html($error) . '</li>';
+            }
+            $message .= '</ul></div>';
+            $message_type = 'error';
+        }
+    }
+
+    // Récupération des valeurs pour conserver les données en cas d'erreur
+    $nom_value = isset($_POST['nom']) ? sanitize_text_field($_POST['nom']) : '';
+    $prenom_value = isset($_POST['prenom']) ? sanitize_text_field($_POST['prenom']) : '';
+    $email_value = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $telephone_value = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
+    $adresse_ligne1_value = isset($_POST['adresse_ligne1']) ? sanitize_text_field($_POST['adresse_ligne1']) : '';
+    $adresse_ligne2_value = isset($_POST['adresse_ligne2']) ? sanitize_text_field($_POST['adresse_ligne2']) : '';
+    $ville_value = isset($_POST['ville']) ? sanitize_text_field($_POST['ville']) : '';
+    $code_postal_value = isset($_POST['code_postal']) ? sanitize_text_field($_POST['code_postal']) : '';
+    $pays_value = isset($_POST['pays']) ? sanitize_text_field($_POST['pays']) : '';
+    $civilite_value = isset($_POST['civilite']) ? sanitize_text_field($_POST['civilite']) : '';
+    $pratiques_selected = isset($_POST['pratique']) && is_array($_POST['pratique']) ? array_map('sanitize_text_field', $_POST['pratique']) : [];
+
+    $pratiques_options = ['VTT', 'VAE', 'Route', 'Vélos Urbains'];
+    
+    // Liste des pays (principaux pays européens et autres)
+    $pays_options = [
+        'FR' => 'France',
+        'BE' => 'Belgique',
+        'CH' => 'Suisse',
+        'LU' => 'Luxembourg',
+        'DE' => 'Allemagne',
+        'IT' => 'Italie',
+        'ES' => 'Espagne',
+        'PT' => 'Portugal',
+        'NL' => 'Pays-Bas',
+        'GB' => 'Royaume-Uni',
+        'IE' => 'Irlande',
+        'AT' => 'Autriche',
+        'DK' => 'Danemark',
+        'SE' => 'Suède',
+        'NO' => 'Norvège',
+        'FI' => 'Finlande',
+        'PL' => 'Pologne',
+        'CZ' => 'République tchèque',
+        'HU' => 'Hongrie',
+        'SK' => 'Slovaquie',
+        'SI' => 'Slovénie',
+        'HR' => 'Croatie',
+        'US' => 'États-Unis',
+        'CA' => 'Canada',
+        'AU' => 'Australie',
+        'JP' => 'Japon'
+    ];
+
+    ob_start();
+    ?>
+    <style>
+        .mon-form-inscription {
+            max-width: 480px;
+            margin: 30px auto;
+            font-family: Arial, sans-serif;
+            border: 1px solid #ddd;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+
+        .mon-form-inscription h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 35px;
+            color: #000000;
+        }
+
+        .mon-form-inscription .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+
+        .mon-form-inscription .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mon-form-inscription .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .mon-form-inscription label {
+            display: block;
+            margin-bottom: 6px;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 300;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .mon-form-inscription label .required {
+            color: red;
+            margin-left: 4px;
+        }
+
+        .mon-form-inscription input[type="email"],
+        .mon-form-inscription input[type="text"],
+        .mon-form-inscription input[type="tel"],
+        .mon-form-inscription input[type="password"],
+        .mon-form-inscription select,
+        .mon-form-inscription textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #F7F7F7;
+        }
+
+        .mon-form-inscription select {
+            height: 42px;
+        }
+
+        .mon-form-inscription textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .mon-form-inscription .checkbox-group {
+            margin-top: 8px;
+        }
+
+        .mon-form-inscription .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 300;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .mon-form-inscription .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .mon-form-inscription button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #151515;
+            color: #F9F9F9;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .mon-form-inscription button[type="submit"]:hover {
+            background-color: #000000;
+        }
+
+        .mon-form-inscription .texte-connexion {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .mon-form-inscription .texte-connexion a {
+            color: #000000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .mon-form-inscription .separator {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            color: #000000;
+            text-align: center;
+        }
+
+        .mon-form-inscription .separator::before,
+        .mon-form-inscription .separator::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #FF3F22;
+            margin: 0 10px;
+        }
+
+        .mon-form-inscription .btn-social {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mon-form-inscription .btn-social button {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'din-next-lt-pro', sans-serif;
+            background-color: #F7F7F7;
+            color: #000000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mon-form-inscription .btn-social button img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .mon-form-inscription .btn-social button:hover {
+            background-color: #e6e6e6;
+        }
+
+        .mon-form-inscription .btn-social button:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .pratique-label {
+            grid-column: span 2;
+            margin-bottom: 0;
+        }
+
+        .pratique-checkboxes {
+            grid-column: span 2;
+            margin-top: 8px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .mon-form-inscription .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mon-form-inscription .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .pratique-label,
+            .pratique-checkboxes {
+                grid-column: span 1;
+            }
+        }
+    </style>
+
+    <div class="mon-form-inscription">
+        <h2>Créer un compte</h2>
+
+        <?php echo $message; ?>
+
+        <form method="post" action="">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="civilite">Civilité <span class="required">*</span></label>
+                    <select id="civilite" name="civilite" required>
+                        <option value="">Sélectionner</option>
+                        <option value="M." <?php selected($civilite_value, 'M.'); ?>>M.</option>
+                        <option value="Mme" <?php selected($civilite_value, 'Mme'); ?>>Mme</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <!-- Espacement -->
+                </div>
+
+                <div class="form-group">
+                    <label for="nom">Nom <span class="required">*</span></label>
+                    <input type="text" id="nom" name="nom" required placeholder="Votre nom" value="<?php echo esc_attr($nom_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="prenom">Prénom <span class="required">*</span></label>
+                    <input type="text" id="prenom" name="prenom" required placeholder="Votre prénom" value="<?php echo esc_attr($prenom_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Adresse email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required placeholder="Votre email" value="<?php echo esc_attr($email_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="telephone">Téléphone <span class="required">*</span></label>
+                    <input type="tel" id="telephone" name="telephone" required placeholder="Votre téléphone" value="<?php echo esc_attr($telephone_value); ?>">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="adresse_ligne1">Adresse ligne 1 <span class="required">*</span></label>
+                    <input type="text" id="adresse_ligne1" name="adresse_ligne1" required placeholder="Numéro et nom de rue" value="<?php echo esc_attr($adresse_ligne1_value); ?>">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="adresse_ligne2">Adresse ligne 2</label>
+                    <input type="text" id="adresse_ligne2" name="adresse_ligne2" placeholder="Complément d'adresse (optionnel)" value="<?php echo esc_attr($adresse_ligne2_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="ville">Ville <span class="required">*</span></label>
+                    <input type="text" id="ville" name="ville" required placeholder="Votre ville" value="<?php echo esc_attr($ville_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="code_postal">Code postal <span class="required">*</span></label>
+                    <input type="text" id="code_postal" name="code_postal" required placeholder="Code postal" value="<?php echo esc_attr($code_postal_value); ?>">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="pays">Pays <span class="required">*</span></label>
+                    <select id="pays" name="pays" required>
+                        <option value="">Sélectionner un pays</option>
+                        <?php foreach ($pays_options as $code => $nom): ?>
+                            <option value="<?php echo esc_attr($code); ?>" <?php selected($pays_value, $code); ?>>
+                                <?php echo esc_html($nom); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="password">Mot de passe <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" required placeholder="Au moins 6 caractères">
+                </div>
+
+                <label class="pratique-label">Pratique <span class="required">*</span></label>
+                <div class="pratique-checkboxes">
+                    <div class="checkbox-group">
+                        <?php foreach ($pratiques_options as $option): ?>
+                            <label>
+                                <input type="checkbox" name="pratique[]" value="<?php echo esc_attr($option); ?>"
+                                    <?php echo in_array($option, $pratiques_selected) ? 'checked' : ''; ?>>
+                                <?php echo esc_html($option); ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" name="inscription_submit">CRÉER MON COMPTE</button>
+        </form>
+
+        <p class="texte-connexion">
+            J'ai déjà un compte ? <a href="/login/">Me connecter</a>
+        </p>
+
+        <div class="separator">Ou</div>
+
+        <div class="btn-social">
+            <button class="btn-google" onclick="window.location.href='#';" type="button" aria-label="S'inscrire avec Google" disabled>
+                <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector3.png" alt="Google logo">
+                S'inscrire avec Google
+            </button>
+
+            <button class="btn-facebook" onclick="window.location.href='#';" type="button" aria-label="S'inscrire avec Facebook" disabled>
+                <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector4.png" alt="Facebook logo">
+                S'inscrire avec Facebook
+            </button>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('mon_formulaire_inscription', 'mon_formulaire_inscription_shortcode');

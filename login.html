@@ -9,7 +9,7 @@
 function mon_formulaire_connexion_shortcode() {
     // ✅ Si l'utilisateur est déjà connecté, on le redirige
     /*if (is_user_logged_in()) {
-        wp_redirect('https://cannonbale.com/mon-compte/');
+        wp_redirect('https://doc-headshok.com/mon-compte/');
         exit;
     }*/
 
@@ -28,11 +28,11 @@ function mon_formulaire_connexion_shortcode() {
             $message = '<p style="color:red;">Identifiants invalides, veuillez réessayer.</p>';
         } else {
             // Détecter la provenance
-            $redirect_url = 'https://cannonbale.com/mon-compte/';
+            $redirect_url = 'https://doc-headshok.com/mon-compte/';
             if (!empty($_SERVER['HTTP_REFERER'])) {
                 $referer = $_SERVER['HTTP_REFERER'];
                 if (strpos($referer, '/panier') !== false) {
-                    $redirect_url = 'https://cannonbale.com/commander/';
+                    $redirect_url = 'https://doc-headshok.com/commander/';
                 }
             }
             wp_redirect($redirect_url);
@@ -200,19 +200,19 @@ function mon_formulaire_connexion_shortcode() {
         </div>
 
         <p class="texte-inscription">
-            Je n’ai pas de compte ? <a href="<?php echo esc_url(wp_registration_url()); ?>">Inscrivez-vous</a>
+            Je n’ai pas de compte ? <a href="https://doc-headshok.com/signin/">Inscrivez-vous</a>
         </p>
 
         <div class="separator">Ou</div>
 
         <div class="btn-social">
             <button class="btn-google" onclick="window.location.href='#';" type="button" aria-label="Se connecter avec Google" disabled>
-                <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector3.png" alt="Google logo">
+                <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector3.png" alt="Google logo">
                 Se connecter avec Google
             </button>
 
             <button class="btn-facebook" onclick="window.location.href='#';" type="button" aria-label="Se connecter avec Facebook" disabled>
-                <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector4.png" alt="Facebook logo">
+                <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector4.png" alt="Facebook logo">
                 Se connecter avec Facebook
             </button>
         </div>
