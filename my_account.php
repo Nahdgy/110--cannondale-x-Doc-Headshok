@@ -468,14 +468,17 @@ function mon_compte_personnalise_shortcode() {
     $customer_orders = wc_get_orders([
         'customer_id' => $user->ID,
         'return'      => 'ids',
-        'status'      => ['processing', 'on-hold', 'completed']
+        'status'      => ['pending', 'processing', 'on-hold', 'completed']
     ]);
 
+    $en_attente_paiement = 0;
     $en_cours = 0;
     $passees = 0;
     foreach ($customer_orders as $order_id) {
         $order = wc_get_order($order_id);
-        if ($order->has_status(['processing', 'on-hold'])) {
+        if ($order->has_status('pending')) {
+            $en_attente_paiement++;
+        } elseif ($order->has_status(['processing', 'on-hold'])) {
             $en_cours++;
         } elseif ($order->has_status('completed')) {
             $passees++;
@@ -1054,9 +1057,75 @@ function mon_compte_personnalise_shortcode() {
             <div id="commandes" class="section-compte">
                 <h2>Mes commandes</h2>
 				<?php
+				// Affichage des commandes en attente de paiement
+				$en_attente_paiement_affichees = 0;
+				echo '<div style="margin-top: 20px;">';
+
+				foreach ($customer_orders as $order_id) {
+					$order = wc_get_order($order_id);
+					if ($order->has_status('pending')) {
+						$en_attente_paiement_affichees++;
+					}
+				}
+				echo '<p class="commande-compteur">En attente de paiement (' . $en_attente_paiement_affichees . ')</p>';
+
+				if ($en_attente_paiement_affichees > 0) {
+					foreach ($customer_orders as $order_id) {
+						$order = wc_get_order($order_id);
+						if ($order->has_status('pending')) {
+							echo '<div style="border: 1px solid #ffcc00; padding: 10px; margin-bottom: 15px; border-radius: 10px; background-color: #fff9e6;">';
+							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . ' - <span style="color: #e67e00; font-weight: bold;">Paiement requis</span></div>';
+
+							// Calculer le prix total de la commande avec livraison
+							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
+							
+							// Récupérer le mode de livraison
+							$shipping_methods = $order->get_shipping_methods();
+							$shipping_method_name = '';
+							if (!empty($shipping_methods)) {
+								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
+								$shipping_method_name = $shipping_method->get_method_title();
+							}
+							
+							foreach ($order->get_items() as $item) {
+								$product = $item->get_product();
+								if ($product) {
+									$product_name = $item->get_name();
+									// Afficher le prix total de la commande avec le mode de livraison
+									$price_display = wc_price($total_order_price);
+									if ($shipping_method_name) {
+										$price_display .= ' (' . esc_html($shipping_method_name) . ')';
+									}
+									$product_image = $product->get_image(array(50, 50));
+
+									echo '<div class="produit-item">';
+									echo '<div class="produit-details">';
+									echo $product_image;
+									echo '<div class="produit-texte">';
+									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
+									echo '<div class="produit-prix">' . $price_display . '</div>';
+									echo '</div>';
+									echo '</div>';
+									echo '<div class="boutons-actions">';
+									echo '<a href="' . esc_url($order->get_checkout_payment_url()) . '" class="bouton-commande" style="background-color: #e67e00;">FINALISER LE PAIEMENT</a>';
+									echo '<a href="' . esc_url(wc_get_cart_url()) . '" class="bouton-commande" style="background-color: #666;">MODIFIER LA COMMANDE</a>';
+									echo '</div>';
+									echo '</div>';
+									break; // On ne montre qu'une fois le prix total pour toute la commande
+								}
+							}
+
+							echo '</div>';
+						}
+					}
+				} else {
+					echo '<p>Aucune commande en attente de paiement.</p>';
+				}
+				echo '</div>';
+
 				// Affichage des commandes en cours
 				$en_cours_affichees = 0;
-				echo '<div style="margin-top: 20px;">';
+				echo '<div style="margin-top: 40px;">';
 
 				foreach ($customer_orders as $order_id) {
 					$order = wc_get_order($order_id);
@@ -1281,7 +1350,6 @@ function mon_compte_personnalise_shortcode() {
     </div>
     <?php
     return ob_get_clean();
-}
 add_shortcode('mon_compte_personnalise', 'mon_compte_personnalise_shortcode');
 
 // Handler AJAX pour télécharger les factures de prestations
