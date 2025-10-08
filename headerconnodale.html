@@ -1,6 +1,7 @@
 function header_personnalise_shortcode() {
   ob_start();
   ?>
+	<script src="https://www.google.com/recaptcha/api.js?render=6LcP-tQrAAAAAAtI4Hwc5OdpwrnB7T9BCO_YsG1Y"></script>
 	<script>
 	document.addEventListener('DOMContentLoaded', function() {
 		var boutonPanier = document.getElementById('ouvrir-panier');
@@ -225,6 +226,8 @@ function header_personnalise_shortcode() {
 		}
 
 	</script>
+	<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 
 
 		<style>
@@ -873,11 +876,14 @@ function header_personnalise_shortcode() {
       	</div>
 
       	<div class="actions-header">
-		  <div>
-			  <a href="https://doc-headshok.com/mon-compte/">
-			  <img src="https://doc-headshok.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
-			  </a>
-		  </div>
+			<div class="">
+				<?php echo do_shortcode('[gtranslate]'); ?>
+			</div>
+			<div>
+				<a href="https://doc-headshok.com/mon-compte/">
+				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
+				</a>
+			</div>
         	<div style="position:relative;">
   				<a href="https://doc-headshok.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
     				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">

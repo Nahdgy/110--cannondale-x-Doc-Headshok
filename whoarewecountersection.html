@@ -1,0 +1,201 @@
+<style>
+    .grid-whoarewecountersection {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, auto);
+      gap: 2rem;
+      text-align: center;
+      margin: 4rem 0;
+      border: 2px solid #ff3f21;
+      border-radius: 10px;
+    }
+    
+    .whomAmI {
+      background-color: #f5f5f5;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  
+  .whomAmI h3 {
+      font-family:Helvetica, sans-serif;
+      font-weight: 700;
+      margin:0;
+    }
+    
+    .whomAmI p {
+        font-family: din-next-lt-pro;
+      font-weight: 300;
+      list-style-type: none;
+      padding-inline-start: 3rem;
+      margin:0;
+    }
+    
+    .whomAmI ul {
+        font-family: din-next-lt-pro;
+      font-weight: 300;
+      list-style-type: none;
+      padding-inline-start: 0;
+    }
+    
+</style>
+
+<div class="grid-whoarewecountersection">
+    <div class="whomAmI">
+        <h3>
+            + de 25 ans
+        </h3>
+        <p>
+            d’expérience dans le domaine du vélo et des fourches
+        </p>
+    </div>
+    					
+    <div class="whomAmI">
+        <h3>
+            4 professionnels
+        </h3>
+        <p>
+            à votre écoute
+        </p>
+    </div>
+      
+      
+    			
+    <div class="whomAmI">
+        <h3>
+            110 %
+        </h3>
+        <p>
+            passionnés
+        </p>
+    </div>
+      
+      
+    								
+    <div class="whomAmI">
+        <h3>
+            + de 10 000
+        </h3>
+        <p>
+            interventions à l’atelier ou sur les évènements
+        </p>
+    </div>
+      
+      
+    								
+    <div class="whomAmI">
+        <h3>
+            5-7 jours
+        </h3>
+        <p>
+            de délai de traitement en moyenne
+        </p>
+    </div>
+      
+      
+    									
+    <div class="whomAmI">
+        <h3>
+            95 %
+        </h3>
+        <p>
+            de clients satisfaits
+        </p>
+    </div>
+</div>
+  
+  
+				
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour animer un compteur
+    function animateCounter(element, target, duration = 2000) {
+        let start = 0;
+        const increment = target / (duration / 16); // 60fps
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                start = target;
+                clearInterval(timer);
+            }
+            
+            // Utiliser la nouvelle fonction de remplacement
+            const originalText = element.dataset.originalText;
+            element.textContent = replaceNumberInText(originalText, Math.floor(start));
+        }, 16);
+    }
+    
+    // Fonction pour extraire et parser les nombres
+    function extractNumber(text) {
+        // Chercher différents patterns de nombres
+        const patterns = [
+            /(\d+)\s*%/, // pourcentage (95 %)
+            /\+\s*de\s*([\d\s]+)/, // + de 25 ans, + de 10 000
+            /([\d\s]+)\s*-\s*\d+/, // 5-7 jours
+            /(\d+)/ // nombres simples
+        ];
+        
+        for (let pattern of patterns) {
+            const match = text.match(pattern);
+            if (match) {
+                // Nettoyer le nombre (enlever espaces)
+                const cleanNumber = match[1].replace(/\s/g, '');
+                return parseInt(cleanNumber);
+            }
+        }
+        return 0;
+    }
+    
+    // Fonction pour remplacer le nombre dans le texte
+    function replaceNumberInText(originalText, newNumber) {
+        // Patterns spécifiques pour chaque type de texte
+        if (originalText.includes('+ de')) {
+            if (originalText.includes('10 000')) {
+                // Pour "+ de 10 000", remplacer "10 000" par le nouveau nombre formaté
+                return originalText.replace(/10\s*000/, newNumber.toLocaleString('fr-FR'));
+            } else if (originalText.includes('25')) {
+                // Pour "+ de 25 ans", remplacer "25" par le nouveau nombre
+                return originalText.replace(/25/, newNumber);
+            } else {
+                // Fallback générique pour autres cas "+ de X"
+                return originalText.replace(/\d+/, newNumber);
+            }
+        } else if (originalText.includes('%')) {
+            return originalText.replace(/\d+/, newNumber);
+        } else if (originalText.includes('-')) {
+            return originalText.replace(/^\d+/, newNumber);
+        } else {
+            return originalText.replace(/\d+/, newNumber);
+        }
+    }
+    
+    // Observer pour détecter quand l'élément entre dans la vue
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.dataset.animated) {
+                const h3 = entry.target.querySelector('h3');
+                if (h3) {
+                    const originalText = h3.textContent.trim();
+                    const targetNumber = extractNumber(originalText);
+                    
+                    if (targetNumber > 0) {
+                        h3.dataset.originalText = originalText;
+                        h3.dataset.animated = 'true';
+                        entry.target.dataset.animated = 'true';
+                        
+                        // Démarrer l'animation avec un délai aléatoire pour un effet plus naturel
+                        setTimeout(() => {
+                            animateCounter(h3, targetNumber, 2500);
+                        }, Math.random() * 500);
+                    }
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    // Observer tous les éléments .whomAmI
+    document.querySelectorAll('.whomAmI').forEach(element => {
+        observer.observe(element);
+    });
+});
+</script>
