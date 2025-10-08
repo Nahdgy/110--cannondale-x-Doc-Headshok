@@ -202,7 +202,7 @@ window.ajax_object = window.ajax_object || {
 
 // Fonction pour afficher la page de remerciement
 function showThankYouPage(numeroCommande) {
-    document.getElementById('dynamic-form').style.display = 'none';
+    document.getElementById('multi-step-form').style.display = 'none';
     document.getElementById('thank-you-page').style.display = 'block';
     document.getElementById('order-number-display').textContent = numeroCommande;
 }
@@ -522,9 +522,10 @@ document.addEventListener('DOMContentLoaded', function() {
         nouvelleDemandeBtn.addEventListener('click', function() {
             // Remettre à zéro et afficher le formulaire
             document.getElementById('thank-you-page').style.display = 'none';
-            document.getElementById('dynamic-form').style.display = 'block';
+            document.getElementById('multi-step-form').style.display = 'block';
             document.getElementById('multi-step-form').reset();
             showStep(0);
+            currentStep = 0;
             updateNext1ButtonState();
             updateNext2ButtonState();
             updateRadioSelected();

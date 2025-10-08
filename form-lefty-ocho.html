@@ -245,7 +245,7 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
   <div class="form-step" id="step-6">
     <h3>Symptômes</h3>
     <div class="radio-group">
-      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Fuite d'huile" required> Fuite d'huile</label>
+      <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Fuite d'huile"> Fuite d'huile</label>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Jeu"> Jeu</label>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Perte d'air en statique"> Perte d'air en statique</label>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Perte d'air à l'utilisation"> Perte d'air à l'utilisation</label>
@@ -351,7 +351,7 @@ window.ajax_object = window.ajax_object || {
 
 // Fonction pour afficher la page de remerciement
 function showThankYouPage(numeroCommande) {
-    document.getElementById('dynamic-form').style.display = 'none';
+    document.getElementById('multi-step-form').style.display = 'none';
     document.getElementById('thank-you-page').style.display = 'block';
     document.getElementById('order-number-display').textContent = numeroCommande;
 }
@@ -606,56 +606,21 @@ function updateRadioSelected() {
       'Modification 650 en 700': null,
       'Sans option': null
     };
-    // Règle 1 : Désactiver toutes les options sauf "Sans option" pour certaines prestations
-    const prestationsSansOptions = [
-      'Optimisation système Headshok',
-      'Réfection système Headshok',
-      'Garantie Cannondale',
-      'Remplacement filet rapporté (hélicoil)'
-    ];
-    const hasPrestationSansOptions = prestations.some(p => prestationsSansOptions.includes(p));
-    if (hasPrestationSansOptions) {
-      Object.keys(options).forEach(opt => {
-        const cb = document.querySelector('input[name="usage[]"][value="'+opt+'"]');
-        if (cb) {
-          cb.disabled = (opt !== 'Sans option');
-          cb.parentElement.classList.toggle('button-disabled', opt !== 'Sans option');
-          // On décoche l'option si elle est désactivée
-          if (cb.disabled) cb.checked = false;
-        }
-      });
-      return;
-    }
-    // Règle 2 : Désactiver "Tuning CFR joints spi SKF" pour "Révision 100 heures"
-    const cbCFR = document.querySelector('input[name="usage[]"][value="Tuning Team CFR joints spi SKF"]');
-    if (cbCFR) {
-      cbCFR.disabled = prestations.includes('Révision 100 heures');
-      cbCFR.parentElement.classList.toggle('button-disabled', prestations.includes('Révision 100 heures'));
-    }
-    // Règle 3 : Désactiver "Modification 650 en 700" sauf pour modèle "Lefty Oliver"
+    
+    // Règle 1 : Désactiver "Modification 650 en 700" sauf pour modèle "Lefty Oliver"
     const cb650700 = document.querySelector('input[name="usage[]"][value="Modification 650 en 700"]');
     if (cb650700) {
       cb650700.disabled = (modele !== 'Lefty Oliver');
       cb650700.parentElement.classList.toggle('button-disabled', modele !== 'Lefty Oliver');
     }
-    // Règle 4 : Désactiver "Blocage sur cintre" sauf pour modèle "Lefty Ocho 29 120mm"
-    const cbBlocageCintre = document.querySelector('input[name="usage[]"][value="Blocage sur cintre"]');
-    if (cbBlocageCintre) {
-      cbBlocageCintre.disabled = (modele !== 'Lefty Ocho 29 120mm');
-      cbBlocageCintre.parentElement.classList.toggle('button-disabled', modele !== 'Lefty Ocho 29 120mm');
-    }
-    // Règle 5 : Désactiver "Modification du débattement" sauf pour modèle "Lefty Ocho 29 110mm"
+    
+    // Règle 2 : Désactiver "Modification du débattement" sauf pour modèle "Lefty Ocho 29 110mm" et "Lefty Ocho 29 120mm"
     const cbDebattement = document.querySelector('input[name="usage[]"][value="Modification du débattement"]');
     if (cbDebattement) {
-      cbDebattement.disabled = (modele !== 'Lefty Ocho 29 110mm');
-      cbDebattement.parentElement.classList.toggle('button-disabled', modele !== 'Lefty Ocho 29 110mm');
+      cbDebattement.disabled = (modele !== 'Lefty Ocho 29 110mm' && modele !== 'Lefty Ocho 29 120mm');
+      cbDebattement.parentElement.classList.toggle('button-disabled', modele !== 'Lefty Ocho 29 110mm' && modele !== 'Lefty Ocho 29 120mm');
     }
-    // Règle 6 : Désactiver "Modification sens du blocage" pour modèle "Lefty Oliver"
-    const cbSensBlocage = document.querySelector('input[name="usage[]"][value="Modification sens du blocage"]');
-    if (cbSensBlocage) {
-      cbSensBlocage.disabled = (modele === 'Lefty Oliver');
-      cbSensBlocage.parentElement.classList.toggle('button-disabled', modele === 'Lefty Oliver');
-    }
+    
     // Réactiver toutes les autres options
     Object.keys(options).forEach(opt => {
       if (opt === 'Sans option') return;
@@ -784,9 +749,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const poidsVal = document.getElementById('poids-pilote').value;
     const modeleVal = document.getElementById('modele-velo').value;
     const anneeVal = document.getElementById('annee-velo').value;
-    const remarquesVal = document.getElementById('remarques').value;
     const nextBtn = document.getElementById('next-7');
-    if(dateVal && poidsVal && modeleVal && anneeVal && remarquesVal) {
+    if(dateVal && poidsVal && modeleVal && anneeVal) {
       nextBtn.classList.remove('button-disabled');
       nextBtn.disabled = false;
     } else {
@@ -794,7 +758,7 @@ document.addEventListener('DOMContentLoaded', function() {
       nextBtn.disabled = true;
     }
   }
-  ['date-revision','poids-pilote','modele-velo','annee-velo','remarques'].forEach(id => {
+  ['date-revision','poids-pilote','modele-velo','annee-velo'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateNext7ButtonState);
   });
   updateNext7ButtonState();
@@ -879,13 +843,11 @@ document.getElementById('next-7').onclick = function() {
   const poidsVal = document.getElementById('poids-pilote').value;
   const modeleVal = document.getElementById('modele-velo').value;
   const anneeVal = document.getElementById('annee-velo').value;
-  const remarquesVal = document.getElementById('remarques').value;
-  if(!dateVal || !poidsVal || !modeleVal || !anneeVal || !remarquesVal) {
+  if(!dateVal || !poidsVal || !modeleVal || !anneeVal) {
     if(!dateVal) document.getElementById('date-revision').focus();
     else if(!poidsVal) document.getElementById('poids-pilote').focus();
     else if(!modeleVal) document.getElementById('modele-velo').focus();
-    else if(!anneeVal) document.getElementById('annee-velo').focus();
-    else document.getElementById('remarques').focus();
+    else document.getElementById('annee-velo').focus();
     return;
   }
   // Afficher le résumé
@@ -1008,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
         nouvelleDemandeBtn.addEventListener('click', function() {
             // Remettre à zéro et afficher le formulaire
             document.getElementById('thank-you-page').style.display = 'none';
-            document.getElementById('dynamic-form').style.display = 'block';
+            document.getElementById('multi-step-form').style.display = 'block';
             document.getElementById('multi-step-form').reset();
             showStep(0);
             currentStep = 0;
