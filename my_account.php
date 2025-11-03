@@ -468,10 +468,10 @@ function mon_compte_personnalise_shortcode() {
     $customer_orders = wc_get_orders([
         'customer_id' => $user->ID,
         'return'      => 'ids',
-        'status'      => ['pending', 'processing', 'on-hold', 'completed']
+                'status'      => ['pending', 'processing', 'on-hold', 'completed']
     ]);
 
-    $en_attente_paiement = 0;
+	$en_attente_paiement = 0;
     $en_cours = 0;
     $passees = 0;
     foreach ($customer_orders as $order_id) {
@@ -751,18 +751,21 @@ function mon_compte_personnalise_shortcode() {
             }
         }
 
-        /* Styles pour les prestations */
-        .prestations-container {
+        /* Styles pour les prestations et commandes */
+        .prestations-container,
+        .commandes-container {
             margin-top: 20px;
         }
 
-        .prestations-liste {
+        .prestations-liste,
+        .commandes-liste {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        .prestation-item {
+        .prestation-item,
+        .commande-item {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
@@ -770,11 +773,13 @@ function mon_compte_personnalise_shortcode() {
             transition: box-shadow 0.2s ease;
         }
 
-        .prestation-item:hover {
+        .prestation-item:hover,
+        .commande-item:hover {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .prestation-header {
+        .prestation-header,
+        .commande-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -783,27 +788,32 @@ function mon_compte_personnalise_shortcode() {
             padding-bottom: 10px;
         }
 
-        .prestation-type {
+        .prestation-type,
+        .commande-numero-header {
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 700;
             font-size: 18px;
             color: #000;
         }
 
-        .prestation-date {
+        .prestation-date,
+        .commande-date {
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 400;
             font-size: 14px;
             color: #6c757d;
         }
 
-        .prestation-statut {
+        .prestation-statut,
+        .commande-statut {
             padding: 5px 12px;
             border-radius: 15px;
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
         }
+
+		/* Statuts pour prestations */
 
         .statut-attente {
             background: #fff3cd;
@@ -820,40 +830,126 @@ function mon_compte_personnalise_shortcode() {
             color: #155724;
         }
 
-        .prestation-details {
+		/* Statuts pour commandes */
+        .statut-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .statut-processing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .statut-on-hold {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .statut-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .statut-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .statut-refunded {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .statut-failed {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+
+        .statut-autre {
+            background: #e2e3e5;
+            color: #495057;
+        }
+
+        .prestation-details,
+        .commande-details {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             gap: 20px;
         }
+  
 
-        .prestation-info {
+        .prestation-info,
+        .commande-info {
             flex: 1;
         }
 
-        .prestation-info p {
+        .prestation-info p,
+        .commande-info p {
             margin: 5px 0;
             font-size: 14px;
             color: #333;
         }
 
-        .prestation-actions {
+        .commande-produits {
+            margin-bottom: 10px;
+        }
+
+        .produit-ligne {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .produit-ligne:last-child {
+            border-bottom: none;
+        }
+
+        .produit-nom {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            color: #333;
+            flex: 1;
+        }
+
+        .produit-quantite {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .commande-livraison {
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .prestation-actions,
+        .commande-actions {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
             gap: 10px;
         }
 
-        .prestation-prix {
+        .prestation-prix,
+        .commande-prix {
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 700;
             font-size: 20px;
             color: #FF3F22;
         }
 
-        .bouton-prestation {
+        .bouton-prestation,
+        .bouton-commande {
             background: #000;
-            color: #fff;
+            color: #fff !important;
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
@@ -863,25 +959,65 @@ function mon_compte_personnalise_shortcode() {
             font-size: 12px;
             text-transform: uppercase;
             transition: background 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            white-space: nowrap;
         }
 
-        .bouton-prestation:hover {
-            background: #333;
+        .bouton-prestation:hover,
+        .bouton-commande:hover {
+            background: #333 !important;
+            color: #fff !important;
+            text-decoration: none !important;
+        }
+
+        .bouton-payment {
+            background: #e67e00 !important;
+        }
+
+        .bouton-payment:hover {
+            background: #d4730a !important;
+        }
+
+        .bouton-modifier {
+            background: #666 !important;
+        }
+
+        .bouton-modifier:hover {
+            background: #555 !important;
+        }
+
+        .bouton-suivi {
+            background: #17a2b8 !important;
+        }
+
+        .bouton-suivi:hover {
+            background: #138496 !important;
         }
 
         @media (max-width: 768px) {
-            .prestation-header {
+            .prestation-header,
+            .commande-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
             }
 
-            .prestation-details {
+            .prestation-details,
+            .commande-details {
                 flex-direction: column;
             }
 
-            .prestation-actions {
+            .prestation-actions,
+            .commande-actions {
                 align-items: flex-start;
+                width: 100%;
+            }
+
+            .bouton-prestation,
+            .bouton-commande {
+                width: 100%;
+                margin-bottom: 5px;
             }
         }
     </style>
@@ -943,6 +1079,41 @@ function mon_compte_personnalise_shortcode() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        };
+		
+		
+        // Fonction pour le suivi des livraisons
+        window.suivreLivraison = function(orderId) {
+            // Récupérer les informations de suivi pour la commande
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?php echo admin_url('admin-ajax.php'); ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                if (response.data.tracking_url) {
+                                    // Ouvrir l'URL de suivi dans une nouvelle fenêtre
+                                    window.open(response.data.tracking_url, '_blank');
+                                } else {
+                                    alert('Informations de suivi : ' + response.data.message);
+                                }
+                            } else {
+                                alert('Erreur : ' + response.data.message);
+                            }
+                        } catch (e) {
+                            alert('Erreur lors de la récupération des informations de suivi.');
+                        }
+                    } else {
+                        alert('Erreur de communication avec le serveur.');
+                    }
+                }
+            };
+            
+            xhr.send('action=get_order_tracking&order_id=' + orderId + '&nonce=<?php echo wp_create_nonce('get_order_tracking_nonce'); ?>');
         };
     });
     </script>
@@ -1056,205 +1227,117 @@ function mon_compte_personnalise_shortcode() {
 
             <div id="commandes" class="section-compte">
                 <h2>Mes commandes</h2>
-				<?php
-				// Affichage des commandes en attente de paiement
-				$en_attente_paiement_affichees = 0;
-				echo '<div style="margin-top: 20px;">';
-
-				foreach ($customer_orders as $order_id) {
-					$order = wc_get_order($order_id);
-					if ($order->has_status('pending')) {
-						$en_attente_paiement_affichees++;
-					}
-				}
-				echo '<p class="commande-compteur">En attente de paiement (' . $en_attente_paiement_affichees . ')</p>';
-
-				if ($en_attente_paiement_affichees > 0) {
-					foreach ($customer_orders as $order_id) {
-						$order = wc_get_order($order_id);
-						if ($order->has_status('pending')) {
-							echo '<div style="border: 1px solid #ffcc00; padding: 10px; margin-bottom: 15px; border-radius: 10px; background-color: #fff9e6;">';
-							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . ' - <span style="color: #e67e00; font-weight: bold;">Paiement requis</span></div>';
-
-							// Calculer le prix total de la commande avec livraison
-							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
-							
-							// Récupérer le mode de livraison
-							$shipping_methods = $order->get_shipping_methods();
-							$shipping_method_name = '';
-							if (!empty($shipping_methods)) {
-								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
-								$shipping_method_name = $shipping_method->get_method_title();
-							}
-							
-							foreach ($order->get_items() as $item) {
-								$product = $item->get_product();
-								if ($product) {
-									$product_name = $item->get_name();
-									// Afficher le prix total de la commande avec le mode de livraison
-									$price_display = wc_price($total_order_price);
-									if ($shipping_method_name) {
-										$price_display .= ' (' . esc_html($shipping_method_name) . ')';
-									}
-									$product_image = $product->get_image(array(50, 50));
-
-									echo '<div class="produit-item">';
-									echo '<div class="produit-details">';
-									echo $product_image;
-									echo '<div class="produit-texte">';
-									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
-									echo '<div class="produit-prix">' . $price_display . '</div>';
-									echo '</div>';
-									echo '</div>';
-									echo '<div class="boutons-actions">';
-									echo '<a href="' . esc_url($order->get_checkout_payment_url()) . '" class="bouton-commande" style="background-color: #e67e00;">FINALISER LE PAIEMENT</a>';
-									echo '<a href="' . esc_url(wc_get_cart_url()) . '" class="bouton-commande" style="background-color: #666;">MODIFIER LA COMMANDE</a>';
-									echo '</div>';
-									echo '</div>';
-									break; // On ne montre qu'une fois le prix total pour toute la commande
-								}
-							}
-
-							echo '</div>';
-						}
-					}
-				} else {
-					echo '<p>Aucune commande en attente de paiement.</p>';
-				}
-				echo '</div>';
-
-				// Affichage des commandes en cours
-				$en_cours_affichees = 0;
-				echo '<div style="margin-top: 40px;">';
-
-				foreach ($customer_orders as $order_id) {
-					$order = wc_get_order($order_id);
-					if ($order->has_status(['processing', 'on-hold'])) {
-						$en_cours_affichees++;
-					}
-				}
-				echo '<p class="commande-compteur">En cours (' . $en_cours_affichees . ')</p>';
-
-				if ($en_cours_affichees > 0) {
-					foreach ($customer_orders as $order_id) {
-						$order = wc_get_order($order_id);
-						if ($order->has_status(['processing', 'on-hold'])) {
-							echo '<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 10px;">';
-							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . '</div>';
-
-							// Calculer le prix total de la commande avec livraison
-							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
-							
-							// Récupérer le mode de livraison
-							$shipping_methods = $order->get_shipping_methods();
-							$shipping_method_name = '';
-							if (!empty($shipping_methods)) {
-								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
-								$shipping_method_name = $shipping_method->get_method_title();
-							}
-							
-							foreach ($order->get_items() as $item) {
-								$product = $item->get_product();
-								if ($product) {
-									$product_name = $item->get_name();
-									// Afficher le prix total de la commande avec le mode de livraison
-									$price_display = wc_price($total_order_price);
-									if ($shipping_method_name) {
-										$price_display .= ' (' . esc_html($shipping_method_name) . ')';
-									}
-									$product_image = $product->get_image(array(50, 50));
-
-									echo '<div class="produit-item">';
-									echo '<div class="produit-details">';
-									echo $product_image;
-									echo '<div class="produit-texte">';
-									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
-									echo '<div class="produit-prix">' . $price_display . '</div>';
-									echo '</div>';
-									echo '</div>';
-									echo '<div class="boutons-actions">';
-									echo '<button class="bouton-commande" onclick="telechargerFacture(' . $order_id . ')">TÉLÉCHARGER MA FACTURE</button>';
-									echo '<a class="bouton-commande" target="_blank">SUIVRE LA LIVRAISON</a>';
-									echo '</div>';
-									echo '</div>';
-									break; // On ne montre qu'une fois le prix total pour toute la commande
-								}
-							}
-
-							echo '</div>';
-						}
-					}
-				} else {
-					echo '<p>Aucune commande en cours.</p>';
-				}
-				echo '</div>';
-
-				// Affichage des commandes passées
-				$passees_affichees = 0;
-				echo '<div style="margin-top: 40px;">';
-
-				foreach ($customer_orders as $order_id) {
-					$order = wc_get_order($order_id);
-					if ($order->has_status('completed')) {
-						$passees_affichees++;
-					}
-				}
-				echo '<p class="commande-compteur">Passées (' . $passees_affichees . ')</p>';
-
-				if ($passees_affichees > 0) {
-					foreach ($customer_orders as $order_id) {
-						$order = wc_get_order($order_id);
-						if ($order->has_status('completed')) {
-							echo '<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 10px;">';
-							echo '<div class="commande-numero">Commande #' . $order->get_order_number() . '</div>';
-
-							// Calculer le prix total de la commande avec livraison
-							$total_order_price = $order->get_total(); // Prix total TTC avec livraison
-							
-							// Récupérer le mode de livraison
-							$shipping_methods = $order->get_shipping_methods();
-							$shipping_method_name = '';
-							if (!empty($shipping_methods)) {
-								$shipping_method = reset($shipping_methods); // Premier (et généralement seul) mode de livraison
-								$shipping_method_name = $shipping_method->get_method_title();
-							}
-							
-							foreach ($order->get_items() as $item) {
-								$product = $item->get_product();
-								if ($product) {
-									$product_name = $item->get_name();
-									// Afficher le prix total de la commande avec le mode de livraison
-									$price_display = wc_price($total_order_price);
-									if ($shipping_method_name) {
-										$price_display .= '<p style="font-size: 12px; color: #666;">' . esc_html($shipping_method_name) . '</p>';
-									}
-									$product_image = $product->get_image(array(50, 50));
-
-									echo '<div class="produit-item">';
-									echo '<div class="produit-details">';
-									echo $product_image;
-									echo '<div class="produit-texte">';
-									echo '<div class="produit-nom">' . esc_html($product_name) . '</div>';
-									echo '<div class="produit-prix">' . $price_display . '</div>';
-									echo '</div>';
-									echo '</div>';
-									echo '<div class="boutons-actions">';
-									echo '<button class="bouton-commande" onclick="telechargerFacture(' . $order_id . ')">TÉLÉCHARGER MA FACTURE</button>';
-									echo '<a class="bouton-commande" target="_blank">SUIVRE LA LIVRAISON</a>';
-									echo '</div>';
-									echo '</div>';
-									break; // On ne montre qu'une fois le prix total pour toute la commande
-								}
-							}
-
-							echo '</div>';
-						}
-					}
-				} else {
-					echo '<p>Aucune commande terminée.</p>';
-				}
-				echo '</div>';
-				?>
+                <div class="commandes-container">
+                    <?php
+                    if (!empty($customer_orders)) {
+                        echo '<div class="commandes-liste">';
+                        
+                        foreach ($customer_orders as $order_id) {
+                            $order = wc_get_order($order_id);
+                            
+                            // Déterminer le statut et la classe CSS
+                            $statut_class = '';
+                            $statut_text = '';
+                            
+                            switch($order->get_status()) {
+                                case 'pending':
+                                    $statut_class = 'statut-pending';
+                                    $statut_text = 'En attente de paiement';
+                                    break;
+                                case 'processing':
+                                    $statut_class = 'statut-processing';
+                                    $statut_text = 'En cours de traitement';
+                                    break;
+                                case 'on-hold':
+                                    $statut_class = 'statut-on-hold';
+                                    $statut_text = 'En attente';
+                                    break;
+                                case 'completed':
+                                    $statut_class = 'statut-completed';
+                                    $statut_text = 'Terminée';
+                                    break;
+                                case 'cancelled':
+                                    $statut_class = 'statut-cancelled';
+                                    $statut_text = 'Annulée';
+                                    break;
+                                case 'refunded':
+                                    $statut_class = 'statut-refunded';
+                                    $statut_text = 'Remboursée';
+                                    break;
+                                case 'failed':
+                                    $statut_class = 'statut-failed';
+                                    $statut_text = 'Échouée';
+                                    break;
+                                default:
+                                    $statut_class = 'statut-autre';
+                                    $statut_text = ucfirst($order->get_status());
+                            }
+                            
+                            // Récupérer le mode de livraison
+                            $shipping_methods = $order->get_shipping_methods();
+                            $shipping_method_name = '';
+                            if (!empty($shipping_methods)) {
+                                $shipping_method = reset($shipping_methods);
+                                $shipping_method_name = $shipping_method->get_method_title();
+                            }
+                            
+                            echo '<div class="commande-item">';
+                            echo '<div class="commande-header">';
+                            echo '<div class="commande-numero-header">Commande #' . $order->get_order_number() . '</div>';
+                            echo '<div class="commande-date">' . $order->get_date_created()->date('d/m/Y') . '</div>';
+                            echo '<div class="commande-statut ' . $statut_class . '">' . $statut_text . '</div>';
+                            echo '</div>';
+                            
+                            echo '<div class="commande-details">';
+                            echo '<div class="commande-info">';
+                            
+                            // Afficher les produits de la commande
+                            $items = $order->get_items();
+                            if (!empty($items)) {
+                                echo '<div class="commande-produits">';
+                                foreach ($items as $item) {
+                                    $product = $item->get_product();
+                                    if ($product) {
+                                        echo '<div class="produit-ligne">';
+                                        echo '<span class="produit-nom">' . esc_html($item->get_name()) . '</span>';
+                                        echo '<span class="produit-quantite">x' . $item->get_quantity() . '</span>';
+                                        echo '</div>';
+                                    }
+                                }
+                                echo '</div>';
+                            }
+                            
+                            if ($shipping_method_name) {
+                                echo '<p class="commande-livraison"><strong>Livraison :</strong> ' . esc_html($shipping_method_name) . '</p>';
+                            }
+                            
+                            echo '</div>';
+                            
+                            echo '<div class="commande-actions">';
+                            echo '<div class="commande-prix">' . wc_price($order->get_total()) . '</div>';
+                            
+                            // Actions selon le statut
+                            if ($order->has_status('pending')) {
+                                echo '<a href="' . esc_url($order->get_checkout_payment_url()) . '" class="bouton-commande bouton-payment">FINALISER LE PAIEMENT</a>';
+                                echo '<a href="' . esc_url(wc_get_cart_url()) . '" class="bouton-commande bouton-modifier">MODIFIER LA COMMANDE</a>';
+                            } else {
+                                echo '<button class="bouton-commande" onclick="telechargerFacture(' . $order_id . ')">TÉLÉCHARGER LA FACTURE</button>';
+                                if ($order->has_status(['processing', 'on-hold', 'completed'])) {
+                                    echo '<button class="bouton-commande bouton-suivi" onclick="suivreLivraison(\'' . $order->get_order_number() . '\')">SUIVRE LA LIVRAISON</button>';
+                                }
+                            }
+                            
+                            echo '</div>';
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                        
+                        echo '</div>';
+                    } else {
+                        echo '<p>Aucune commande trouvée.</p>';
+                    }
+                    ?>
+                </div>
             </div>
 
             <!-- Section Historique des prestations -->
@@ -1350,6 +1433,7 @@ function mon_compte_personnalise_shortcode() {
     </div>
     <?php
     return ob_get_clean();
+}
 add_shortcode('mon_compte_personnalise', 'mon_compte_personnalise_shortcode');
 
 // Handler AJAX pour télécharger les factures de prestations
