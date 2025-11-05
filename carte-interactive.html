@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Interactive - Doc Headshok</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DIN+Next+LT+Pro:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'din-next-lt-pro', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .carte-container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .carte-wrapper {
+            background: white;
+            border-radius: 0;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .info-section {
+            padding: 25px;
+            display: flex;
+            width: 100%;
+            gap: 30px;
+            background: #fff;
+            justify-content: center;
+        }
+        
+        #map {
+            height: 70vh;
+            min-height: 400px;
+            width: 100%;
+            border: 3px solid #FF3F22;
+        }
+        
+        .directions-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF3F22, #e6381e);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 63, 34, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .directions-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 63, 34, 0.4);
+            background: linear-gradient(135deg, #e6381e, #FF3F22);
+        }
+        
+        .directions-btn::before {
+            content: "🗺️";
+            margin-right: 8px;
+        }
+        
+        /* Style personnalisé pour le popup de la carte */
+        .custom-popup {
+            font-family: 'din-next-lt-pro', Arial, sans-serif;
+            max-width: 300px;
+        }
+        
+        .custom-popup h3 {
+            color: #FF3F22;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .custom-popup p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            color: #333;
+        }
+        
+        .custom-popup .popup-address {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        
+        .custom-popup a {
+            display: inline-block;
+            background: #FF3F22;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+        
+        .custom-popup a:hover {
+            background: #e6381e;
+        }
+        
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .carte-container {
+                padding: 0;
+            }
+        
+            .info-section {
+                flex-direction: column;
+                gap: 20px;
+                padding: 15px;
+                text-align: center;
+            }
+            
+            #map {
+                height: 60vh;
+                min-height: 300px;
+            }
+            
+            .directions-btn {
+                width: auto;
+                max-width: 300px;
+                margin: 0 auto;
+                text-align: center;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            
+            .info-section {
+                padding: 10px;
+            }
+            
+            #map {
+                height: 50vh;
+                min-height: 250px;
+            }
+            
+            .directions-btn {
+                font-size: 0.9em;
+                padding: 10px 15px;
+            }
+        }
+        
+        /* Animation d'entrée */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .carte-container > * {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .info-section {
+            animation-delay: 0.2s;
+        }
+        
+        #map {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+<body>
+    <div class="carte-container">
+        <div class="carte-wrapper">
+            <div class="info-section">
+                <a href="https://maps.google.com/maps?daddr=1299+chemin+des+Nartettes,+83400+Hyères,+France" target="_blank" class="directions-btn">
+                    Obtenir un itinéraire
+                </a>
+            </div>
+            
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialisation de la carte avec une vue plus large
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: true
+        }).setView([43.1202, 6.1286], 14);
+
+        // Ajout du fond de carte OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+            minZoom: 10
+        }).addTo(map);
+
+        // Icône personnalisée pour le marqueur
+        const customIcon = L.divIcon({
+            html: `
+                <div style="
+                    width: 40px;
+                    height: 40px;
+                    background: linear-gradient(135deg, #FF3F22, #e6381e);
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    border: 3px solid white;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <div style="
+                        transform: rotate(45deg);
+                        color: white;
+                        font-weight: bold;
+                        font-size: 16px;
+                    ">🔧</div>
+                </div>
+            `,
+            className: 'custom-marker',
+            iconSize: [40, 40],
+            iconAnchor: [20, 35]
+        });
+
+        // Coordonnées approximatives pour l'adresse
+        const coords = [43.1202, 6.1286]; // Coordonnées approximatives pour Hyères
+
+        // Ajout du marqueur avec popup
+        const marker = L.marker(coords, {icon: customIcon}).addTo(map);
+
+        const popupContent = `
+            <div class="custom-popup">
+                <h3>Doc Headshok</h3>
+                <p class="popup-address">1299 chemin des Nartettes<br>83400 Hyères, France</p>
+                <p><strong>Spécialiste Cannondale</strong></p>
+                <p>Fourches • Amortisseurs • Pièces détachées</p>
+                <a href="https://maps.google.com/maps?daddr=1299+chemin+des+Nartettes,+83400+Hyères,+France" 
+                   target="_blank">
+                    Itinéraire GPS
+                </a>
+            </div>
+        `;
+
+        marker.bindPopup(popupContent).openPopup();
+
+        // Animation au clic sur le marqueur
+        marker.on('click', function(e) {
+            map.setView(e.latlng, 16, {
+                animate: true,
+                duration: 1
+            });
+        });
+
+        // Contrôles de zoom personnalisés repositionnés
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(map);
+
+        // Événement de redimensionnement pour la responsivité
+        window.addEventListener('resize', function() {
+            setTimeout(function() {
+                map.invalidateSize();
+                // Recentrer la carte après redimensionnement
+                map.setView(coords, map.getZoom());
+            }, 100);
+        });
+
+        // Ajout d'un cercle autour du point pour indiquer la zone de service
+        const serviceArea = L.circle(coords, {
+            color: '#FF3F22',
+            fillColor: '#FF3F22',
+            fillOpacity: 0.1,
+            radius: 2000, // 2km de rayon pour une vue plus large
+            weight: 2,
+            opacity: 0.7
+        }).addTo(map);
+
+        serviceArea.bindTooltip("Zone de service - 2km", {
+            permanent: false,
+            direction: 'top'
+        });
+
+        // Fonction pour adapter la carte selon la taille d'écran
+        function adaptMapToScreen() {
+            const screenWidth = window.innerWidth;
+            let zoomLevel, centerCoords;
+            
+            if (screenWidth <= 480) {
+                zoomLevel = 12;
+                centerCoords = coords;
+            } else if (screenWidth <= 768) {
+                zoomLevel = 13;
+                centerCoords = coords;
+            } else {
+                zoomLevel = 14;
+                centerCoords = coords;
+            }
+            
+            setTimeout(function() {
+                map.setView(centerCoords, zoomLevel);
+                map.invalidateSize();
+            }, 300);
+        }
+
+        // Appel initial et sur redimensionnement
+        adaptMapToScreen();
+        window.addEventListener('resize', adaptMapToScreen);
+
+        // Ajout d'une couche de contrôle pour basculer entre les vues
+        const baseMaps = {
+            "Plan": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }),
+            "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri'
+            })
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+    </script>
+</body>
+</html>
