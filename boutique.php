@@ -1,19 +1,6 @@
 // Shortcode : [produits_boutique]
 add_shortcode('produits_boutique', 'afficher_produits_boutique');
 
-// Fonction pour vider le cache de la boutique
-function vider_cache_boutique() {
-	global $wpdb;
-	// Supprimer tous les transients de cache boutique
-	$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_boutique_produits_%'");
-	$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_boutique_produits_%'");
-}
-
-// Vider le cache quand un produit est modifié/créé/supprimé
-add_action('woocommerce_update_product', 'vider_cache_boutique');
-add_action('woocommerce_new_product', 'vider_cache_boutique');
-add_action('woocommerce_delete_product', 'vider_cache_boutique');
-
 function afficher_produits_boutique() {
 	ob_start();
 
@@ -25,53 +12,17 @@ function afficher_produits_boutique() {
 		'exclude' => [get_option('default_product_cat')],
 	]);
 
-	// Récupère tous les produits avec pagination et cache
-	$page_courante = isset($_GET['page_produits']) ? max(1, intval($_GET['page_produits'])) : 1;
-	$limite_par_page = 36; // Nombre de produits par page (plus élevé pour moins de requêtes AJAX)
-	$offset = ($page_courante - 1) * $limite_par_page;
-	
-	// Créer une clé de cache unique basée sur les filtres
-	$filtres_actifs = isset($_GET['filtre']) ? $_GET['filtre'] : [];
-	$cache_key = 'boutique_produits_' . md5(serialize($filtres_actifs) . '_page_' . $page_courante);
-	
-	// Tentative de récupération depuis le cache (durée: 15 minutes)
-	$cached_data = get_transient($cache_key);
-	
-	if ($cached_data !== false) {
-		// Utiliser les données mises en cache
-		$produits = $cached_data['produits'];
-		$total_produits = $cached_data['total'];
-	} else {
-		// Pas de cache, faire les requêtes
-		$args = [
-			'status' => 'publish',
-			'limit' => $limite_par_page,
-			'offset' => $offset,
-			'return' => 'ids', // Récupère seulement les IDs pour compter le total
-		];
-		
-		// Filtrage par catégorie via GET
-		if (isset($_GET['filtre']) && is_array($_GET['filtre']) && count($_GET['filtre']) > 0) {
-			$args['category'] = array_map('sanitize_text_field', $_GET['filtre']);
-		}
-		
-		// Compter le total pour la pagination
-		$args_count = $args;
-		unset($args_count['limit']);
-		unset($args_count['offset']);
-		$total_produits = count(wc_get_products($args_count));
-		
-		// Récupérer les produits de la page courante
-		unset($args['return']); // Récupérer les objets complets maintenant
-		$produits = wc_get_products($args);
-		
-		// Mettre en cache les résultats (15 minutes)
-		$cache_data = [
-			'produits' => $produits,
-			'total' => $total_produits
-		];
-		set_transient($cache_key, $cache_data, 15 * MINUTE_IN_SECONDS);
+	// Récupère tous les produits
+	$args = [
+		'status' => 'publish',
+		'limit' => -1,
+	];
+	// Filtrage par catégorie via GET
+	if (isset($_GET['filtre']) && is_array($_GET['filtre']) && count($_GET['filtre']) > 0) {
+		$args['category'] = array_map('sanitize_text_field', $_GET['filtre']);
 	}
+	// Note: Le filtrage par prix sera géré côté client JavaScript
+	$produits = wc_get_products($args);
 
 	// Préparation des filtres structurés
 	$html_filtres = '<form id="form-filtres">';
@@ -230,9 +181,9 @@ function afficher_produits_boutique() {
 	$html_filtres .= '<span id="reset" style="cursor:pointer; color:#FF3F22; margin-left:20px;">Tout effacer</span>';
 	$html_filtres .= '</form>';
 
-	// Affichage produits avec pagination
-	$limite_affichage = $limite_par_page; // Correspond à la limite par page
-	$total = count($produits); // Nombre de produits sur cette page
+	// Affichage produits
+	$limite_affichage = 18;
+	$total = count($produits);
 	$all_produits = [];
 	foreach ($produits as $product) {
 		$image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
@@ -246,14 +197,13 @@ function afficher_produits_boutique() {
 			'permalink' => $product->get_permalink(),
 		];
 	}
-	
-	// Calculer le nombre total de pages
-	$total_pages = ceil($total_produits / $limite_par_page);
 	   ?>
        <div class="barre-tri">
             <div style="display: flex; align-items: center;">
-                <div id="nombre-produits"><?php echo $total_produits; ?> résultats au total (Page <?php echo $page_courante; ?>/<?php echo $total_pages; ?>)</div>
-                <div id="cacher-filtres">Cacher les filtres</div>
+                <div id="nombre-produits"><?php echo count($produits); ?> résultats</div>
+                <button id="toggle-filtres" class="btn-toggle-filtres">
+                    <span id="filtres-icon">🔽</span> Filtres
+                </button>
             </div>
             <div class="tri-container">
                 <label for="tri-sous-categories">Trier par :</label>
@@ -265,63 +215,160 @@ function afficher_produits_boutique() {
             </div>
         </div>
         <hr class="separator-red">
-	   <div id="produits-filtrables-container" style="display:flex; flex-direction:row; gap:40px; align-items:flex-start;">
         
-		   <div id="filtres-colonne" style="min-width:280px;max-width:320px;">
-			   <?php echo $html_filtres; ?>
-		   </div>
+        <!-- Section filtres déroulante -->
+        <div id="section-filtres" class="section-filtres-collapsed">
+            <div id="filtres-colonne" style="width:100%;">
+                <?php echo $html_filtres; ?>
+            </div>
+        </div>
+        
+        <!-- Conteneur principal des produits -->
+        <div id="produits-container">
 		   <div style="flex:1;">
 			   <ul class="liste-categories" id="liste-produits">
-				   <?php foreach ($all_produits as $prod): ?>
+				   <?php for ($i = 0; $i < min($limite_affichage, $total); $i++): $prod = $all_produits[$i]; ?>
 					   <li data-price="<?php echo esc_attr($prod['price_numeric']); ?>" data-name="<?php echo esc_attr($prod['name']); ?>">
 						   <a href="<?php echo esc_url($prod['permalink']); ?>">
-							   <img src="<?php echo esc_url($prod['image']); ?>" alt="<?php echo esc_attr($prod['name']); ?>" loading="lazy">
+							   <img src="<?php echo esc_url($prod['image']); ?>" alt="<?php echo esc_attr($prod['name']); ?>">
 							   <div class="titre-categorie"><?php echo esc_html($prod['name']); ?></div>
 							   <div class="prix-produit"><?php echo $prod['price']; ?></div>
 						   </a>
 						   <button class="btn-ajouter" data-product-id="<?php echo esc_attr($prod['id']); ?>">Ajouter au panier</button>
 					   </li>
-				   <?php endforeach; ?>
+				   <?php endfor; ?>
 			   </ul>
-			   
-			   <!-- Pagination -->
-			   <?php if ($total_pages > 1): ?>
-				   <div class="pagination-container" style="display:flex;justify-content:center;align-items:center;margin-top:30px;gap:10px;">
-					   <?php if ($page_courante > 1): ?>
-						   <a href="?<?php echo http_build_query(array_merge($_GET, ['page_produits' => $page_courante - 1])); ?>" class="btn-pagination">← Précédent</a>
-					   <?php endif; ?>
-					   
-					   <?php
-					   $debut_page = max(1, $page_courante - 2);
-					   $fin_page = min($total_pages, $page_courante + 2);
-					   ?>
-					   
-					   <?php for ($p = $debut_page; $p <= $fin_page; $p++): ?>
-						   <?php if ($p == $page_courante): ?>
-							   <span class="btn-pagination active"><?php echo $p; ?></span>
-						   <?php else: ?>
-							   <a href="?<?php echo http_build_query(array_merge($_GET, ['page_produits' => $p])); ?>" class="btn-pagination"><?php echo $p; ?></a>
-						   <?php endif; ?>
-					   <?php endfor; ?>
-					   
-					   <?php if ($page_courante < $total_pages): ?>
-						   <a href="?<?php echo http_build_query(array_merge($_GET, ['page_produits' => $page_courante + 1])); ?>" class="btn-pagination">Suivant →</a>
-					   <?php endif; ?>
+			   <?php if ($total > $limite_affichage): ?>
+				   <div style="display:flex;justify-content:center;margin-top:30px;">
+					   <button id="voir-plus" class="btn-voir-plus">Voir plus</button>
 				   </div>
 			   <?php endif; ?>
+			   <!-- Plus de popup custom, alert navigateur classique -->
 		   </div>
 	   </div>
 
 	   <style>
+		   /* Section filtres déroulante */
+		   .btn-toggle-filtres {
+			   background: #FF3F22;
+			   color: white;
+			   border: none;
+			   border-radius: 6px;
+			   padding: 8px 16px;
+			   font-size: 14px;
+			   font-weight: 600;
+			   cursor: pointer;
+			   display: flex;
+			   align-items: center;
+			   gap: 8px;
+			   transition: all 0.3s ease;
+			   font-family: 'din-next-lt-pro', sans-serif;
+		   }
+		   
+		   .btn-toggle-filtres:hover {
+			   background: #e6381e;
+			   transform: translateY(-1px);
+		   }
+		   
+		   #filtres-icon {
+			   transition: transform 0.3s ease;
+		   }
+		   
+		   .section-filtres-collapsed {
+			   max-height: 0;
+			   overflow: hidden;
+			   transition: max-height 0.4s ease, padding 0.4s ease;
+			   background: #f9f9f9;
+			   border-radius: 8px;
+			   margin-bottom: 20px;
+		   }
+		   
+		   .section-filtres-expanded {
+			   max-height: 800px;
+			   padding: 20px;
+			   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+			   border: 1px solid #eee;
+		   }
+		   
 		   #produits-filtrables-container {
 			   display: flex;
-			   flex-direction: row;
-			   gap: 40px;
-			   align-items: flex-start;
+			   flex-direction: column;
+			   gap: 20px;
 		   }
+		   
+		   #produits-container {
+			   width: 100%;
+		   }
+		   
 		   #filtres-colonne {
-			   min-width: 280px;
-			   max-width: 320px;
+			   width: 100%;
+		   }
+		   
+		   /* Responsive Design - Mobile et Tablette */
+		   @media screen and (max-width: 1129px) {
+			   .section-filtres-expanded {
+				   max-height: 600px;
+				   padding: 15px;
+			   }
+			   
+			   #form-filtres {
+				   display: flex;
+				   flex-direction: row;
+				   flex-wrap: wrap;
+				   gap: 15px;
+				   padding: 0;
+				   max-width: 100%;
+				   overflow-x: auto;
+				   background: transparent;
+				   border-radius: 0;
+				   box-shadow: none;
+			   }
+			   .filtre-groupe {
+				   min-width: 200px;
+				   flex-shrink: 0;
+				   margin-bottom: 0;
+				   background: #fff;
+				   border-radius: 6px;
+				   padding: 12px;
+				   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			   }
+			   .toggle-titre {
+				   font-size: 14px;
+				   margin-bottom: 8px;
+				   color: #FF3F22;
+				   font-weight: 600;
+			   }
+			   .filtre-options {
+				   max-height: 150px;
+				   overflow-y: auto;
+			   }
+			   .separator-red {
+				   display: none;
+			   }
+		   }
+		   
+		   @media screen and (max-width: 768px) {
+			   .section-filtres-expanded {
+				   max-height: 500px;
+			   }
+			   
+			   #form-filtres {
+				   flex-direction: column;
+				   overflow-x: visible;
+			   }
+			   .filtre-groupe {
+				   min-width: auto;
+				   width: 100%;
+			   }
+			   
+			   .btn-toggle-filtres {
+				   font-size: 12px;
+				   padding: 6px 12px;
+			   }
+			   .barre-tri {
+				   flex-direction: column;
+				   gap: 10px;
+			   }
 		   }
            #nombre-produits {
                 font-family: 'din-next-lt-pro', sans-serif;
@@ -348,15 +395,11 @@ function afficher_produits_boutique() {
 			   ul.liste-categories {
 				   grid-template-columns: repeat(2, 1fr);
 			   }
-			   #produits-filtrables-container {
-				   flex-direction: column;
-			   }
-			   #filtres-colonne {
-				   max-width: 100%;
-				   margin-bottom: 30px;
-			   }
 		   }
 		   @media screen and (max-width: 766px) {
+			#tri-sous-categories {
+				width: 100px;
+			}
 			   ul.liste-categories {
 				   grid-template-columns: 1fr;
 			   }
@@ -503,30 +546,34 @@ function afficher_produits_boutique() {
 		   .filtre-options::-webkit-scrollbar-thumb:hover {
 			   background: #e6381e;
 		   }
-		   .btn-pagination {
-			   background: #fff;
-			   color: #000;
-			   border: 1px solid #ddd;
-			   border-radius: 6px;
-			   padding: 8px 12px;
-			   text-decoration: none;
-			   transition: all 0.2s;
-			   font-weight: 500;
-		   }
-		   .btn-pagination:hover {
-			   background: #FF3F22;
-			   color: #fff;
-			   border-color: #FF3F22;
-		   }
-		   .btn-pagination.active {
-			   background: #FF3F22;
-			   color: #fff;
-			   border-color: #FF3F22;
-		   }
 	   </style>
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
+			// Gestion du dropdown filtres
+			const toggleFiltres = document.getElementById('toggle-filtres');
+			const sectionFiltres = document.getElementById('section-filtres');
+			const filtresIcon = document.getElementById('filtres-icon');
+			let filtresOuverts = false;
+			
+			if (toggleFiltres && sectionFiltres) {
+				toggleFiltres.addEventListener('click', function() {
+					if (filtresOuverts) {
+						// Fermer les filtres
+						sectionFiltres.className = 'section-filtres-collapsed';
+						filtresIcon.style.transform = 'rotate(0deg)';
+						toggleFiltres.innerHTML = '<span id="filtres-icon">🔽</span> Filtres';
+						filtresOuverts = false;
+					} else {
+						// Ouvrir les filtres
+						sectionFiltres.className = 'section-filtres-expanded';
+						filtresIcon.style.transform = 'rotate(180deg)';
+						toggleFiltres.innerHTML = '<span id="filtres-icon" style="transform: rotate(180deg);">🔽</span> Masquer filtres';
+						filtresOuverts = true;
+					}
+				});
+			}
+			
             // Tri sous-catégories
             const triSelect = document.getElementById('tri-sous-categories');
             const liste = document.getElementById('liste-produits');
@@ -630,7 +677,13 @@ function afficher_produits_boutique() {
 				// Remettre le compteur original
 				var compteurElement = document.getElementById('nombre-produits');
 				if (compteurElement) {
-					compteurElement.textContent = <?php echo $total_produits; ?> + ' résultats au total (Page <?php echo $page_courante; ?>/<?php echo $total_pages; ?>)';
+					compteurElement.textContent = <?php echo $total; ?> + ' résultats';
+				}
+				
+				// Rétablir le bouton "Voir plus" si nécessaire
+				var voirPlusBtn = document.getElementById('voir-plus');
+				if (voirPlusBtn && <?php echo $total; ?> > <?php echo $limite_affichage; ?>) {
+					voirPlusBtn.style.display = 'block';
 				}
 			}
 			
@@ -639,6 +692,34 @@ function afficher_produits_boutique() {
 			if (appliquerPrixBtn) {
 				appliquerPrixBtn.addEventListener('click', appliquerFiltrePrix);
 			}
+			// Voir plus
+			   var voirPlusBtn = document.getElementById('voir-plus');
+			   if (voirPlusBtn) {
+				   var produits = <?php echo json_encode($all_produits); ?>;
+				   var limite = <?php echo $limite_affichage; ?>;
+				   var total = <?php echo $total; ?>;
+				   var affiches = limite;
+				   voirPlusBtn.addEventListener('click', function() {
+					   var ul = document.getElementById('liste-produits');
+					   for (var i = affiches; i < Math.min(affiches + limite, total); i++) {
+						   var prod = produits[i];
+						   var li = document.createElement('li');
+						   li.setAttribute('data-price', prod.price_numeric);
+						   li.setAttribute('data-name', prod.name);
+						   li.innerHTML = '<a href="'+prod.permalink+'">'+
+							   '<img src="'+prod.image+'" alt="'+prod.name+'">'+
+							   '<div class="titre-categorie">'+prod.name+'</div>'+ 
+							   '<div class="prix-produit">'+prod.price+'</div>'+ 
+							   '</a>'+
+							   '<button class="btn-ajouter" data-product-id="'+prod.id+'">Ajouter au panier</button>';
+						   ul.appendChild(li);
+					   }
+					   affiches += limite;
+					   if (affiches >= total) {
+						   voirPlusBtn.style.display = 'none';
+					   }
+				   });
+			   }
 
 			   // Ajout au panier
 			   function showPopupAjout() {

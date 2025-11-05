@@ -35,8 +35,6 @@ function afficher_produits_fourches() {
       }
       return false;
     });
-      return false;
-    });
   }
 
   $html_filtres = afficher_filtres_fourches($filtres);
@@ -205,6 +203,142 @@ function afficher_produits_fourches() {
         margin: 0 0 20px 0;
         width: 100%;
       }
+      
+      /* Dropdown filters styles */
+      .btn-toggle-filtres {
+        background: #FF3F22;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s ease;
+        margin-left: 15px;
+      }
+      
+      .btn-toggle-filtres:hover {
+        background: #e6391e;
+      }
+      
+      .section-filtres-collapsed {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        opacity: 0;
+      }
+      
+      .section-filtres-expanded {
+        max-height: 500px;
+        overflow: visible;
+        transition: max-height 0.3s ease-in;
+        opacity: 1;
+        padding: 15px 0;
+      }
+      
+      #filtres-colonne {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      /* Responsive Design */
+      @media screen and (max-width: 1129px) {
+        #produits-filtrables-container > div:nth-child(3) {
+          flex-direction: column !important;
+        }
+        
+        .btn-toggle-filtres {
+          margin-left: 0;
+        }
+        
+        .barre-tri {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 15px;
+        }
+        
+        .barre-tri > div:first-child {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+        }
+        
+        .tri-container {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+        
+        #form-filtres {
+          display: flex !important;
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 15px;
+          overflow-x: auto;
+          padding: 15px;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+          height: auto !important;
+          margin-bottom: 20px;
+        }
+        
+        .filtre-groupe {
+          min-width: 200px !important;
+          flex-shrink: 0;
+          margin-bottom: 0 !important;
+          margin-right: 0 !important;
+          background: #f8f8f8;
+          border-radius: 6px;
+          padding: 12px;
+        }
+        
+        .toggle-titre {
+          font-size: 14px !important;
+          color: #FF3F22;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+        
+        .filtre-options {
+          max-height: 150px;
+        }
+        
+        .separator-red {
+          display: none;
+        }
+      }
+      
+      @media screen and (max-width: 768px) {
+        #form-filtres {
+          flex-direction: column !important;
+          overflow-x: visible;
+        }
+        
+        .filtre-groupe {
+          min-width: auto !important;
+          width: 100%;
+        }
+        
+        ul.liste-categories {
+          grid-template-columns: 1fr !important;
+        }
+
+        .barre-tri {
+				   flex-direction: column;
+				   gap: 10px;
+			   }
+
+        #tri-sous-categories {
+				width: 100px;
+			}
+    
 
 	.prix-ajout-container {
 	  display: flex;
@@ -250,7 +384,9 @@ function afficher_produits_fourches() {
       <div class="barre-tri">
         <div style="display: flex; align-items: center;">
           <div id="nombre-produits"><?php echo count($produits); ?> résultats</div>
-          <div id="cacher-filtres">Cacher les filtres</div>
+          <button id="toggle-filtres" class="btn-toggle-filtres">
+            <span id="filtres-icon">🔽</span> Filtres
+          </button>
         </div>
         <div class="tri-container">
           <label for="tri-sous-categories">Trier par :</label>
@@ -263,12 +399,15 @@ function afficher_produits_fourches() {
       </div>
       <hr class="separator-red">
 
-      <div style="display:flex; gap:20px;">
-        <div style="width:25%; min-width:170px" id="zone-filtres">
+      <!-- Section filtres déroulante -->
+      <div id="section-filtres" class="section-filtres-collapsed">
+        <div id="filtres-colonne" style="width:100%;">
           <?php echo $html_filtres; ?>
         </div>
-        <div style="flex:1;">
-          <ul class="liste-categories" id="liste-sous-categories">
+      </div>
+      
+      <div class="contenu-principal">
+        <ul class="liste-categories" id="liste-sous-categories">
             <?php
               $limite_affichage = 18;
               $total = count($produits);
@@ -291,7 +430,6 @@ function afficher_produits_fourches() {
           <?php if ($total > $limite_affichage) : ?>
             <button class="btn-voir-plus" id="voir-plus" data-total="<?php echo $total; ?>" data-limite="<?php echo $limite_affichage; ?>">Voir plus</button>
           <?php endif; ?>
-        </div>
       </div>
     </div>
 
@@ -329,6 +467,29 @@ function afficher_produits_fourches() {
 
           items.forEach(item => liste.appendChild(item));
         });
+
+        // Dropdown filters functionality
+        const toggleBtn = document.getElementById('toggle-filtres');
+        const filtresSection = document.getElementById('section-filtres');
+        const filtresIcon = document.getElementById('filtres-icon');
+        
+        if (toggleBtn && filtresSection) {
+          toggleBtn.addEventListener('click', function() {
+            const isCollapsed = filtresSection.classList.contains('section-filtres-collapsed');
+            
+            if (isCollapsed) {
+              filtresSection.classList.remove('section-filtres-collapsed');
+              filtresSection.classList.add('section-filtres-expanded');
+              filtresIcon.textContent = '🔼';
+              toggleBtn.innerHTML = '<span id="filtres-icon">🔼</span> Masquer les filtres';
+            } else {
+              filtresSection.classList.remove('section-filtres-expanded');
+              filtresSection.classList.add('section-filtres-collapsed');
+              filtresIcon.textContent = '🔽';
+              toggleBtn.innerHTML = '<span id="filtres-icon">🔽</span> Filtres';
+            }
+          });
+        }
 
         document.querySelectorAll(".toggle-titre").forEach((title) => {
           title.addEventListener("click", () => {
