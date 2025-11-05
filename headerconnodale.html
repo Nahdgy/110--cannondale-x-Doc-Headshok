@@ -51,6 +51,8 @@ function header_personnalise_shortcode() {
 				headerMenu.style.display = 'none';
 				const flags = document.getElementById('flags');
 				if (flags) flags.style.zIndex = '1';
+				// Réactiver le scroll de la page quand on ferme le menu
+				document.body.style.overflow = '';
 			});
 		}
 
@@ -75,9 +77,38 @@ function header_personnalise_shortcode() {
 					if (submenu.style.display === 'grid') {
 						submenu.style.display = 'none';
 						currentSubMenu = null;
+						// Réactiver le scroll de la page
+						if (window.innerWidth <= 1129) {
+							document.body.style.overflow = '';
+						}
 					} else {
 						submenu.style.display = 'grid';
 						currentSubMenu = submenu;
+						
+						// Désactiver le scroll de la page en mode mobile quand un sous-menu s'ouvre
+						if (window.innerWidth <= 1129) {
+							document.body.style.overflow = 'hidden';
+						}
+						
+						// Ajustement de position en mode mobile pour éviter les débordements
+						if (window.innerWidth <= 1129) {
+							const rect = sub.getBoundingClientRect();
+							const menuHeight = submenu.offsetHeight || 300;
+							const viewportHeight = window.innerHeight;
+							
+							// Si le sous-menu dépasse en bas, le positionner vers le haut
+							if (rect.bottom + menuHeight > viewportHeight) {
+								submenu.style.top = 'auto';
+								submenu.style.bottom = '100%';
+								submenu.style.marginTop = '0';
+								submenu.style.marginBottom = '5px';
+							} else {
+								submenu.style.top = '100%';
+								submenu.style.bottom = 'auto';
+								submenu.style.marginTop = '5px';
+								submenu.style.marginBottom = '0';
+							}
+						}
 					}
 				});
 				
@@ -93,8 +124,27 @@ function header_personnalise_shortcode() {
 			if (currentSubMenu) {
 				currentSubMenu.style.display = 'none';
 				currentSubMenu = null;
+				// Réactiver le scroll de la page
+				if (window.innerWidth <= 1129) {
+					document.body.style.overflow = '';
+				}
 			}
-		});		// Timeout hover menu déroulant principal BOUTIQUE
+		});
+		
+		// Gestion du redimensionnement de l'écran
+		window.addEventListener('resize', function() {
+			// Si on passe en mode desktop, réactiver le scroll
+			if (window.innerWidth > 1129) {
+				document.body.style.overflow = '';
+				// Fermer tous les sous-menus ouverts
+				if (currentSubMenu) {
+					currentSubMenu.style.display = 'none';
+					currentSubMenu = null;
+				}
+			}
+		});
+		
+		// Timeout hover menu déroulant principal BOUTIQUE
 		var dropdownBoutique = document.querySelector('.dropdown');
 		if (dropdownBoutique) {
 			var menuContent = dropdownBoutique.querySelector('.dropdown-content');
@@ -340,6 +390,27 @@ function header_personnalise_shortcode() {
 				.header-menu .dropdown-content {
 						overflow: visible;
 				}
+
+				/* Responsive pour les sous-menus en mode mobile */
+				@media screen and (max-width: 1129px) {
+					.header-menu .dropdown-content-sub {
+						position: absolute;
+						left: 0;
+						top: 100%;
+						min-width: auto;
+						width: calc(100vw - 60px);
+						max-width: 400px;
+						max-height: 300px;
+						border-radius: 8px;
+						margin-top: 5px;
+						margin-left: 0;
+						box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.15);
+					}
+					
+					.header-menu .dropdown-sub {
+						position: relative;
+					}
+				}
 				.fil-ariane{
 					margin-top:20%;
 
@@ -413,6 +484,27 @@ function header_personnalise_shortcode() {
 		/* Pour éviter que le sous-menu ne soit coupé */
 		.dropdown-content {
 			overflow: visible;
+		}
+
+		/* Responsive pour les sous-menus */
+		@media screen and (max-width: 1129px) {
+			.dropdown-content-sub {
+				position: absolute;
+				left: 0;
+				top: 100%;
+				width: calc(100vw - 60px);
+				max-width: 400px;
+				max-height: 300px;
+				border-radius: 8px;
+				margin-top: 5px;
+				margin-left: 0;
+				box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.15);
+				background: #f9f9f9;
+			}
+			
+			.dropdown-sub {
+				position: relative;
+			}
 		}
 
 	.header-custom{
@@ -616,7 +708,9 @@ function header_personnalise_shortcode() {
 			display: flex;
 			flex-direction:column;
 			align-items: center;
-		  width: 20rem;
+		  	width: 20rem;
+			max-height: 80vh;
+			overflow-y: auto;
 		}
 		  .cross{
 			  width:100%;
@@ -634,6 +728,9 @@ function header_personnalise_shortcode() {
 			  display: flex;
     		  flex-direction: column;
 		  }
+		.translator{
+			margin-bottom:1rem;
+		}
 	}
 
     .header-menu nav a {
@@ -793,6 +890,19 @@ function header_personnalise_shortcode() {
 	right: 0;
 	top: 0;
 	}
+
+	/* Responsive pour les flèches en mode mobile */
+	@media screen and (max-width: 1129px) {
+		/* Garder les flèches à droite mais ajuster la direction */
+		.arrow-orange::after {
+			border-left: 9px solid transparent;
+			border-right: 9px solid transparent;
+			border-top: 12px solid #FF3F22;
+			border-bottom: none;
+			right: 0;
+			transform: none;
+		}
+	}
 	.fil-ariane {
 	margin: 1rem 0;
 	font-family: 'din-next-lt-pro', sans-serif;
@@ -867,18 +977,15 @@ function header_personnalise_shortcode() {
 				<div class="search">
 					<?php echo do_shortcode('[wpdreams_ajaxsearchlite]'); ?>
 				</div>
-
-      	<div class="logos">
-			<img src='https://doc-headshok.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
-			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
-			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
-			<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
-      	</div>
-
-      	<div class="actions-header">
-			<div class="">
-				<?php echo do_shortcode('[gtranslate]'); ?>
+		<a href="https://doc-headshok.com/">
+			<div class="logos">
+					<img src='https://doc-headshok.com/wp-content/uploads/2025/07/Logos-mobiles.png' class="logos-mobile">
+					<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_110.png' class="logos-en-ligne">
+					<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_headshok.png' class="logos-en-ligne" id="headshok">
+					<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
 			</div>
+		</a>
+      	<div class="actions-header">
 			<div>
 				<a href="https://doc-headshok.com/mon-compte/">
 				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
@@ -933,7 +1040,7 @@ function header_personnalise_shortcode() {
     <ul class="dropdown-content-sub">
       <li><a href="/boutique/vtt/?filtre%5B%5D=beast-of-the-east-2016-2019">Beast of the East</a></li>
       <li><a href="/boutique/vtt/?filtre%5B%5D=cadre-caad2&filtre%5B%5D=cadre-caad3&filtre%5B%5D=cadre-caad4&filtre%5B%5D=cadre-caad5">CAAD</a></li>
-      <li><a href="/boutique/vtt/?filtre%5B%5D=caffeine-26-29-2007-2009">Cafféine</a></li>
+      <li><a href="/boutique/vtt/?filtre%5B%5D=caffeine-26-et-29-2007-2009">Cafféine</a></li>
 	  <li><a href="/boutique/vtt/?filtre%5B%5D=cadre-furio-furio-x-2004-2007">Furio - Furio X</a></li>
       <li><a href="/boutique/vtt/?filtre%5B%5D=claymore-2011-2013">Claymore</a></li>
       <li><a href="/boutique/vtt/?filtre%5B%5D=f26-f29-2013-2014">F26 - F29</a></li>
@@ -1105,6 +1212,9 @@ function header_personnalise_shortcode() {
           		<a href="https://doc-headshok.com/qui-sommes-nous-2/">QUI SOMMES NOUS ?</a>
           		<a href="https://doc-headshok.com/nos-news/">NOS NEWS</a>
         	</nav>
+		</div>
+		<div class="translator">
+			<?php echo do_shortcode('[gtranslate]'); ?>
 		</div>
         <div class="partner">
 			<a href="https://doc-headshok.com/devenir-partenaire/" class="btn-prestataire">DEVENIR PARTENAIRE</a>
