@@ -11,6 +11,7 @@ function shortcode_carousel_bestseller() {
             max-width: 1200px;
             margin-left: auto;
             margin-right: auto;
+            overflow-x: hidden;
         }
         .carousel-container {
             position: relative;
@@ -36,8 +37,8 @@ function shortcode_carousel_bestseller() {
 		.carousel-btn:hover{
 			background-color: #FF3F22;
 		}
-        .carousel-btn.prev { left: -20px; }
-        .carousel-btn.next { right: -20px; }
+        .carousel-btn.prev { left: 1px; }
+        .carousel-btn.next { right: 1px; }
 
         .carousel-track {
             display: flex;

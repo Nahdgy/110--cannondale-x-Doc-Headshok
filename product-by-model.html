@@ -308,12 +308,20 @@ function afficher_produits_par_modele() {
       .grille-produits-modele {
         grid-template-columns: repeat(2, 1fr);
       }
-    }
+	  .bouton-ajouter-panier {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+	}
 
     @media (max-width: 480px) {
       .grille-produits-modele {
         grid-template-columns: 1fr;
       }
+	  .bouton-ajouter-panier {
+		padding: 6px 10px;
+		font-size: 12px;
+	  }
     }
 
     .produit-modele {

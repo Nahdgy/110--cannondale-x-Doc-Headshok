@@ -339,7 +339,7 @@ function afficher_sous_categories_route() {
               $image_url = $thumbnail_id ? wp_get_attachment_url($thumbnail_id) : wc_placeholder_img_src('medium');
               ?>
 				<li data-name="<?php echo esc_attr($cat->name); ?>">
-				  <a href="<?php echo esc_url('https://cannonbale.com/detail-velo/?pratique=route&modele=' . sanitize_title($cat->name)); ?>">
+				  <a href="<?php echo esc_url('https://doc-headshok.com/detail-velo/?pratique=route&modele=' . sanitize_title($cat->name)); ?>">
 					<img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($cat->name); ?>">
 					<div class="titre-categorie"><?php echo esc_html($cat->name); ?></div>
 				  </a>
