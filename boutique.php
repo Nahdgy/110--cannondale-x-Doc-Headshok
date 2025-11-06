@@ -251,6 +251,11 @@ function afficher_produits_boutique() {
 
 	#filtres-colonne {
 		width: 100%;
+		background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 
 	#nombre-produits {
@@ -400,16 +405,15 @@ function afficher_produits_boutique() {
 	}
 
 	#form-filtres {
-		margin-bottom: 30px;
-		background: #fff;
-		border-radius: 8px;
-		padding: 18px;
-		box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-		max-width: 600px;
+		height: 600px;
+        overflow-y: scroll;
+        width: 100%;
+        scrollbar-color: black #F8F8F8;
 	}
 
 	.filtre-groupe {
-		margin-bottom: 18px;
+		margin-right: 1rem;
+        min-width: 200px;
 	}
 	.filtre-options {
 		max-height: 300px;
@@ -432,22 +436,39 @@ function afficher_produits_boutique() {
 
 	/* Responsive Design - Mobile et Tablette */
 	@media screen and (max-width: 1129px) {
+		.barre-tri {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 15px;
+        }
+
+		.barre-tri > div:first-child {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			width: 100%;
+        }
+
+		.tri-container {
+			justify-content: center;
+			flex-wrap: wrap;
+        }
+
 		.section-filtres-expanded {
 			max-height: 600px;
 			padding: 15px;
 		}
 		
 		#form-filtres {
-			display: flex;
-			flex-direction: row;
+			display: flex !important;
+			flex-direction: column;
 			flex-wrap: wrap;
 			gap: 15px;
-			padding: 0;
-			max-width: 100%;
 			overflow-x: auto;
-			background: transparent;
-			border-radius: 0;
-			box-shadow: none;
+			padding: 15px;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 		}
 		.filtre-groupe {
 			min-width: 200px;
@@ -479,6 +500,7 @@ function afficher_produits_boutique() {
 	@media screen and (max-width: 768px) {
 		.section-filtres-expanded {
 			max-height: 500px;
+			overflow-y: auto;
 		}
 		
 		#form-filtres {
