@@ -1201,6 +1201,315 @@ function mon_compte_personnalise_shortcode() {
             margin-bottom: 15px;
         }
 
+        /* Styles pour les retours */
+        .retours-container {
+            margin-top: 20px;
+        }
+
+        .retours-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .retour-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .retour-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .retour-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        .retour-numero {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #FF3F22;
+        }
+
+        .retour-date {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .retour-statut {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .statut-approuve {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .statut-refuse {
+            background: #F44336;
+            color: white;
+        }
+
+        .statut-recu {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .statut-rembourse {
+            background: #22C55E;
+            color: white;
+        }
+
+        .retour-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .retour-info {
+            flex: 1;
+        }
+
+        .retour-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .retour-produits {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .retour-produits li {
+            font-size: 13px;
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .retour-notes-admin {
+            background: #fff3cd;
+            border-left: 4px solid #FFA500;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .retour-notes-admin p {
+            margin: 5px 0;
+        }
+
+        .retour-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .retour-montant {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: #FF3F22;
+        }
+
+        .retour-rembourse {
+            background: #22C55E;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .nouvelle-demande-retour {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nouvelle-demande-retour h3 {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .nouvelle-demande-retour p {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .no-retours {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Modal de demande de retour */
+        .modal-retour {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+        }
+
+        .modal-retour-content {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .modal-retour-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #FF3F22;
+            padding-bottom: 15px;
+        }
+
+        .modal-retour-header h2 {
+            margin: 0;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 24px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-retour {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-retour label {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-retour select,
+        .form-retour textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 14px;
+        }
+
+        .form-retour textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .produits-selection {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .produit-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .produit-checkbox:last-child {
+            border-bottom: none;
+        }
+
+        .produit-checkbox input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .produit-checkbox label {
+            margin: 0;
+            font-weight: 400;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .message-retour-succes {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .message-retour-succes h3 {
+            margin-top: 0;
+            color: #155724;
+        }
+
+        .numero-retour-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF3F22;
+            margin: 15px 0;
+        }
+
+        #retours::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 4px;
+            background-color: #FF3F22;
+            margin-bottom: 15px;
+        }
+
         @media (max-width: 768px) {
             .code-promo-header {
                 flex-direction: column;
@@ -1223,6 +1532,26 @@ function mon_compte_personnalise_shortcode() {
 
             .bouton-code-promo {
                 width: 100%;
+            }
+
+            .retour-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .retour-details {
+                flex-direction: column;
+            }
+
+            .retour-actions {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .modal-retour-content {
+                margin: 20px;
+                padding: 20px;
             }
         }
     </style>
@@ -1315,6 +1644,214 @@ function mon_compte_personnalise_shortcode() {
             
             document.body.removeChild(tempInput);
         };
+
+        // Fonction pour ouvrir le modal de demande de retour
+        window.ouvrirModalRetour = function() {
+            // Créer le modal
+            const modal = document.createElement('div');
+            modal.className = 'modal-retour';
+            modal.id = 'modal-demande-retour';
+            
+            modal.innerHTML = `
+                <div class="modal-retour-content">
+                    <div class="modal-retour-header">
+                        <h2>Demande de retour</h2>
+                        <button class="modal-close" onclick="fermerModalRetour()">&times;</button>
+                    </div>
+                    <div id="retour-form-container">
+                        <form class="form-retour" id="form-demande-retour">
+                            <div>
+                                <label for="commande-select">Sélectionnez la commande *</label>
+                                <select id="commande-select" name="order_id" required>
+                                    <option value="">Choisir une commande...</option>
+                                    <?php
+                                    // Récupérer les commandes éligibles (completed, moins de 30 jours)
+                                    $eligible_orders = wc_get_orders(array(
+                                        'customer_id' => $user->ID,
+                                        'status' => 'completed',
+                                        'limit' => 50,
+                                        'orderby' => 'date',
+                                        'order' => 'DESC'
+                                    ));
+                                    
+                                    foreach ($eligible_orders as $order) {
+                                        $date_completed = $order->get_date_completed();
+                                        if (!$date_completed) continue;
+                                        
+                                        $jours = (time() - $date_completed->getTimestamp()) / (60 * 60 * 24);
+                                        if ($jours > 30) continue;
+                                        
+                                        echo '<option value="' . $order->get_id() . '" data-order-data=\'' . json_encode(array(
+                                            'id' => $order->get_id(),
+                                            'number' => $order->get_order_number(),
+                                            'items' => array_map(function($item) {
+                                                return array(
+                                                    'id' => $item->get_id(),
+                                                    'name' => $item->get_name(),
+                                                    'quantity' => $item->get_quantity(),
+                                                    'total' => $item->get_total()
+                                                );
+                                            }, $order->get_items())
+                                        )) . '\'>';
+                                        echo 'Commande #' . $order->get_order_number() . ' - ' . $date_completed->date('d/m/Y');
+                                        echo '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            
+                            <div id="produits-container" style="display: none;">
+                                <label>Produits à retourner *</label>
+                                <div class="produits-selection" id="produits-selection">
+                                    <!-- Les produits seront chargés dynamiquement -->
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="motif-retour">Motif du retour *</label>
+                                <select id="motif-retour" name="motif" required>
+                                    <option value="">Sélectionner un motif...</option>
+                                    <option value="Produit défectueux">Produit défectueux</option>
+                                    <option value="Produit non conforme">Produit non conforme à la description</option>
+                                    <option value="Mauvaise taille">Mauvaise taille/modèle</option>
+                                    <option value="Changement d'avis">Changement d'avis</option>
+                                    <option value="Article endommagé">Article endommagé lors de la livraison</option>
+                                    <option value="Autre">Autre raison</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="description-retour">Description détaillée</label>
+                                <textarea id="description-retour" name="description" placeholder="Expliquez en détail la raison de votre retour..."></textarea>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button type="submit" class="bouton-commande" id="btn-submit-retour">
+                                    ENVOYER LA DEMANDE
+                                </button>
+                                <button type="button" class="bouton-commande" onclick="fermerModalRetour()" style="background: #999; margin-left: 10px;">
+                                    ANNULER
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Afficher le modal
+            setTimeout(() => {
+                modal.style.display = 'block';
+            }, 100);
+            
+            // Gérer la sélection de commande
+            const commandeSelect = document.getElementById('commande-select');
+            const produitsContainer = document.getElementById('produits-container');
+            const produitsSelection = document.getElementById('produits-selection');
+            
+            commandeSelect.addEventListener('change', function() {
+                if (this.value) {
+                    const option = this.options[this.selectedIndex];
+                    const orderData = JSON.parse(option.getAttribute('data-order-data'));
+                    
+                    // Afficher les produits
+                    produitsSelection.innerHTML = '';
+                    orderData.items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'produit-checkbox';
+                        div.innerHTML = `
+                            <input type="checkbox" id="produit-${item.id}" name="produits[]" value="${item.id}">
+                            <label for="produit-${item.id}">
+                                ${item.name} (x${item.quantity}) - ${item.total} €
+                            </label>
+                        `;
+                        produitsSelection.appendChild(div);
+                    });
+                    
+                    produitsContainer.style.display = 'block';
+                } else {
+                    produitsContainer.style.display = 'none';
+                }
+            });
+            
+            // Gérer la soumission du formulaire
+            const form = document.getElementById('form-demande-retour');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const orderId = document.getElementById('commande-select').value;
+                const motif = document.getElementById('motif-retour').value;
+                const description = document.getElementById('description-retour').value;
+                
+                // Récupérer les produits sélectionnés
+                const produitsChecked = document.querySelectorAll('#produits-selection input[type="checkbox"]:checked');
+                const produits = Array.from(produitsChecked).map(cb => cb.value);
+                
+                if (!orderId || !motif || produits.length === 0) {
+                    alert('Veuillez remplir tous les champs obligatoires et sélectionner au moins un produit.');
+                    return;
+                }
+                
+                const btnSubmit = document.getElementById('btn-submit-retour');
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = 'ENVOI EN COURS...';
+                
+                // Envoyer la demande via AJAX
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '<?php echo admin_url('admin-ajax.php'); ?>', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.success) {
+                                    // Afficher le message de succès
+                                    document.getElementById('retour-form-container').innerHTML = `
+                                        <div class="message-retour-succes">
+                                            <h3>✓ Demande de retour enregistrée !</h3>
+                                            <p>Votre numéro de retour :</p>
+                                            <div class="numero-retour-display">${response.data.numero_retour}</div>
+                                            <p>Vous allez recevoir un email avec les instructions pour retourner votre colis.</p>
+                                            <p>Vous pouvez suivre l'état de votre demande dans cette page.</p>
+                                            <button class="bouton-commande" onclick="window.location.reload()">
+                                                OK
+                                            </button>
+                                        </div>
+                                    `;
+                                } else {
+                                    alert('Erreur : ' + response.data);
+                                    btnSubmit.disabled = false;
+                                    btnSubmit.textContent = 'ENVOYER LA DEMANDE';
+                                }
+                            } catch (e) {
+                                alert('Erreur lors du traitement de la demande.');
+                                btnSubmit.disabled = false;
+                                btnSubmit.textContent = 'ENVOYER LA DEMANDE';
+                            }
+                        }
+                    }
+                };
+                
+                const formData = 'action=creer_demande_retour' +
+                    '&nonce=<?php echo wp_create_nonce('retour_nonce'); ?>' +
+                    '&order_id=' + encodeURIComponent(orderId) +
+                    '&motif=' + encodeURIComponent(motif) +
+                    '&description=' + encodeURIComponent(description) +
+                    '&produits=' + encodeURIComponent(JSON.stringify(produits));
+                
+                xhr.send(formData);
+            });
+        };
+        
+        window.fermerModalRetour = function() {
+            const modal = document.getElementById('modal-demande-retour');
+            if (modal) {
+                modal.remove();
+            }
+        };
 		
 		
         // Fonction pour le suivi des livraisons
@@ -1359,6 +1896,7 @@ function mon_compte_personnalise_shortcode() {
             <div class="menu-compte">
                 <a href="#infos" class="active">Mes informations</a>
                 <a href="#commandes">Mes commandes</a>
+                <a href="#retours">Mes retours</a>
                 <a href="#prestations">Historique des prestations</a>
                 <a href="#codes-promo">Mes codes promo</a>
                 <a href="#parametres">Paramètres</a>
@@ -1573,6 +2111,125 @@ function mon_compte_personnalise_shortcode() {
                         echo '<p>Aucune commande trouvée.</p>';
                     }
                     ?>
+                </div>
+            </div>
+
+            <!-- Section Mes Retours -->
+            <div id="retours" class="section-compte">
+                <h2>Mes demandes de retour</h2>
+                <div class="retours-container">
+                    <?php
+                    $retours = obtenir_retours_utilisateur($user->ID);
+                    
+                    $statuts_labels_retour = array(
+                        'en_attente' => 'En attente d\'examen',
+                        'approuve' => 'Approuvé - Renvoyez votre colis',
+                        'refuse' => 'Refusé',
+                        'en_cours' => 'Retour en cours',
+                        'recu' => 'Colis reçu',
+                        'rembourse' => 'Remboursé',
+                        'termine' => 'Terminé'
+                    );
+                    
+                    if (!empty($retours)) {
+                        echo '<div class="retours-liste">';
+                        
+                        foreach ($retours as $retour) {
+                            $order = wc_get_order($retour->order_id);
+                            
+                            $statut_class = '';
+                            switch($retour->statut) {
+                                case 'en_attente':
+                                    $statut_class = 'statut-attente';
+                                    break;
+                                case 'approuve':
+                                    $statut_class = 'statut-approuve';
+                                    break;
+                                case 'refuse':
+                                    $statut_class = 'statut-refuse';
+                                    break;
+                                case 'en_cours':
+                                    $statut_class = 'statut-cours';
+                                    break;
+                                case 'recu':
+                                    $statut_class = 'statut-recu';
+                                    break;
+                                case 'rembourse':
+                                    $statut_class = 'statut-rembourse';
+                                    break;
+                                case 'termine':
+                                    $statut_class = 'statut-terminee';
+                                    break;
+                                default:
+                                    $statut_class = 'statut-attente';
+                            }
+                            
+                            $statut_text = $statuts_labels_retour[$retour->statut] ?? ucfirst($retour->statut);
+                            
+                            echo '<div class="retour-item">';
+                            echo '<div class="retour-header">';
+                            echo '<div class="retour-numero">Retour #' . esc_html($retour->numero_retour) . '</div>';
+                            echo '<div class="retour-date">' . date('d/m/Y H:i', strtotime($retour->date_demande)) . '</div>';
+                            echo '<div class="retour-statut ' . $statut_class . '">' . $statut_text . '</div>';
+                            echo '</div>';
+                            
+                            echo '<div class="retour-details">';
+                            echo '<div class="retour-info">';
+                            echo '<p><strong>Commande concernée :</strong> <a href="#commandes">#' . $order->get_order_number() . '</a></p>';
+                            echo '<p><strong>Motif :</strong> ' . esc_html($retour->motif) . '</p>';
+                            
+                            if ($retour->description) {
+                                echo '<p><strong>Description :</strong> ' . nl2br(esc_html($retour->description)) . '</p>';
+                            }
+                            
+                            // Afficher les produits concernés
+                            $produits = json_decode($retour->produits_concernes, true);
+                            if ($produits && is_array($produits)) {
+                                echo '<p><strong>Produits :</strong></p>';
+                                echo '<ul class="retour-produits">';
+                                foreach ($produits as $produit) {
+                                    echo '<li>' . esc_html($produit['name']) . ' (x' . $produit['quantity'] . ')</li>';
+                                }
+                                echo '</ul>';
+                            }
+                            
+                            if ($retour->numero_suivi_retour) {
+                                echo '<p><strong>N° de suivi retour :</strong> ' . esc_html($retour->numero_suivi_retour) . '</p>';
+                            }
+                            
+                            if ($retour->notes_admin) {
+                                echo '<div class="retour-notes-admin">';
+                                echo '<p><strong>📝 Message de notre équipe :</strong></p>';
+                                echo '<p>' . nl2br(esc_html($retour->notes_admin)) . '</p>';
+                                echo '</div>';
+                            }
+                            
+                            echo '</div>';
+                            
+                            echo '<div class="retour-actions">';
+                            echo '<div class="retour-montant">' . wc_price($retour->montant_total) . '</div>';
+                            
+                            if ($retour->remboursement_effectue) {
+                                echo '<div class="retour-rembourse">✓ Remboursé</div>';
+                            }
+                            
+                            echo '</div>';
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                        
+                        echo '</div>';
+                    } else {
+                        echo '<p class="no-retours">Aucune demande de retour effectuée.</p>';
+                    }
+                    ?>
+                    
+                    <div class="nouvelle-demande-retour">
+                        <h3>Demander un retour</h3>
+                        <p>Vous souhaitez retourner un ou plusieurs produits d'une commande ? Sélectionnez la commande ci-dessous.</p>
+                        
+                        <button class="bouton-commande" onclick="ouvrirModalRetour()">+ NOUVELLE DEMANDE DE RETOUR</button>
+                    </div>
                 </div>
             </div>
 
