@@ -95,8 +95,57 @@ function panier_produits_shortcode() {
         }
 
 	  @media screen and (max-width: 530px) {
+		  .panier-grid {
+			  grid-template-columns: 80px 1fr;
+			  gap: 15px;
+			  padding: 15px 10px;
+		  }
 		  
-	}
+		  .panier-image img {
+			  max-width: 70px;
+		  }
+		  
+		  .panier-nom {
+			  font-size: 14px;
+		  }
+		  
+		  .panier-stock {
+			  font-size: 14px;
+		  }
+		  
+		  .panier-quantite-wrapper {
+			  flex-wrap: wrap;
+			  gap: 15px;
+		  }
+		  
+		  .panier-quantite {
+			  padding: 4px 6px;
+		  }
+		  
+		  .panier-quantite button {
+			  padding: 3px 8px;
+			  font-size: 14px;
+		  }
+		  
+		  .panier-quantite input {
+			  width: 50px;
+			  font-size: 13px;
+		  }
+		  
+		  /* Agrandissement de l'icône poubelle */
+		  .panier-supprimer img {
+			  width: 24px;
+			  height: 24px;
+			  min-width: 24px;
+			  min-height: 24px;
+		  }
+		  
+		  .panier-prix {
+			  font-size: 15px;
+			  text-align: left;
+			  margin-top: 5px;
+		  }
+	  }
     </style>
 
     <div class="panier-produits">
@@ -128,7 +177,7 @@ function panier_produits_shortcode() {
                             <button class="plus">+</button>
                         </div>
                         <div class="panier-supprimer">
-                            <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector.png" 
+                            <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector.png" 
                                  alt="Supprimer" class="supprimer-btn">
                         </div>
                     </div>
@@ -165,36 +214,73 @@ function panier_produits_shortcode() {
             let input = row.querySelector("input");
             let prixDiv = row.querySelector(".panier-prix");
             let supBtn = row.querySelector(".supprimer-btn");
+            let isUpdating = false; // Flag pour éviter les clics multiples
+            let timeoutId = null; // Pour gérer le délai de debounce
 
             moinsBtn.addEventListener("click", function() {
+                if (isUpdating) return; // Ignorer si une mise à jour est en cours
+                
                 let q = parseInt(input.value);
                 if (q > 1) {
+                    isUpdating = true;
+                    moinsBtn.disabled = true;
+                    plusBtn.disabled = true;
+                    moinsBtn.style.opacity = "0.5";
+                    plusBtn.style.opacity = "0.5";
                     q--;
                     input.value = q;
-                    majPanier(row.dataset.key, q, prixDiv);
+                    
+                    // Debounce pour éviter les appels multiples
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(function() {
+                        majPanier(row.dataset.key, q, prixDiv, null, function() {
+                            isUpdating = false;
+                            moinsBtn.disabled = false;
+                            plusBtn.disabled = false;
+                            moinsBtn.style.opacity = "1";
+                            plusBtn.style.opacity = "1";
+                        });
+                    }, 300);
                 }
             });
 
             plusBtn.addEventListener("click", function() {
+                if (isUpdating) return; // Ignorer si une mise à jour est en cours
+                
+                isUpdating = true;
+                moinsBtn.disabled = true;
+                plusBtn.disabled = true;
+                moinsBtn.style.opacity = "0.5";
+                plusBtn.style.opacity = "0.5";
                 let q = parseInt(input.value);
                 q++;
                 input.value = q;
-                majPanier(row.dataset.key, q, prixDiv);
+                
+                // Debounce pour éviter les appels multiples
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(function() {
+                    majPanier(row.dataset.key, q, prixDiv, null, function() {
+                        isUpdating = false;
+                        moinsBtn.disabled = false;
+                        plusBtn.disabled = false;
+                        moinsBtn.style.opacity = "1";
+                        plusBtn.style.opacity = "1";
+                    });
+                }, 300);
             });
 
             supBtn.addEventListener("click", function() {
+                if (isUpdating) return; // Ignorer si une mise à jour est en cours
+                
+                isUpdating = true;
                 // Remplace l'icône poubelle par un spinner
-                supBtn.src = "https://cannonbale.com/wp-content/uploads/2025/07/spinner.svg";
+                supBtn.src = "https://doc-headshok.com/wp-content/uploads/2025/07/spinner.svg";
                 supBtn.style.animation = "spin 1s linear infinite";
                 majPanier(row.dataset.key, 0, prixDiv, row);
             });
-    // Ajout de l'animation spinner
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-    document.head.appendChild(style);
         });
 
-        function majPanier(cartKey, qty, prixDiv, row = null) {
+        function majPanier(cartKey, qty, prixDiv, row = null, callback = null) {
             fetch("<?php echo esc_url(admin_url('admin-ajax.php')); ?>", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded"},
@@ -225,6 +311,13 @@ function panier_produits_shortcode() {
 				}
                 // Mise à jour du scroll après chaque modification
                 updateScroll();
+            })
+            .catch(error => {
+                console.error('Erreur lors de la mise à jour du panier:', error);
+            })
+            .finally(() => {
+                // Toujours réactiver les boutons après l'AJAX (succès ou erreur)
+                if (callback) callback();
             });
         }
 
