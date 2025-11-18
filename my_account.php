@@ -1020,6 +1020,211 @@ function mon_compte_personnalise_shortcode() {
                 margin-bottom: 5px;
             }
         }
+
+        /* Styles pour les codes promo */
+        .codes-promo-container {
+            margin-top: 20px;
+        }
+
+        .codes-promo-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .code-promo-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .code-promo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .code-promo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .code-promo-code {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+        }
+
+        .code-promo-statut {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .statut-actif {
+            background: rgba(34, 197, 94, 0.9);
+            color: #fff;
+        }
+
+        .statut-expired {
+            background: rgba(239, 68, 68, 0.9);
+            color: #fff;
+        }
+
+        .code-promo-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .code-promo-info {
+            flex: 1;
+        }
+
+        .code-promo-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-promo-reduction {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 18px !important;
+            margin-bottom: 12px !important;
+        }
+
+        .code-promo-expiry {
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .code-promo-minimum,
+        .code-promo-usage {
+            font-size: 13px !important;
+            opacity: 0.85;
+        }
+
+        .code-promo-description {
+            margin-top: 12px !important;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .code-promo-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .bouton-code-promo {
+            background: #fff;
+            color: #667eea !important;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .bouton-code-promo:hover {
+            background: #f0f0f0 !important;
+            color: #667eea !important;
+            text-decoration: none !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .bouton-utiliser {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            border: 2px solid #fff;
+        }
+
+        .bouton-utiliser:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            color: #fff !important;
+        }
+
+        .codes-promo-vide {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .codes-promo-vide p {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 16px;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+
+        .codes-promo-info {
+            font-size: 14px !important;
+            color: #adb5bd !important;
+        }
+
+        #codes-promo::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 4px;
+            background-color: #FF3F22;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .code-promo-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .code-promo-code {
+                font-size: 18px;
+            }
+
+            .code-promo-details {
+                flex-direction: column;
+            }
+
+            .code-promo-actions {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .bouton-code-promo {
+                width: 100%;
+            }
+        }
     </style>
 
     <script>
@@ -1080,6 +1285,36 @@ function mon_compte_personnalise_shortcode() {
             link.click();
             document.body.removeChild(link);
         };
+
+        // Fonction pour copier le code promo dans le presse-papier
+        window.copierCodePromo = function(code) {
+            // Créer un élément temporaire pour copier le texte
+            const tempInput = document.createElement('input');
+            tempInput.value = code;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); // Pour mobile
+            
+            try {
+                document.execCommand('copy');
+                
+                // Afficher un message de confirmation
+                const originalText = event.target.textContent;
+                event.target.textContent = '✓ CODE COPIÉ !';
+                event.target.style.background = '#22C55E';
+                event.target.style.color = '#fff';
+                
+                setTimeout(function() {
+                    event.target.textContent = originalText;
+                    event.target.style.background = '';
+                    event.target.style.color = '';
+                }, 2000);
+            } catch (err) {
+                alert('Impossible de copier le code. Veuillez le copier manuellement : ' + code);
+            }
+            
+            document.body.removeChild(tempInput);
+        };
 		
 		
         // Fonction pour le suivi des livraisons
@@ -1125,6 +1360,7 @@ function mon_compte_personnalise_shortcode() {
                 <a href="#infos" class="active">Mes informations</a>
                 <a href="#commandes">Mes commandes</a>
                 <a href="#prestations">Historique des prestations</a>
+                <a href="#codes-promo">Mes codes promo</a>
                 <a href="#parametres">Paramètres</a>
                <a href="<?php echo esc_url(wp_logout_url('https://doc-headshok.com/login/')); ?>" class="deconnexion">Se déconnecter</a>
             </div>
@@ -1418,6 +1654,114 @@ function mon_compte_personnalise_shortcode() {
                         echo '</div>';
                     } else {
                         echo '<p>Aucune prestation demandée.</p>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <!-- Section Codes Promo -->
+            <div id="codes-promo" class="section-compte">
+                <h2>Mes codes promo</h2>
+                <div class="codes-promo-container">
+                    <?php
+                    // Récupérer tous les coupons WooCommerce assignés à cet utilisateur
+                    $user_email = $user->user_email;
+                    $user_coupons = obtenir_coupons_utilisateur($user_email);
+                    
+                    if (!empty($user_coupons)) {
+                        echo '<div class="codes-promo-liste">';
+                        
+                        foreach ($user_coupons as $coupon_code) {
+                            $coupon = new WC_Coupon($coupon_code);
+                            
+                            // Vérifier que le coupon existe et est valide
+                            if (!$coupon->get_id()) {
+                                continue;
+                            }
+                            
+                            // Déterminer le type de réduction
+                            $discount_type = $coupon->get_discount_type();
+                            $amount = $coupon->get_amount();
+                            
+                            $discount_text = '';
+                            switch($discount_type) {
+                                case 'percent':
+                                    $discount_text = $amount . '% de réduction';
+                                    break;
+                                case 'fixed_cart':
+                                    $discount_text = wc_price($amount) . ' de réduction sur le panier';
+                                    break;
+                                case 'fixed_product':
+                                    $discount_text = wc_price($amount) . ' de réduction par produit';
+                                    break;
+                                default:
+                                    $discount_text = 'Réduction spéciale';
+                            }
+                            
+                            // Date d'expiration
+                            $expiry_date = $coupon->get_date_expires();
+                            $expiry_text = $expiry_date ? 'Expire le ' . $expiry_date->date('d/m/Y') : 'Pas de date d\'expiration';
+                            
+                            // Montant minimum
+                            $minimum_amount = $coupon->get_minimum_amount();
+                            $minimum_text = $minimum_amount ? 'Minimum d\'achat : ' . wc_price($minimum_amount) : '';
+                            
+                            // Nombre d'utilisations
+                            $usage_limit = $coupon->get_usage_limit();
+                            $usage_count = $coupon->get_usage_count();
+                            $usage_text = '';
+                            if ($usage_limit) {
+                                $remaining = $usage_limit - $usage_count;
+                                $usage_text = 'Utilisations restantes : ' . $remaining . '/' . $usage_limit;
+                            }
+                            
+                            // Vérifier si le coupon est expiré
+                            $is_expired = $expiry_date && $expiry_date->getTimestamp() < time();
+                            $statut_class = $is_expired ? 'statut-expired' : 'statut-actif';
+                            $statut_text = $is_expired ? 'Expiré' : 'Actif';
+                            
+                            echo '<div class="code-promo-item">';
+                            echo '<div class="code-promo-header">';
+                            echo '<div class="code-promo-code">' . esc_html($coupon_code) . '</div>';
+                            echo '<div class="code-promo-statut ' . $statut_class . '">' . $statut_text . '</div>';
+                            echo '</div>';
+                            
+                            echo '<div class="code-promo-details">';
+                            echo '<div class="code-promo-info">';
+                            echo '<p class="code-promo-reduction">' . $discount_text . '</p>';
+                            echo '<p class="code-promo-expiry">' . $expiry_text . '</p>';
+                            
+                            if ($minimum_text) {
+                                echo '<p class="code-promo-minimum">' . $minimum_text . '</p>';
+                            }
+                            
+                            if ($usage_text) {
+                                echo '<p class="code-promo-usage">' . $usage_text . '</p>';
+                            }
+                            
+                            if ($coupon->get_description()) {
+                                echo '<p class="code-promo-description">' . esc_html($coupon->get_description()) . '</p>';
+                            }
+                            
+                            echo '</div>';
+                            
+                            if (!$is_expired) {
+                                echo '<div class="code-promo-actions">';
+                                echo '<button class="bouton-code-promo" onclick="copierCodePromo(\'' . esc_js($coupon_code) . '\')">📋 COPIER LE CODE</button>';
+                                echo '<a href="' . esc_url(wc_get_page_permalink('shop')) . '" class="bouton-code-promo bouton-utiliser">UTILISER MAINTENANT</a>';
+                                echo '</div>';
+                            }
+                            
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                        
+                        echo '</div>';
+                    } else {
+                        echo '<div class="codes-promo-vide">';
+                        echo '<p>Vous n\'avez pas encore de codes promo assignés.</p>';
+                        echo '<p class="codes-promo-info">Les codes promo vous seront attribués par notre équipe pour des offres spéciales ou des récompenses de fidélité.</p>';
+                        echo '</div>';
                     }
                     ?>
                 </div>
