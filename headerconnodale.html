@@ -1038,17 +1038,17 @@ function header_personnalise_shortcode() {
 						<?php
 						// Définir les catégories principales
 						$categories_principales = array(
-							array('slug' => 'vtt', 'label' => 'PIÈCES DE VÉLO VTT'),
-							array('slug' => 'vae', 'label' => 'PIÈCES DE VÉLO VAE'),
-							array('slug' => 'route', 'label' => 'PIÈCES DE VÉLO ROUTE'),
-							array('slug' => 'velos-urbains', 'label' => 'PIÈCES DE VÉLO URBAIN'),
-							array('slug' => 'fourche', 'label' => 'FOURCHES'),
-							array('slug' => 'cadre', 'label' => 'PIECES DE CADRE'),
-							array('slug' => 'transmission', 'label' => 'TRANSMISSION'),
-							array('slug' => 'freinage', 'label' => 'FREINAGE'),
-							array('slug' => 'roue', 'label' => 'ROUE / PNEU'),
-							array('slug' => 'composants', 'label' => 'COMPOSANTS PERIPHERIQUES'),
-							array('slug' => 'equipement', 'label' => 'ÉQUIPEMENTS')
+							array('link'=>'vtt','slug' => 'vtt', 'label' => 'PIÈCES DE VÉLO VTT'),
+							array('link'=>'vae-2','slug' => 'vae', 'label' => 'PIÈCES DE VÉLO VAE'),
+							array('link'=>'route','slug' => 'route', 'label' => 'PIÈCES DE VÉLO ROUTE'),
+							array('link'=>'velos-urbains-2','slug' => 'velos-urbains', 'label' => 'PIÈCES DE VÉLO URBAIN'),
+							array('link'=>'fourches','slug' => 'fourche', 'label' => 'FOURCHES'),
+							array('link'=>'pieces-de-cadre','slug' => 'cadre', 'label' => 'PIECES DE CADRE'),
+							array('link'=>'transmission','slug' => 'transmission', 'label' => 'TRANSMISSION'),
+							array('link'=>'freinage','slug' => 'freinage', 'label' => 'FREINAGE'),
+							array('link'=>'roue-pneu','slug' => 'roue', 'label' => 'ROUE / PNEU'),
+							array('link'=>'composants','slug' => 'composants', 'label' => 'COMPOSANTS PERIPHERIQUES'),
+							array('link'=>'equipement','slug' => 'equipement', 'label' => 'ÉQUIPEMENTS')
 						);
 						
 						// Boucle pour chaque catégorie principale
@@ -1068,14 +1068,14 @@ function header_personnalise_shortcode() {
 							));
 							?>
 							<li class="dropdown-sub">
-								<a href="/boutique/<?php echo esc_attr($cat_data['slug']); ?>"><?php echo esc_html($cat_data['label']); ?></a>
+								<a href="/boutique/<?php echo esc_attr($cat_data['link']); ?>"><?php echo esc_html($cat_data['label']); ?></a>
 								<span class="arrow-orange"></span>
 								
 								<?php if (!empty($subcategories) && !is_wp_error($subcategories)): ?>
 								<ul class="dropdown-content-sub">
 									<?php foreach ($subcategories as $subcat): ?>
 									<li>
-										<a href="/boutique/<?php echo esc_attr($cat_data['slug']); ?>/?filtre%5B%5D=<?php echo esc_attr($subcat->slug); ?>">
+										<a href="/boutique/<?php echo esc_attr($cat_data['link']); ?>/?filtre%5B%5D=<?php echo esc_attr($subcat->slug); ?>">
 											<?php echo esc_html($subcat->name); ?>
 										</a>
 									</li>
