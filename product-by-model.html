@@ -106,243 +106,54 @@ function afficher_produits_par_modele() {
 
   // 👉 Ensuite, afficher le HTML
   ?>
-	<div class="titre-et-manuel">
-	  <h1 class="titre-modele">
-		<?php echo esc_html($term->name); ?>
-	  </h1>
-
-	  <?php if ($chemin_pdf): ?>
-		<a href="<?php echo esc_url($chemin_pdf); ?>" download class="bouton-manuel">TÉLÉCHARGER LE MANUEL</a>
-	  <?php else: ?>
-		<p style="color: #777; font-size: 14px;">Aucun manuel PDF disponible.</p>
-	  <?php endif; ?>
-	</div>
-
-	<div class="images-et-essentiel">
-	  <div class="images-modele">
-		<?php
-		  // Afficher d'abord les images de la galerie de catégorie
-		  if (!empty($category_images)) {
-		    foreach ($category_images as $img) {
-		      echo '<img src="' . esc_url($img['medium']) . '" alt="' . esc_attr($img['title']) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($img['full']) . '&quot;)">';
-		    }
-		  } else {
-		    // Si pas d'images dans la galerie de catégorie, utiliser l'ancienne méthode
-		    $images_args = [
-		      'post_type'      => 'attachment',
-		      'post_mime_type' => 'image',
-		      'posts_per_page' => -1,
-		      'post_status'    => 'inherit',
-		      's'              => $modele_slug
-		    ];
-
-		    $images_query = new WP_Query($images_args);
-
-		    if ($images_query->have_posts()) {
-		      while ($images_query->have_posts()) {
-		        $images_query->the_post();
-		        $image_url = wp_get_attachment_image_src(get_the_ID(), 'medium')[0];
-		        $image_full_url = wp_get_attachment_image_src(get_the_ID(), 'full')[0];
-		        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr(get_the_title()) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($image_full_url) . '&quot;)">';
-		      }
-		      wp_reset_postdata();
-		    } else {
-		      echo '<p style="font-size: 14px; color: #777;">Aucune image disponible pour ce modèle.</p>';
-		    }
-		  }
-		?>
-	  </div>
-
-	  <?php
-	  // Affichage du tableau personnalisé de la catégorie (si disponible)
-	  if ($category_table && isset($category_table['rows']) && isset($category_table['cols']) && isset($category_table['data'])) {
-	    echo '<div class="tableau-category">';
-	    echo '<h3 class="titre-tableau">Informations techniques</h3>';
-	    echo '<table class="category-table-display">';
-	    for ($i = 0; $i < $category_table['rows']; $i++) {
-	      echo '<tr>';
-	      for ($j = 0; $j < $category_table['cols']; $j++) {
-	        $cell_content = isset($category_table['data'][$i][$j]) ? $category_table['data'][$i][$j] : '';
-	        echo '<td>' . esc_html($cell_content) . '</td>';
-	      }
-	      echo '</tr>';
-	    }
-	    echo '</table>';
-	    echo '</div>';
-	  }
-	  ?>
-	</div>
-
-  <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px; margin-bottom: 2%;">
-    <div class="barre-tri">
-      <div style="display: flex; align-items: center;">
-        <div id="nombre-produits">
-          <span class="produits-affiches"><?php echo $produits_total; ?> résultats</span>
-        </div>
-      </div>
-      <div class="tri-container">
-        <label for="tri-sous-categories">Trier par :</label>
-        <select id="tri-sous-categories">
-          <option value="default">Tri par défaut</option>
-          <option value="alpha">Ordre alphabétique A-Z</option>
-          <option value="alpha-desc">Ordre alphabétique Z-A</option>
-        </select>
-      </div>
-    </div>
-    <hr class="separator-red">
-  </div>
-  <?php
-
-  // 👉 Puis afficher les produits
-	if ($loop->have_posts()) {
-		echo '<div class="grille-produits-modele" id="grille-produits-modele">';
-		$i = 0;
-		while ($loop->have_posts() && $i < $limite_affichage) {
-			$loop->the_post();
-			global $product;
-			$thumbnail = get_the_post_thumbnail($product->get_id(), 'medium');
-			if (!$thumbnail) {
-				$thumbnail = '<img src="' . wc_placeholder_img_src('medium') . '" alt="Image par défaut" />';
-			}
-			echo '<div class="produit-modele">';
-			echo '<a href="' . get_permalink() . '">' . $thumbnail . '</a>';
-			echo '<div class="info-produit">';
-			echo '<div class="texte-produit">';
-			echo '<h3>' . get_the_title() . '</h3>';
-			echo '<p>' . $product->get_price_html() . '</p>';
-			echo '</div>';
-			echo '<a href="' . esc_url('?add-to-cart=' . $product->get_id()) . '" 
-								data-quantity="1" 
-								class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
-								data-product_id="' . esc_attr($product->get_id()) . '" 
-								data-product_sku="' . esc_attr($product->get_sku()) . '" 
-								aria-label="Ajouter “' . esc_attr($product->get_name()) . '” au panier" 
-								rel="nofollow">Ajouter au panier</a>';
-			echo '</div>';
-			echo '</div>';
-			$i++;
-		}
-		echo '</div>';
-			if ($produits_total > $limite_affichage) {
-				echo '<div style="display: flex; justify-content: center; width: 100%;"><button class="btn-voir-plus" id="voir-plus">Voir plus</button></div>';
-			}
-		wp_reset_postdata();
-	} else {
-		echo '<p>Aucun produit trouvé pour ce modèle.</p>';
-	}
-	if ($produits_total > $limite_affichage) : ?>
-		<script>
-			window.allProduitsByModel = <?php echo json_encode($all_produits); ?>;
-		</script>
-	<?php endif; ?>
-	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			const triSelect = document.getElementById('tri-sous-categories');
-			const grille = document.getElementById('grille-produits-modele');
-			const voirPlusBtn = document.getElementById('voir-plus');
-			if (triSelect && grille) {
-				triSelect.addEventListener('change', function () {
-					const items = Array.from(grille.querySelectorAll('.produit-modele'));
-					if (this.value === 'alpha') {
-						items.sort((a, b) => a.querySelector('h3').textContent.localeCompare(b.querySelector('h3').textContent));
-					} else if (this.value === 'alpha-desc') {
-						items.sort((a, b) => b.querySelector('h3').textContent.localeCompare(a.querySelector('h3').textContent));
-					} else {
-						return;
-					}
-					items.forEach(item => grille.appendChild(item));
-				});
-			}
-			if (voirPlusBtn && window.allProduitsByModel) {
-				voirPlusBtn.addEventListener('click', function (e) {
-					e.preventDefault();
-					grille.innerHTML = '';
-					window.allProduitsByModel.forEach(function(p) {
-						const div = document.createElement('div');
-						div.className = 'produit-modele';
-						div.innerHTML = `
-							<a href="${p.permalink}">${p.thumbnail}</a>
-							<div class=\"info-produit\">
-								<div class=\"texte-produit\">
-									<h3>${p.title}</h3>
-									<p>${p.price_html}</p>
-								</div>
-								<a href="?add-to-cart=${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter “${p.name}” au panier" rel="nofollow">Ajouter au panier</a>
-							</div>
-						`;
-						grille.appendChild(div);
-					});
-					voirPlusBtn.style.display = 'none';
-				});
-			}
-		});
-	</script>
-
-  ?>
-
-	<style>
-		.btn-voir-plus {
+  <style>
+		#voir-plus {
 			display: block;
-			margin: 30px auto 0 auto;
-			background-color: black;
-			color: white;
+			margin: 20px auto 0;
+			background-color: #000;
+			color: #fff;
 			padding: 10px 20px;
-			font-size: 16px;
-			font-family: 'DIN Next LT Pro', sans-serif;
+			font-size: 14px;
+			font-family: 'din-next-lt-pro', sans-serif;
 			border: none;
-			border-radius: 6px;
+			border-radius: 4px;
 			cursor: pointer;
-			transition: background 0.2s, color 0.2s;
 		}
-		.btn-voir-plus:hover {
+		#voir-plus:hover {
 			background-color: #FF3F22;
 			color: #fff;
 		}
     .grille-produits-modele {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
-    }
-
-    @media (max-width: 768px) {
-      .grille-produits-modele {
-        grid-template-columns: repeat(2, 1fr);
-      }
-	  .bouton-ajouter-panier {
-        padding: 8px 12px;
-        font-size: 14px;
-      }
-	}
-
-    @media (max-width: 480px) {
-      .grille-produits-modele {
-        grid-template-columns: 1fr;
-      }
-	  .bouton-ajouter-panier {
-		padding: 6px 10px;
-		font-size: 12px;
-	  }
+      gap: 20px;
     }
 
     .produit-modele {
       background-color: #F7F7F7;
       padding: 15px;
-      border-radius: 10px;
+      border-radius: 6px;
       text-align: center;
       position: relative;
-      transition: transform 0.2s ease;
+      transition: transform 0.3s ease;
       display: flex;
       flex-direction: column;
+      min-height: 400px;
+      box-sizing: border-box;
     }
 
     .produit-modele:hover {
-      transform: translateY(-5px);
+      transform: scale(1.03);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
 
     .produit-modele img {
       max-width: 100%;
       height: auto;
-      margin-bottom: 10px;
+      margin-bottom: 18px;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
       object-fit: contain;
     }
 
@@ -358,8 +169,8 @@ function afficher_produits_par_modele() {
     .texte-produit h3 {
       font-size: 16px;
       font-weight: 600;
-      margin: 0 0 5px;
-      color: #000;
+      margin: 10px 0;
+      color: #000 !important;
       text-align: left;
     }
 
@@ -375,14 +186,14 @@ function afficher_produits_par_modele() {
       background-color: #000000 !important;
       color: #ffffff !important;
       width: 100%;
-      border-radius: 10px;
-		padding: 2px;
+      border-radius: 6px;
+      padding: 10px;
       text-align: center;
-      line-height: 30px;
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 16px;
+      font-weight: 600;
       text-decoration: none;
       margin-top: 5px;
+      transition: background-color 0.3s ease;
     }
 
     .bouton-ajouter-panier:hover {
@@ -390,42 +201,42 @@ function afficher_produits_par_modele() {
       color: #ffffff !important;
     }
 
-      .barre-tri {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 5px;
-      }
-      #nombre-produits {
-        font-family: 'DIN Next LT Pro', sans-serif;
-        font-weight: 300;
-        font-size: 24px;
-        color: #656565;
-      }
-      .tri-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .tri-container label {
-        font-family: 'DIN Next LT Pro', sans-serif;
-        font-weight: 300;
-        font-size: 16px;
-        color: #000;
-        margin-bottom: 0;
-      }
-      #tri-sous-categories {
-        width: 160px;
-        padding: 6px 8px;
-        font-family: 'DIN Next LT Pro', sans-serif;
-        font-size: 14px;
-      }
-      .separator-red {
-        border: none;
-        border-bottom: 2px solid #FF3F22;
-        margin: 0 0 20px 0;
-        width: 100%;
-      }
+	.barre-tri {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 5px;
+	}
+	#nombre-produits {
+	font-family: 'din-next-lt-pro', sans-serif;
+	font-weight: 300;
+	font-size: 24px;
+	color: black;
+	margin-right: 2rem;
+	}
+	.tri-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	}
+	.tri-container label {
+	font-family: 'din-next-lt-pro', sans-serif;
+	font-weight: 300;
+	font-size: 16px;
+	color: #000;
+	margin-bottom: 0;
+	}
+	#tri-sous-categories {
+	width: 160px;
+	padding: 6px 8px;
+	font-family: 'din-next-lt-pro', sans-serif;
+	font-size: 14px;
+	}
+	.separator-red {
+	border: none;
+	border-top: 2px solid #FF3F22;
+	margin: 18px 0;
+	}
 
 	.titre-et-manuel {
 	  display: flex;
@@ -586,21 +397,9 @@ function afficher_produits_par_modele() {
 	  background: rgba(0, 0, 0, 0.7);
 	  padding: 10px 20px;
 	  border-radius: 5px;
-	  font-family: 'DIN Next LT Pro', sans-serif;
+	  font-family: 'din-next-lt-pro', sans-serif;
 	  font-size: 14px;
 	  z-index: 10001;
-	}
-
-	@media (max-width: 1024px) {
-	  .modal-content-container {
-	    flex-direction: column;
-	    gap: 20px;
-	  }
-	  
-	  #modalZoom img {
-	    max-width: 90vw;
-	    max-height: 70vh;
-	  }
 	}
 
 	/* STYLES POUR LE TABLEAU PERSONNALISÉ DE CATÉGORIE */
@@ -612,7 +411,7 @@ function afficher_produits_par_modele() {
 	}
 
 	.titre-tableau {
-	  font-family: 'DIN Next LT Pro', sans-serif;
+	  font-family: 'din-next-lt-pro', sans-serif;
 	  font-size: 24px;
 	  font-weight: 700;
 	  margin-bottom: 15px;
@@ -633,7 +432,7 @@ function afficher_produits_par_modele() {
 	  padding: 12px;
 	  background: #f9f9f9;
 	  transition: background 0.3s ease;
-	  font-family: 'DIN Next LT Pro', sans-serif;
+	  font-family: 'din-next-lt-pro', sans-serif;
 	  font-size: 14px;
 	}
 
@@ -650,7 +449,233 @@ function afficher_produits_par_modele() {
 	  background: #e0e0e0 !important;
 	  color: #000;
 	}
+
+	  /* Responsive Design */
+      @media screen and (max-width: 1129px) {
+        .grille-produits-modele {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .barre-tri {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 15px;
+        }
+        .tri-container {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+      }
+	  @media (max-width: 1024px) {
+		.modal-content-container {
+			flex-direction: column;
+			gap: 20px;
+		}
+		
+		#modalZoom img {
+			max-width: 90vw;
+			max-height: 70vh;
+		}
+	}
+      
+      @media screen and (max-width: 768px) {
+        .grille-produits-modele {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .produit-modele {
+          min-height: 0px;
+        }
+        .texte-produit h3 {
+          font-size: 14px;
+        }
+        .bouton-ajouter-panier {
+          padding: 8px 12px;
+          font-size: 14px;
+        }
+        .barre-tri {
+          flex-direction: column;
+          gap: 10px;
+        }
+        #tri-sous-categories {
+          width: 100px;
+        }
+      }
   </style>
+	<div class="titre-et-manuel">
+	  <h1 class="titre-modele">
+		<?php echo esc_html($term->name); ?>
+	  </h1>
+
+	  <?php if ($chemin_pdf): ?>
+		<a href="<?php echo esc_url($chemin_pdf); ?>" download class="bouton-manuel">TÉLÉCHARGER LE MANUEL</a>
+	  <?php else: ?>
+		<p style="color: #777; font-size: 14px;">Aucun manuel PDF disponible.</p>
+	  <?php endif; ?>
+	</div>
+
+	<div class="images-et-essentiel">
+	  <div class="images-modele">
+		<?php
+		  // Afficher d'abord les images de la galerie de catégorie
+		  if (!empty($category_images)) {
+		    foreach ($category_images as $img) {
+		      echo '<img src="' . esc_url($img['medium']) . '" alt="' . esc_attr($img['title']) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($img['full']) . '&quot;)">';
+		    }
+		  } else {
+		    // Si pas d'images dans la galerie de catégorie, utiliser l'ancienne méthode
+		    $images_args = [
+		      'post_type'      => 'attachment',
+		      'post_mime_type' => 'image',
+		      'posts_per_page' => -1,
+		      'post_status'    => 'inherit',
+		      's'              => $modele_slug
+		    ];
+
+		    $images_query = new WP_Query($images_args);
+
+		    if ($images_query->have_posts()) {
+		      while ($images_query->have_posts()) {
+		        $images_query->the_post();
+		        $image_url = wp_get_attachment_image_src(get_the_ID(), 'medium')[0];
+		        $image_full_url = wp_get_attachment_image_src(get_the_ID(), 'full')[0];
+		        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr(get_the_title()) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($image_full_url) . '&quot;)">';
+		      }
+		      wp_reset_postdata();
+		    } else {
+		      echo '<p style="font-size: 14px; color: #777;">Aucune image disponible pour ce modèle.</p>';
+		    }
+		  }
+		?>
+	  </div>
+
+	  <?php
+	  // Affichage du tableau personnalisé de la catégorie (si disponible)
+	  if ($category_table && isset($category_table['rows']) && isset($category_table['cols']) && isset($category_table['data'])) {
+	    echo '<div class="tableau-category">';
+	    echo '<h3 class="titre-tableau">Informations techniques</h3>';
+	    echo '<table class="category-table-display">';
+	    for ($i = 0; $i < $category_table['rows']; $i++) {
+	      echo '<tr>';
+	      for ($j = 0; $j < $category_table['cols']; $j++) {
+	        $cell_content = isset($category_table['data'][$i][$j]) ? $category_table['data'][$i][$j] : '';
+	        echo '<td>' . esc_html($cell_content) . '</td>';
+	      }
+	      echo '</tr>';
+	    }
+	    echo '</table>';
+	    echo '</div>';
+	  }
+	  ?>
+	</div>
+
+  <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px; margin-bottom: 2%;">
+    <div class="barre-tri">
+      <div style="display: flex; align-items: center;">
+        <div id="nombre-produits">
+          <span class="produits-affiches"><?php echo $produits_total; ?> résultats</span>
+        </div>
+      </div>
+      <div class="tri-container">
+        <label for="tri-sous-categories">Trier par :</label>
+        <select id="tri-sous-categories">
+          <option value="default">Tri par défaut</option>
+          <option value="alpha">Ordre alphabétique A-Z</option>
+          <option value="alpha-desc">Ordre alphabétique Z-A</option>
+        </select>
+      </div>
+    </div>
+    <hr class="separator-red">
+  </div>
+  <?php
+
+  // 👉 Puis afficher les produits
+	if ($loop->have_posts()) {
+		echo '<div class="grille-produits-modele" id="grille-produits-modele">';
+		$i = 0;
+		while ($loop->have_posts() && $i < $limite_affichage) {
+			$loop->the_post();
+			global $product;
+			$thumbnail = get_the_post_thumbnail($product->get_id(), 'medium');
+			if (!$thumbnail) {
+				$thumbnail = '<img src="' . wc_placeholder_img_src('medium') . '" alt="Image par défaut" />';
+			}
+			echo '<div class="produit-modele">';
+			echo '<a href="' . get_permalink() . '">' . $thumbnail . '</a>';
+			echo '<div class="info-produit">';
+			echo '<div class="texte-produit">';
+			echo '<h3>' . get_the_title() . '</h3>';
+			echo '<p>' . $product->get_price_html() . '</p>';
+			echo '</div>';
+			echo '<a href="' . esc_url('?add-to-cart=' . $product->get_id()) . '" 
+								data-quantity="1" 
+								class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
+								data-product_id="' . esc_attr($product->get_id()) . '" 
+								data-product_sku="' . esc_attr($product->get_sku()) . '" 
+								aria-label="Ajouter “' . esc_attr($product->get_name()) . '” au panier" 
+								rel="nofollow">Ajouter au panier</a>';
+			echo '</div>';
+			echo '</div>';
+			$i++;
+		}
+		echo '</div>';
+			if ($produits_total > $limite_affichage) {
+				echo '<button id="voir-plus">Voir plus</button>';
+			}
+		wp_reset_postdata();
+	} else {
+		echo '<p>Aucun produit trouvé pour ce modèle.</p>';
+	}
+	if ($produits_total > $limite_affichage) : ?>
+		<script>
+			window.allProduitsByModel = <?php echo json_encode($all_produits); ?>;
+		</script>
+	<?php endif; ?>
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const triSelect = document.getElementById('tri-sous-categories');
+			const grille = document.getElementById('grille-produits-modele');
+			const voirPlusBtn = document.getElementById('voir-plus');
+			if (triSelect && grille) {
+				triSelect.addEventListener('change', function () {
+					const items = Array.from(grille.querySelectorAll('.produit-modele'));
+					if (this.value === 'alpha') {
+						items.sort((a, b) => a.querySelector('h3').textContent.localeCompare(b.querySelector('h3').textContent));
+					} else if (this.value === 'alpha-desc') {
+						items.sort((a, b) => b.querySelector('h3').textContent.localeCompare(a.querySelector('h3').textContent));
+					} else {
+						return;
+					}
+					items.forEach(item => grille.appendChild(item));
+				});
+			}
+			if (voirPlusBtn && window.allProduitsByModel) {
+				voirPlusBtn.addEventListener('click', function (e) {
+					e.preventDefault();
+					grille.innerHTML = '';
+					window.allProduitsByModel.forEach(function(p) {
+						const div = document.createElement('div');
+						div.className = 'produit-modele';
+						div.innerHTML = `
+							<a href="${p.permalink}">${p.thumbnail}</a>
+							<div class=\"info-produit\">
+								<div class=\"texte-produit\">
+									<h3>${p.title}</h3>
+									<p>${p.price_html}</p>
+								</div>
+								<a href="?add-to-cart=${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter “${p.name}” au panier" rel="nofollow">Ajouter au panier</a>
+							</div>
+						`;
+						grille.appendChild(div);
+					});
+					voirPlusBtn.style.display = 'none';
+				});
+			}
+		});
+	</script>
+
+  ?>
+
+	
 
 	<div id="modalZoom" onclick="fermerImageZoom()">
 	  <span class="close">&times;</span>

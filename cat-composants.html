@@ -38,6 +38,8 @@ function afficher_produits_composants() {
     foreach ($produits as $product) {
       $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
       $all_produits[] = [
+        'id' => $product->get_id(),
+        'sku' => $product->get_sku(),
         'name' => $product->get_name(),
         'permalink' => get_permalink($product->get_id()),
         'image_url' => $image_url,
@@ -50,30 +52,9 @@ function afficher_produits_composants() {
         list-style: none;
         padding: 0;
         margin: 0;
-      }
-
-      @media screen and (min-width: 1024px) {
-        ul.liste-categories {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
-      }
-
-      @media screen and (min-width: 767px) and (max-width: 1023px) {
-        ul.liste-categories {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
-        }
-      }
-
-      @media screen and (max-width: 766px) {
-        ul.liste-categories {
-          display: grid;
-          grid-template-columns: repeat(1, 1fr);
-          gap: 20px;
-        }
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
       }
 
 	ul.liste-categories li {
@@ -86,12 +67,13 @@ function afficher_produits_composants() {
 	  flex-direction: column;
 	  align-items: center;
 	  text-align: center;
-	  min-height: 400px; /* Augmentation de la hauteur */
+	  min-height: 400px;
 	  transition: transform 0.3s ease;
 	}
 
       ul.liste-categories li:hover {
-        transform: translateY(-4px);
+        transform: scale(1.03);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
       }
 
       ul.liste-categories li a {
@@ -104,9 +86,11 @@ function afficher_produits_composants() {
       ul.liste-categories li img {
         max-width: 100%;
         height: auto;
-        margin-bottom: 15px;
+        margin-bottom: 18px;
+        border-radius: 6px;
+        background: #fff;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
         object-fit: contain;
-        max-height: 180px;
       }
 
       ul.liste-categories li .titre-categorie {
@@ -116,6 +100,59 @@ function afficher_produits_composants() {
         color: #000000;
         text-align: center;
         margin-top: auto;
+      }
+
+      .info-produit {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        height: 100%;
+        flex-grow: 1;
+        width: 100%;
+      }
+
+      .texte-produit {
+        text-align: left;
+        width: 100%;
+      }
+
+      .texte-produit h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 10px 0;
+        color: #000 !important;
+        text-align: left;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .texte-produit p {
+        font-size: 14px;
+        color: #444;
+        margin: 0;
+        text-align: left;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .bouton-ajouter-panier {
+        align-self: flex-end;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        width: 100%;
+        border-radius: 6px;
+        padding: 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        margin-top: 5px;
+        transition: background-color 0.3s ease;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .bouton-ajouter-panier:hover {
+        background-color: #FF3F22 !important;
+        color: #ffffff !important;
       }
 
       /*.btn-ajouter {
@@ -137,13 +174,19 @@ function afficher_produits_composants() {
       .btn-voir-plus {
         display: block;
         margin: 30px auto 0 auto;
-        background-color: black;
-        color: white;
+        background-color: #000;
+        color: #fff;
         padding: 10px 20px;
-        font-size: 16px;
+        font-size: 14px;
         font-family: 'din-next-lt-pro', sans-serif;
         border: none;
+        border-radius: 4px;
         cursor: pointer;
+      }
+
+      .btn-voir-plus:hover {
+        background-color: #FF3F22;
+        color: #fff;
       }
 
       .barre-tri {
@@ -251,47 +294,14 @@ function afficher_produits_composants() {
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       }
 
-	.prix-ajout-container {
-	  display: flex;
-	  justify-content: space-between;
-	  align-items: center;
-	  width: calc(100% - 30px); /* 100% - padding gauche/droite */
-	  position: absolute;
-	  bottom: 15px;
-	  left: 15px;
-	  right: 15px;
-	}
 
-	/* Prix */
-	.prix-produit {
-	  font-family: 'din-next-lt-pro', sans-serif;
-	  font-size: 16px;
-	  font-weight: 500;
-	  color: #000;
-	}
-
-	.btn-ajouter {
-	  background-color: black;
-	  color: white;
-	  border-radius: 50%;
-	  width: 32px;
-	  height: 32px;
-	  display: flex;
-	  align-items: center;
-	  justify-content: center;
-	  font-size: 18px;
-	  cursor: pointer;
-	  position: static; /* pas absolute ici */
-	}
-
-	/* Supprime l'effet hover du bouton "Voir plus" */
-	.btn-voir-plus:hover {
-	  background-color: black;
-	  color: white;
-	}
 	
 	/* Responsive Design */
 	@media screen and (max-width: 1129px) {
+	  ul.liste-categories {
+		grid-template-columns: repeat(2, 1fr);
+	  }
+	  
 	  #produits-filtrables-container > div:nth-child(3) {
 		flex-direction: column !important;
 	  }
@@ -359,18 +369,33 @@ function afficher_produits_composants() {
 	}
 	
 	@media screen and (max-width: 768px) {
+	  ul.liste-categories {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+	  }
+	  
+	  ul.liste-categories li {
+		min-height: 0px;
+	  }
+	  
+	  .texte-produit h3 {
+		font-size: 14px;
+	  }
+	  
+	  .bouton-ajouter-panier {
+		padding: 8px 12px;
+		font-size: 14px;
+	  }
+	  
 	  #form-filtres {
 		flex-direction: column !important;
 		overflow-x: visible;
+		overflow-y: auto;
 	  }
 	  
 	  .filtre-groupe {
 		min-width: auto !important;
 		width: 100%;
-	  }
-	  
-	  ul.liste-categories {
-		grid-template-columns: 1fr !important;
 	  }
 
       .barre-tri {
@@ -419,12 +444,20 @@ function afficher_produits_composants() {
               <li data-name="<?php echo esc_attr($p['name']); ?>">
                 <a href="<?php echo esc_url($p['permalink']); ?>">
                   <img src="<?php echo esc_url($p['image_url']); ?>" alt="<?php echo esc_attr($p['name']); ?>">
-                  <div class="titre-categorie"><?php echo esc_html($p['name']); ?></div>
-                  <div class="prix-ajout-container">
-                    <span class="prix-produit"><?php echo $p['price_html']; ?></span>
-                    <div class="btn-ajouter">+</div>
-                  </div>
                 </a>
+                <div class="info-produit">
+                  <div class="texte-produit">
+                    <h3><?php echo esc_html($p['name']); ?></h3>
+                    <p><?php echo $p['price_html']; ?></p>
+                  </div>
+                  <a href="<?php echo esc_url('?add-to-cart=' . $p['id']); ?>" 
+                     data-quantity="1" 
+                     class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
+                     data-product_id="<?php echo esc_attr($p['id']); ?>" 
+                     data-product_sku="<?php echo esc_attr($p['sku']); ?>" 
+                     aria-label="Ajouter '<?php echo esc_attr($p['name']); ?>' au panier" 
+                     rel="nofollow">Ajouter au panier</a>
+                </div>
               </li>
             <?php endfor; ?>
           </ul>
@@ -510,11 +543,18 @@ function afficher_produits_composants() {
             window.allProduitsComposants.forEach(function(p) {
               const li = document.createElement('li');
               li.setAttribute('data-name', p.name);
-              li.innerHTML = `<a href="${p.permalink}">
-                <img src="${p.image_url}" alt="${p.name}">
-                <div class=\"titre-categorie\">${p.name}</div>
-                <div class=\"prix-ajout-container\"><span class=\"prix-produit\">${p.price_html}</span><div class=\"btn-ajouter\">+</div></div>
-              </a>`;
+              li.innerHTML = `
+                <a href="${p.permalink}">
+                  <img src="${p.image_url}" alt="${p.name}">
+                </a>
+                <div class="info-produit">
+                  <div class="texte-produit">
+                    <h3>${p.name}</h3>
+                    <p>${p.price_html}</p>
+                  </div>
+                  <a href="?add-to-cart=${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter '${p.name}' au panier" rel="nofollow">Ajouter au panier</a>
+                </div>
+              `;
               liste.appendChild(li);
             });
             voirPlusBtn.style.display = 'none';

@@ -521,17 +521,6 @@ const steps = [
   document.getElementById('step-8')
 ];
 
-// === VARIABLES AJAX PRESTATIONS ===
-<?php 
-// Utiliser la fonction du functions.php
-$ajax_vars = get_ajax_prestations_vars();
-?>
-window.ajax_object = window.ajax_object || {
-    ajax_url: '<?php echo esc_js($ajax_vars['ajax_url']); ?>',
-    nonce: '<?php echo esc_js($ajax_vars['nonce']); ?>',
-    user_logged_in: <?php echo $ajax_vars['user_logged_in'] ? 'true' : 'false'; ?>
-};
-
 let currentStep = 0;
 function showStep(index) {
   steps.forEach((step, i) => step.classList.toggle('active', i === index));
