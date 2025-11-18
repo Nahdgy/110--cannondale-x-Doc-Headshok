@@ -1,0 +1,209 @@
+<style>
+    
+    .forks-maintenance h3{
+        font-family:din-next-lt-pro;
+      font-size: 35px;
+      font-weight: 700;
+      color: black;
+      margin: 0px
+    }
+    
+     .forks-maintenance h4{
+         font-family:din-next-lt-pro;
+      font-size: 16px;
+      font-weight: 700;
+      color: black;
+      margin: 0px;
+      width: 100%;
+    }
+    
+    .forks-maintenances p{
+    font-family:din-next-lt-pro;
+      font-size: 16px;
+      font-weight: 300;
+      color: black;
+      margin: 0px
+    }
+    .show-more{
+        font-family: din-next-lt-pro;
+        color: #fff;
+        background-color: #000;
+        border: 1px solid; 
+        border-radius: 10px;
+        text-align: center;
+        padding: 2px;
+        margin-top: 2px;
+    }
+</style>
+
+
+<div class="forks-maintenance">
+    <h4 id="toggle-menu1" style="cursor:pointer;">
+         Dévoilage roue 
+         <p class="show-more">Voir plus</p>
+    </h4>
+    <div id="menu-content1" style="display:none; margin-top:10px;">
+        <p>La roue prend du voile avec les chocs et les secousses pendant la pratique, mais également à cause d'une perte de tensio
+Les chocs et les secousses lors de la pratique engendre un desserrage et une perte de tensions de certains rayons, ce qui provoque un déséquilibre et peut amener à la casse des rayons.
+Il est donc important de corriger rapidemment le voile pour éviter l'aggravation et la déformation de la jante, ce qui nuit à la performance et au confort de la conduite
+</p>
+<p>Prix : 19€</p>
+    <p>Tolérance Dt swiss :</p>
+        <ul style="font-family:din-next-lt-pro; font-size:15px; color:#333; margin:0; padding-left:18px;">
+            <li>Voile 0.4 mm</li>
+            <li>Saut : 0.5 mm</li>
+            <li>Centrage 0.2 mm</li>
+        </ul>
+        <button id="open-modal1" style="margin-top:20px; background:#FF3F22; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:16px; cursor:pointer;">Envoyer une demande
+        </button>
+    </div>
+</div>
+
+
+<div id="modal-form1" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:30px 24px; border-radius:12px; max-width:400px; width:90vw; position:relative;">
+    <button id="close-modal1" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+    <h3 style="font-family:Helvetica; font-size:22px; margin-bottom:18px;">Formulaire de demande</h3>
+    <form id="demande-form1" enctype="multipart/form-data">
+      <label for="remarque" style="font-family:DIN Next LT Pro; font-size:16px;">Remarque :</label><br>
+      <textarea id="remarque" name="remarque" rows="4" style="width:100%; margin-bottom:14px; font-size:15px;"></textarea><br>
+      <label for="piece-jointe" style="font-family:din-next-lt-pro; font-size:16px;">Ajouter une pièce jointe :</label><br>
+      <input type="file" id="piece-jointe" name="piece_jointe" multiple style="margin-bottom:14px;"><br>
+      <button type="submit" id="btn-submit-roue" style="background:#FF3F22; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:16px; cursor:pointer;">Envoyer</button>
+    </form>
+    <div id="form-message1" style="margin-top:10px; font-size:15px;"></div>
+  </div>
+</div>
+
+<!-- Page de remerciement pour dévoilage roue (cachée par défaut) -->
+<div id="thank-you-page-roue" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:10000; justify-content:center; align-items:center;">
+  <div style="background:#fff; max-width:600px; margin:0 auto; padding:40px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <div style="margin-bottom:30px;">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" style="display:block; margin:0 auto;">
+        <circle cx="12" cy="12" r="10" stroke="#22C55E" stroke-width="2" fill="none"/>
+        <path d="M8 12l2 2 4-4" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 style="color:#1f2937; margin-bottom:20px; font-size:32px; font-weight:700; text-align:center;">Formulaire envoyé avec succès</h2>
+    
+    <div id="reservation-number-roue" style="background:#f3f4f6; border:2px solid #22C55E; border-radius:8px; padding:20px; margin:30px 0;">
+      <p style="color:#6b7280; font-size:14px; margin:0 0 10px 0; text-align:center;">Votre numéro de suivi :</p>
+      <p id="order-number-display-roue" style="color:#1f2937; font-size:28px; font-weight:700; margin:0; text-align:center; font-family:monospace;">CMD-XXXXXXXX</p>
+    </div>
+    
+    <p style="color:#6b7280; font-size:16px; margin:30px 0; line-height:1.6; text-align:center;">
+      Nous avons bien reçu votre demande de dévoilage roue. Un email de confirmation a été envoyé avec toutes les informations.
+    </p>
+    
+    <button id="nouvelle-demande-roue-btn" style="
+      background:#1f2937;
+      color:#fff;
+      padding:15px 30px;
+      border:none;
+      border-radius:8px;
+      font-weight:600;
+      font-size:16px;
+      cursor:pointer;
+      display:block;
+      margin:0 auto;
+      transition:background 0.3s;
+      font-family:'din-next-lt-pro', sans-serif;
+    " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1f2937'">
+      ✓ Nouvelle demande
+    </button>
+  </div>
+</div>
+<script>
+document.getElementById('toggle-menu1').addEventListener('click', function() {
+    var content = document.getElementById('menu-content1');
+    content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
+});
+document.getElementById('open-modal1').onclick = function() {
+  document.getElementById('modal-form1').style.display = 'flex';
+};
+document.getElementById('close-modal1').onclick = function() {
+  document.getElementById('modal-form1').style.display = 'none';
+};
+document.getElementById('demande-form1').onsubmit = function(e) {
+  e.preventDefault();
+  
+  var btnSubmit = document.getElementById('btn-submit-roue');
+  var formMessage = document.getElementById('form-message1');
+  
+  // Désactiver le bouton pendant l'envoi
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = 'Envoi en cours...';
+  btnSubmit.style.opacity = '0.6';
+  
+  var formData = new FormData(this);
+  var xhr = new XMLHttpRequest();
+  
+  xhr.open('POST', '/wp-admin/admin-ajax.php?action=envoyer_form_roue', true);
+  
+  xhr.onload = function() {
+    // Réactiver le bouton
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = 'Envoyer';
+    btnSubmit.style.opacity = '1';
+    
+    if (xhr.status === 200) {
+      try {
+        var response = JSON.parse(xhr.responseText);
+        
+        if (response.success && response.data && response.data.order_number) {
+          // Afficher le numéro de commande dans la page de remerciement
+          document.getElementById('order-number-display-roue').textContent = response.data.order_number;
+          
+          // Fermer le modal du formulaire
+          document.getElementById('modal-form1').style.display = 'none';
+          
+          // Afficher la page de remerciement
+          document.getElementById('thank-you-page-roue').style.display = 'flex';
+          
+          // Réinitialiser le formulaire
+          document.getElementById('demande-form1').reset();
+        } else {
+          formMessage.style.color = 'green';
+          formMessage.textContent = 'Demande envoyée avec succès !';
+          setTimeout(function() {
+            document.getElementById('modal-form1').style.display = 'none';
+            formMessage.textContent = '';
+          }, 2000);
+        }
+      } catch (e) {
+        console.error('Erreur de parsing JSON:', e);
+        formMessage.style.color = 'red';
+        formMessage.textContent = 'Erreur lors de l\'envoi.';
+      }
+    } else {
+      formMessage.style.color = 'red';
+      formMessage.textContent = 'Erreur lors de l\'envoi.';
+    }
+  };
+  
+  xhr.onerror = function() {
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = 'Envoyer';
+    btnSubmit.style.opacity = '1';
+    formMessage.style.color = 'red';
+    formMessage.textContent = 'Erreur réseau.';
+  };
+  
+  xhr.send(formData);
+};
+
+// Gestion du bouton "Nouvelle demande"
+document.addEventListener('DOMContentLoaded', function() {
+  var nouvelleDemandeRoueBtn = document.getElementById('nouvelle-demande-roue-btn');
+  if (nouvelleDemandeRoueBtn) {
+    nouvelleDemandeRoueBtn.onclick = function() {
+      // Masquer la page de remerciement
+      document.getElementById('thank-you-page-roue').style.display = 'none';
+      
+      // Réinitialiser et réafficher le formulaire
+      document.getElementById('demande-form1').reset();
+      document.getElementById('modal-form1').style.display = 'flex';
+    };
+  }
+});
+</script>
