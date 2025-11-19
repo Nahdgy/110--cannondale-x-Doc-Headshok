@@ -2009,43 +2009,10 @@ function mon_compte_personnalise_shortcode() {
                         foreach ($customer_orders as $order_id) {
                             $order = wc_get_order($order_id);
                             
-                            // Déterminer le statut et la classe CSS
-                            $statut_class = '';
-                            $statut_text = '';
-                            
-                            switch($order->get_status()) {
-                                case 'pending':
-                                    $statut_class = 'statut-pending';
-                                    $statut_text = 'En attente de paiement';
-                                    break;
-                                case 'processing':
-                                    $statut_class = 'statut-processing';
-                                    $statut_text = 'En cours de traitement';
-                                    break;
-                                case 'on-hold':
-                                    $statut_class = 'statut-on-hold';
-                                    $statut_text = 'En attente';
-                                    break;
-                                case 'completed':
-                                    $statut_class = 'statut-completed';
-                                    $statut_text = 'Terminée';
-                                    break;
-                                case 'cancelled':
-                                    $statut_class = 'statut-cancelled';
-                                    $statut_text = 'Annulée';
-                                    break;
-                                case 'refunded':
-                                    $statut_class = 'statut-refunded';
-                                    $statut_text = 'Remboursée';
-                                    break;
-                                case 'failed':
-                                    $statut_class = 'statut-failed';
-                                    $statut_text = 'Échouée';
-                                    break;
-                                default:
-                                    $statut_class = 'statut-autre';
-                                    $statut_text = ucfirst($order->get_status());
-                            }
+                            // Récupérer le statut exact depuis WooCommerce
+                            $order_status = $order->get_status();
+                            $statut_text = wc_get_order_status_name($order_status);
+                            $statut_class = 'statut-' . $order_status;
                             
                             // Récupérer le mode de livraison
                             $shipping_methods = $order->get_shipping_methods();
