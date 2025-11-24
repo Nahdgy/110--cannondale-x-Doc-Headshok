@@ -2,6 +2,14 @@
 add_action('wp_ajax_envoyer_form_roue', 'envoyer_form_roue');
 add_action('wp_ajax_nopriv_envoyer_form_roue', 'envoyer_form_roue');
 
+// Vérification de la connexion utilisateur
+add_action('wp_ajax_check_user_logged_in', 'check_user_logged_in');
+add_action('wp_ajax_nopriv_check_user_logged_in', 'check_user_logged_in');
+
+function check_user_logged_in() {
+	wp_send_json_success(['logged_in' => is_user_logged_in()]);
+}
+
 //Formulaire de dévoilage roue
 function envoyer_form_roue() {
 	// Récupération des données
