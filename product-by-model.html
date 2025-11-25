@@ -694,7 +694,7 @@ function afficher_produits_par_modele() {
 	document.addEventListener('DOMContentLoaded', function() {
 		let zoomLevel = 0; // Niveau de zoom actuel (0, 1, 2, 3)
 		const maxZoomLevels = 3; // Maximum 3 niveaux de zoom
-		const zoomScales = [1, 1.5, 2.5, 4]; // Facteurs d'agrandissement pour chaque niveau
+		const zoomScales = [1, 2, 3.5, 5]; // Facteurs d'agrandissement pour chaque niveau
 
 		// Vérifier si on est sur un écran d'ordinateur (largeur > 1024px)
 		function isDesktop() {
@@ -728,13 +728,15 @@ function afficher_produits_par_modele() {
 		    // Réinitialiser le zoom
 		    zoomLevel = 0;
 		    img.style.transform = 'scale(1)';
+		    img.style.transformOrigin = 'center center';
 		    img.style.cursor = 'zoom-in';
 		    
 		    // Mettre à jour les instructions initiales
 		    updateZoomInstructions();
 		    
-		    // Configurer le zoom par clic
+		    // Configurer le zoom par clic et mouvement
 		    setupClickZoom();
+		    setupMouseMove();
 		    
 		    console.log('Modal ouvert avec succès'); // Debug
 		  } catch (error) {
@@ -763,18 +765,26 @@ function afficher_produits_par_modele() {
 		    return;
 		  }
 		  
+		  // Calculer la position du clic par rapport à l'image
+		  const rect = img.getBoundingClientRect();
+		  const x = ((e.clientX - rect.left) / rect.width) * 100;
+		  const y = ((e.clientY - rect.top) / rect.height) * 100;
+		  
 		  // Passer au niveau de zoom suivant
 		  zoomLevel++;
 		  
 		  // Si on dépasse le maximum, revenir au niveau 0
 		  if (zoomLevel > maxZoomLevels) {
 		    zoomLevel = 0;
+		    img.style.transformOrigin = 'center center';
+		  } else {
+		    // Définir le point d'origine du zoom à l'endroit du clic
+		    img.style.transformOrigin = `${x}% ${y}%`;
 		  }
 		  
 		  // Appliquer le nouveau niveau de zoom
 		  const scale = zoomScales[zoomLevel];
 		  img.style.transform = `scale(${scale})`;
-		  img.style.transformOrigin = 'center center';
 		  img.style.transition = 'transform 0.3s ease';
 		  
 		  // Mettre à jour le curseur selon le niveau de zoom
@@ -789,7 +799,24 @@ function afficher_produits_par_modele() {
 		  // Mettre à jour les instructions
 		  updateZoomInstructions();
 		  
-		  console.log('Zoom level:', zoomLevel, 'Scale:', scale); // Debug
+		  console.log('Zoom level:', zoomLevel, 'Scale:', scale, 'Origin:', `${x}% ${y}%`); // Debug
+		}
+
+		// Gérer le mouvement de la souris pour déplacer le point de zoom
+		function handleMouseMove(e) {
+		  const img = document.getElementById("imageZoomee");
+		  
+		  if (!img || zoomLevel === 0) {
+		    return;
+		  }
+		  
+		  // Calculer la position de la souris par rapport à l'image
+		  const rect = img.getBoundingClientRect();
+		  const x = ((e.clientX - rect.left) / rect.width) * 100;
+		  const y = ((e.clientY - rect.top) / rect.height) * 100;
+		  
+		  // Mettre à jour le point d'origine du zoom en temps réel
+		  img.style.transformOrigin = `${x}% ${y}%`;
 		}
 
 		function setupClickZoom() {
@@ -810,6 +837,24 @@ function afficher_produits_par_modele() {
 		  console.log('Event listener ajouté pour le zoom'); // Debug
 		}
 
+		function setupMouseMove() {
+		  const img = document.getElementById("imageZoomee");
+		  
+		  // Vérifier que l'image existe
+		  if (!img) {
+		    console.error('Image non trouvée pour setupMouseMove');
+		    return;
+		  }
+		  
+		  // Nettoyer les anciens event listeners
+		  img.removeEventListener('mousemove', handleMouseMove);
+		  
+		  // Ajouter le nouvel event listener pour le mouvement de la souris
+		  img.addEventListener('mousemove', handleMouseMove);
+		  
+		  console.log('Event listener ajouté pour le mouvement de la souris'); // Debug
+		}
+
 		function updateZoomInstructions() {
 		  const instructions = document.querySelector('.zoom-instructions');
 		  
@@ -820,11 +865,11 @@ function afficher_produits_par_modele() {
 		  }
 		  
 		  if (zoomLevel === 0) {
-		    instructions.textContent = 'Cliquez sur l\'image pour zoomer (Niveau 1/3)';
+		    instructions.textContent = 'Cliquez sur une partie de l\'image pour zoomer (Niveau 1/3)';
 		  } else if (zoomLevel === maxZoomLevels) {
-		    instructions.textContent = 'Cliquez pour revenir à la taille normale';
+		    instructions.textContent = 'Cliquez pour revenir à la taille normale • Bougez la souris pour explorer';
 		  } else {
-		    instructions.textContent = `Zoom niveau ${zoomLevel}/3 • Cliquez pour zoomer davantage`;
+		    instructions.textContent = `Zoom niveau ${zoomLevel}/3 • Cliquez pour zoomer davantage • Bougez la souris pour explorer`;
 		  }
 		}
 
@@ -836,6 +881,7 @@ function afficher_produits_par_modele() {
 		    if (img) {
 		      zoomLevel = 0;
 		      img.style.transform = 'scale(1)';
+		      img.style.transformOrigin = 'center center';
 		      img.style.cursor = 'default';
 		    }
 		  }
