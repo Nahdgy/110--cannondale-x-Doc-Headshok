@@ -168,7 +168,7 @@ function panier_produits_shortcode() {
 
                 <!-- Colonne centre : infos -->
                 <div class="panier-info">
-                    <div class="panier-nom"><?php echo esc_html($product->get_name()); ?></div>
+                    <div class="panier-nom"><?php echo wp_kses_post($product->get_name()); ?></div>
                     <div class="panier-stock">Stocks Disponibles: <?php echo $stock ? $stock : 'Rupture'; ?></div>
                     <div class="panier-quantite-wrapper">
                         <div class="panier-quantite">
