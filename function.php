@@ -2508,6 +2508,9 @@ function sauvegarder_restrictions_avant_modification($coupon_id, $coupon) {
 // Inclure le système de gestion des retours
 require_once get_template_directory() . '/gestion-retours.php';
 
+// Activation du module de carte interactive avec liste de lieux
+require_once get_template_directory() . '/carte-revendeurs.php';
+
 // ========== GESTION DU TYPE DE COMPTE (PARTICULIER / MAGASIN) ==========
 
 // Ajouter une colonne "Type de compte" dans la liste des utilisateurs
