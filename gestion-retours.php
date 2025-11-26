@@ -6,6 +6,30 @@
  * et aux administrateurs de gérer ces demandes depuis le back-office WordPress
  */
 
+// Créer/Mettre à jour la table des retours avec les colonnes avoirs
+function verifier_table_retours_avoirs() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'demandes_retours';
+    
+    // Vérifier si les colonnes existent
+    $column_avoir = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'avoir_genere'");
+    $column_montant = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'montant_avoir'");
+    
+    // Ajouter la colonne avoir_genere si elle n'existe pas
+    if (empty($column_avoir)) {
+        $wpdb->query("ALTER TABLE $table_name ADD COLUMN avoir_genere VARCHAR(50) NULL AFTER remboursement_effectue");
+    }
+    
+    // Ajouter la colonne montant_avoir si elle n'existe pas
+    if (empty($column_montant)) {
+        $wpdb->query("ALTER TABLE $table_name ADD COLUMN montant_avoir DECIMAL(10,2) NULL AFTER avoir_genere");
+    }
+}
+
+// Exécuter la vérification au chargement
+add_action('admin_init', 'verifier_table_retours_avoirs');
+add_action('wp_loaded', 'verifier_table_retours_avoirs');
+
 // Générer un numéro de retour unique
 function generer_numero_retour() {
     $prefix = 'RET';
@@ -126,6 +150,210 @@ function mettre_a_jour_statut_retour($retour_id, $nouveau_statut, $notes_admin =
     return $result !== false;
 }
 
+// ========== SYSTÈME DE BONS D'AVOIR ==========
+
+// Générer un code d'avoir unique
+function generer_code_avoir() {
+    $prefix = 'AVOIR';
+    $date = date('Ymd');
+    $random = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+    $code = $prefix . '-' . $date . '-' . $random;
+    
+    // Vérifier que le code n'existe pas déjà
+    $existing = get_posts(array(
+        'post_type' => 'shop_coupon',
+        'title' => $code,
+        'posts_per_page' => 1
+    ));
+    
+    if (!empty($existing)) {
+        return generer_code_avoir(); // Régénérer si le code existe
+    }
+    
+    return $code;
+}
+
+// Créer un bon d'avoir WooCommerce
+function creer_bon_avoir($retour_id, $montant, $user_email, $notes = '') {
+    global $wpdb;
+    
+    // Récupérer les infos du retour
+    $table_name = $wpdb->prefix . 'demandes_retours';
+    $retour = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE id = %d",
+        $retour_id
+    ));
+    
+    if (!$retour) {
+        return false;
+    }
+    
+    // Générer un code unique
+    $code_avoir = generer_code_avoir();
+    
+    // Créer le coupon WooCommerce
+    $coupon = array(
+        'post_title' => $code_avoir,
+        'post_content' => $notes ? $notes : 'Bon d\'avoir suite au retour #' . $retour->numero_retour,
+        'post_status' => 'publish',
+        'post_author' => 1,
+        'post_type' => 'shop_coupon'
+    );
+    
+    $coupon_id = wp_insert_post($coupon);
+    
+    if ($coupon_id) {
+        // Configurer le coupon
+        update_post_meta($coupon_id, 'discount_type', 'fixed_cart');
+        update_post_meta($coupon_id, 'coupon_amount', $montant);
+        update_post_meta($coupon_id, 'individual_use', 'yes');
+        update_post_meta($coupon_id, 'usage_limit', '1');
+        update_post_meta($coupon_id, 'usage_limit_per_user', '1');
+        update_post_meta($coupon_id, 'email_restrictions', array($user_email));
+        update_post_meta($coupon_id, 'date_expires', strtotime('+1 year')); // Valable 1 an
+        
+        // Métadonnées personnalisées
+        update_post_meta($coupon_id, '_est_avoir', 'yes');
+        update_post_meta($coupon_id, '_retour_id', $retour_id);
+        update_post_meta($coupon_id, '_date_emission', current_time('mysql'));
+        
+        // Lier l'avoir au retour
+        $wpdb->update(
+            $table_name,
+            array('avoir_genere' => $code_avoir, 'montant_avoir' => $montant),
+            array('id' => $retour_id),
+            array('%s', '%f'),
+            array('%d')
+        );
+        
+        // Envoyer l'email de notification
+        notifier_client_emission_avoir($code_avoir, $montant, $user_email, $retour);
+        
+        return $code_avoir;
+    }
+    
+    return false;
+}
+
+// Récupérer les avoirs d'un utilisateur
+function obtenir_avoirs_utilisateur($user_email) {
+    if (empty($user_email)) {
+        return array();
+    }
+    
+    $args = array(
+        'posts_per_page' => -1,
+        'post_type' => 'shop_coupon',
+        'post_status' => 'publish',
+        'meta_query' => array(
+            array(
+                'key' => '_est_avoir',
+                'value' => 'yes'
+            )
+        )
+    );
+    
+    $coupons = get_posts($args);
+    $user_avoirs = array();
+    
+    foreach ($coupons as $coupon_post) {
+        $coupon = new WC_Coupon($coupon_post->ID);
+        $email_restrictions = $coupon->get_email_restrictions();
+        
+        if (!empty($email_restrictions) && in_array($user_email, $email_restrictions)) {
+            $usage_count = $coupon->get_usage_count();
+            $usage_limit = $coupon->get_usage_limit();
+            
+            // Vérifier si l'avoir n'a pas été utilisé
+            if ($usage_count < $usage_limit) {
+                $user_avoirs[] = array(
+                    'code' => $coupon_post->post_title,
+                    'montant' => $coupon->get_amount(),
+                    'date_expiration' => $coupon->get_date_expires(),
+                    'retour_id' => get_post_meta($coupon_post->ID, '_retour_id', true),
+                    'date_emission' => get_post_meta($coupon_post->ID, '_date_emission', true),
+                    'description' => $coupon_post->post_content,
+                    'utilise' => $usage_count >= $usage_limit
+                );
+            }
+        }
+    }
+    
+    return $user_avoirs;
+}
+
+// Email de notification d'émission d'avoir
+function notifier_client_emission_avoir($code_avoir, $montant, $user_email, $retour) {
+    $user = get_user_by('email', $user_email);
+    $user_name = $user ? $user->display_name : 'Cher client';
+    
+    $subject = '💰 Vous avez reçu un bon d\'avoir - ' . $code_avoir;
+    
+    $message = "
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .code { font-size: 32px; font-weight: bold; letter-spacing: 3px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .montant { font-size: 36px; color: #4CAF50; font-weight: bold; margin: 20px 0; text-align: center; }
+            .info-box { background: #fff; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0; }
+            .button { display: inline-block; background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; color: #999; margin-top: 20px; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>💰 Bon d'Avoir Émis !</h1>
+                <p>Bonjour " . esc_html($user_name) . ",</p>
+            </div>
+            <div class='content'>
+                <p>Suite à votre demande de retour <strong>#" . $retour->numero_retour . "</strong>, nous avons le plaisir de vous informer qu'un bon d'avoir a été émis.</p>
+                
+                <div class='montant'>" . wc_price($montant) . "</div>
+                
+                <div class='info-box'>
+                    <p><strong>Code d'avoir :</strong></p>
+                    <div class='code'>" . $code_avoir . "</div>
+                </div>
+                
+                <p><strong>📋 Comment utiliser votre bon d'avoir ?</strong></p>
+                <ol>
+                    <li>Connectez-vous à votre compte</li>
+                    <li>Ajoutez vos produits au panier</li>
+                    <li>Lors du paiement, entrez le code d'avoir</li>
+                    <li>Le montant sera automatiquement déduit</li>
+                </ol>
+                
+                <div class='info-box'>
+                    <p><strong>⏰ Validité :</strong> Ce bon d'avoir est valable 1 an</p>
+                    <p><strong>🎯 Utilisation :</strong> Unique - Ne peut être utilisé qu'une seule fois</p>
+                </div>
+                
+                <p style='text-align: center;'>
+                    <a href='" . esc_url(wc_get_page_permalink('shop')) . "' class='button'>Commencer mes achats</a>
+                </p>
+                
+                <p>Vous retrouverez ce bon d'avoir dans votre espace Mon Compte, section \"Mes Avoirs\".</p>
+                
+                <p>Cordialement,<br>L'équipe Doc-Headshok</p>
+            </div>
+            <div class='footer'>
+                <p>Merci pour votre confiance !</p>
+                <p>Doc-Headshok - Spécialiste Cannondale</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+    wp_mail($user_email, $subject, $message, $headers);
+}
+
 // AJAX : Créer une demande de retour
 add_action('wp_ajax_creer_demande_retour', 'creer_demande_retour_ajax');
 function creer_demande_retour_ajax() {
@@ -240,6 +468,49 @@ function maj_statut_retour_ajax() {
         wp_send_json_success('Statut mis à jour avec succès');
     } else {
         wp_send_json_error('Erreur lors de la mise à jour');
+    }
+}
+
+// AJAX : Générer un bon d'avoir (admin uniquement)
+add_action('wp_ajax_generer_bon_avoir', 'generer_bon_avoir_ajax');
+function generer_bon_avoir_ajax() {
+    // Vérifier les permissions
+    if (!current_user_can('manage_woocommerce')) {
+        wp_send_json_error('Permissions insuffisantes');
+        return;
+    }
+    
+    // Vérifier le nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'admin_retour_nonce')) {
+        wp_send_json_error('Erreur de sécurité');
+        return;
+    }
+    
+    $retour_id = intval($_POST['retour_id']);
+    $montant = floatval($_POST['montant']);
+    $user_email = sanitize_email($_POST['user_email']);
+    $notes = sanitize_textarea_field($_POST['notes']);
+    
+    if (empty($user_email) || !is_email($user_email)) {
+        wp_send_json_error('Email invalide');
+        return;
+    }
+    
+    if ($montant <= 0) {
+        wp_send_json_error('Montant invalide');
+        return;
+    }
+    
+    $code_avoir = creer_bon_avoir($retour_id, $montant, $user_email, $notes);
+    
+    if ($code_avoir) {
+        wp_send_json_success(array(
+            'message' => 'Bon d\'avoir généré avec succès',
+            'code' => $code_avoir,
+            'montant' => $montant
+        ));
+    } else {
+        wp_send_json_error('Erreur lors de la génération de l\'avoir');
     }
 }
 
@@ -474,6 +745,7 @@ function afficher_page_gestion_retours() {
     $en_attente = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE statut = 'en_attente'");
     $approuves = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE statut = 'approuve'");
     $termines = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE statut = 'termine'");
+    $avoirs_generes = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE avoir_genere IS NOT NULL AND avoir_genere != ''");
     
     ?>
     <div class="wrap">
@@ -495,6 +767,10 @@ function afficher_page_gestion_retours() {
             <div style="background: #fff; padding: 20px; border-left: 4px solid #888; flex: 1;">
                 <h3 style="margin: 0; color: #888;"><?php echo $termines; ?></h3>
                 <p style="margin: 5px 0 0 0;">Terminés</p>
+            </div>
+            <div style="background: #fff; padding: 20px; border-left: 4px solid #2196F3; flex: 1;">
+                <h3 style="margin: 0; color: #2196F3;"><?php echo $avoirs_generes; ?></h3>
+                <p style="margin: 5px 0 0 0;">Avoirs générés</p>
             </div>
         </div>
         
@@ -590,6 +866,41 @@ function afficher_page_gestion_retours() {
         <div style="background: white; max-width: 600px; margin: 50px auto; padding: 30px; border-radius: 8px; max-height: 80vh; overflow-y: auto;">
             <h2>Gérer le retour</h2>
             <div id="retour-modal-content"></div>
+        </div>
+    </div>
+    
+    <!-- Modal de génération d'avoir -->
+    <div id="avoir-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div style="background: white; max-width: 500px; margin: 50px auto; padding: 30px; border-radius: 8px;">
+            <h2>💰 Générer un Bon d'Avoir</h2>
+            <div id="avoir-modal-content">
+                <form id="avoir-form">
+                    <input type="hidden" id="avoir_retour_id" name="retour_id">
+                    <input type="hidden" id="avoir_user_email" name="user_email">
+                    
+                    <p>
+                        <label for="avoir_montant" style="font-weight: bold;">Montant de l'avoir (€) *</label><br>
+                        <input type="number" id="avoir_montant" name="montant" step="0.01" min="0.01" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                    </p>
+                    
+                    <p>
+                        <label for="avoir_notes" style="font-weight: bold;">Notes (optionnel)</label><br>
+                        <textarea id="avoir_notes" name="notes" rows="4" style="width: 100%; padding: 8px; margin-top: 5px;" placeholder="Raison de l'émission de l'avoir..."></textarea>
+                    </p>
+                    
+                    <p style="background: #e7f3fe; padding: 15px; border-left: 4px solid #2196F3; margin: 15px 0;">
+                        <strong>ℹ️ Information :</strong><br>
+                        • L'avoir sera valable 1 an<br>
+                        • Utilisation unique<br>
+                        • Un email sera automatiquement envoyé au client
+                    </p>
+                    
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="button" onclick="closeAvoirModal()">Annuler</button>
+                        <button type="submit" class="button button-primary">Générer l'Avoir</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     

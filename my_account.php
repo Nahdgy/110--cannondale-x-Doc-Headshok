@@ -1035,7 +1035,7 @@ function mon_compte_personnalise_shortcode() {
         }
 
         .code-promo-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff3f22 0%, #db6e78 100%);
             border-radius: 12px;
             padding: 25px;
             color: #fff;
@@ -1200,6 +1200,208 @@ function mon_compte_personnalise_shortcode() {
             width: 100%;
             height: 4px;
             background-color: #FF3F22;
+            margin-bottom: 15px;
+        }
+
+        /* Styles pour les avoirs */
+        .avoirs-container {
+            margin-top: 20px;
+        }
+
+        .avoirs-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .avoir-item {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border-radius: 12px;
+            padding: 25px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .avoir-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .avoir-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .avoir-code {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .avoir-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.9;
+        }
+
+        .avoir-code-text {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            display: inline-block;
+        }
+
+        .avoir-statut {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .statut-disponible {
+            background: rgba(255, 255, 255, 0.3);
+            color: #fff;
+            border: 2px solid #fff;
+        }
+
+        .statut-utilise {
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+        }
+
+        .avoir-details {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .avoir-montant {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .avoir-info {
+            flex: 1;
+        }
+
+        .avoir-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .avoir-description {
+            margin-top: 12px !important;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .avoir-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .bouton-avoir {
+            background: #fff;
+            color: #4CAF50 !important;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .bouton-avoir:hover {
+            background: #f0f0f0 !important;
+            color: #4CAF50 !important;
+            text-decoration: none !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .bouton-avoir.bouton-utiliser {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            border: 2px solid #fff;
+        }
+
+        .bouton-avoir.bouton-utiliser:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            color: #fff !important;
+        }
+
+        .avoir-aide {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .avoir-aide p {
+            margin: 0;
+            opacity: 0.85;
+            font-size: 13px;
+        }
+
+        .avoirs-vide {
+            background: #e8f5e9;
+            border: 2px dashed #4CAF50;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .avoirs-vide p {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 16px;
+            color: #2e7d32;
+            margin: 10px 0;
+        }
+
+        .avoirs-info {
+            font-size: 14px !important;
+            color: #66bb6a !important;
+        }
+
+        #avoirs::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
             margin-bottom: 15px;
         }
 
@@ -1901,6 +2103,7 @@ function mon_compte_personnalise_shortcode() {
                 <a href="#retours">Mes retours</a>
                 <a href="#prestations">Historique des prestations</a>
                 <a href="#codes-promo">Mes codes promo</a>
+                <a href="#avoirs">Mes avoirs</a>
                 <a href="#parametres">Paramètres</a>
                <a href="<?php echo esc_url(wp_logout_url('https://doc-headshok.com/login/')); ?>" class="deconnexion">Se déconnecter</a>
             </div>
@@ -2395,6 +2598,94 @@ function mon_compte_personnalise_shortcode() {
                         echo '<div class="codes-promo-vide">';
                         echo '<p>Vous n\'avez pas encore de codes promo assignés.</p>';
                         echo '<p class="codes-promo-info">Les codes promo vous seront attribués par notre équipe pour des offres spéciales ou des récompenses de fidélité.</p>';
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <!-- Section Avoirs -->
+            <div id="avoirs" class="section-compte">
+                <h2>Mes avoirs</h2>
+                <div class="avoirs-container">
+                    <?php
+                    // Récupérer tous les avoirs de l'utilisateur
+                    $user_email = $user->user_email;
+                    $user_avoirs = obtenir_avoirs_utilisateur($user_email);
+                    
+                    if (!empty($user_avoirs)) {
+                        echo '<div class="avoirs-liste">';
+                        
+                        foreach ($user_avoirs as $avoir) {
+                            $is_expired = $avoir['date_expiration'] && $avoir['date_expiration']->getTimestamp() < time();
+                            $statut_class = $is_expired ? 'statut-expired' : ($avoir['utilise'] ? 'statut-utilise' : 'statut-disponible');
+                            $statut_text = $is_expired ? 'Expiré' : ($avoir['utilise'] ? 'Utilisé' : 'Disponible');
+                            
+                            echo '<div class="avoir-item">';
+                            echo '<div class="avoir-header">';
+                            echo '<div class="avoir-code">';
+                            echo '<span class="avoir-label">💰 BON D\'AVOIR</span>';
+                            echo '<span class="avoir-code-text">' . esc_html($avoir['code']) . '</span>';
+                            echo '</div>';
+                            echo '<div class="avoir-statut ' . $statut_class . '">' . $statut_text . '</div>';
+                            echo '</div>';
+                            
+                            echo '<div class="avoir-details">';
+                            echo '<div class="avoir-montant">' . wc_price($avoir['montant']) . '</div>';
+                            
+                            echo '<div class="avoir-info">';
+                            
+                            if ($avoir['date_emission']) {
+                                echo '<p><strong>📅 Émis le :</strong> ' . date('d/m/Y', strtotime($avoir['date_emission'])) . '</p>';
+                            }
+                            
+                            if ($avoir['date_expiration']) {
+                                $expiry_date = $avoir['date_expiration']->date('d/m/Y');
+                                $days_remaining = ceil(($avoir['date_expiration']->getTimestamp() - time()) / (60 * 60 * 24));
+                                
+                                if ($days_remaining > 0 && $days_remaining <= 30 && !$avoir['utilise']) {
+                                    echo '<p><strong>⏰ Expire le :</strong> <span style="color: #FF3F22;">' . $expiry_date . ' (dans ' . $days_remaining . ' jours)</span></p>';
+                                } else {
+                                    echo '<p><strong>⏰ Expire le :</strong> ' . $expiry_date . '</p>';
+                                }
+                            }
+                            
+                            if ($avoir['retour_id']) {
+                                global $wpdb;
+                                $table_retours = $wpdb->prefix . 'demandes_retours';
+                                $retour = $wpdb->get_row($wpdb->prepare("SELECT numero_retour FROM $table_retours WHERE id = %d", $avoir['retour_id']));
+                                if ($retour) {
+                                    echo '<p><strong>🔄 Suite au retour :</strong> #' . esc_html($retour->numero_retour) . '</p>';
+                                }
+                            }
+                            
+                            if ($avoir['description']) {
+                                echo '<p class="avoir-description">' . esc_html($avoir['description']) . '</p>';
+                            }
+                            
+                            echo '</div>';
+                            
+                            if (!$is_expired && !$avoir['utilise']) {
+                                echo '<div class="avoir-actions">';
+                                echo '<button class="bouton-avoir" onclick="copierCodePromo(\'' . esc_js($avoir['code']) . '\')">📋 COPIER LE CODE</button>';
+                                echo '<a href="' . esc_url(wc_get_page_permalink('shop')) . '" class="bouton-avoir bouton-utiliser">🛒 UTILISER MAINTENANT</a>';
+                                echo '</div>';
+                                
+                                echo '<div class="avoir-aide">';
+                                echo '<p><small><strong>Comment utiliser ?</strong><br>';
+                                echo 'Ajoutez vos produits au panier, puis saisissez ce code dans le champ "Code promo" lors du paiement. Le montant sera automatiquement déduit de votre commande.</small></p>';
+                                echo '</div>';
+                            }
+                            
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                        
+                        echo '</div>';
+                    } else {
+                        echo '<div class="avoirs-vide">';
+                        echo '<p>Vous n\'avez pas d\'avoir disponible actuellement.</p>';
+                        echo '<p class="avoirs-info">Les avoirs sont générés suite à des retours de commande ou des remboursements partiels. Ils apparaîtront automatiquement ici une fois émis par notre équipe.</p>';
                         echo '</div>';
                     }
                     ?>
