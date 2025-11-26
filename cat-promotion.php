@@ -3,7 +3,14 @@ add_shortcode('produits_promotion', 'afficher_produits_promotion');
 function afficher_produits_promotion() {
   ob_start();
 
-  $parent = get_term_by('slug', 'promotion', 'product_cat');
+  // Essayer d'abord 'promotions' puis 'promotion' comme fallback
+  $parent = get_term_by('slug', 'promotions', 'product_cat');
+  if (!$parent) {
+    $parent = get_term_by('slug', 'promotion', 'product_cat');
+  }
+  
+  $category_slug = $parent ? $parent->slug : 'promotions';
+  
   // Récupération des filtres depuis l'URL (GET)
   $filtres = isset($_GET['filtre']) ? (array)$_GET['filtre'] : [];
 
@@ -13,10 +20,11 @@ function afficher_produits_promotion() {
     'post_status' => 'publish',
     'posts_per_page' => -1,
     'tax_query' => [
+      'relation' => 'AND',
       [
         'taxonomy' => 'product_cat',
         'field'    => 'slug',
-        'terms'    => 'promotion',
+        'terms'    => $category_slug,
       ],
     ],
   ];
@@ -30,6 +38,9 @@ function afficher_produits_promotion() {
       'operator' => 'IN',
     ];
   }
+  
+  // Debug: afficher les arguments de la requête (à retirer après test)
+  // error_log('Args WP_Query promotions: ' . print_r($args, true));
 
   $produits = new WP_Query($args);
 
@@ -70,10 +81,6 @@ function afficher_produits_promotion() {
         color: inherit;
         display: block;
         width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
       }
 
       ul.liste-produits-promo li img {
@@ -86,25 +93,58 @@ function afficher_produits_promotion() {
         object-fit: contain;
       }
 
+      .info-produit {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        height: 100%;
+        flex-grow: 1;
+      }
+
+      .texte-produit {
+        width: 100%;
+      }
+
       ul.liste-produits-promo li .titre-produit {
         font-size: 16px;
         font-weight: 600;
         margin-bottom: 10px;
         margin-top: 10px;
         color: #000 !important;
-        text-align: center;
+        text-align: left;
       }
 
       ul.liste-produits-promo li .prix-produit {
         font-size: 14px;
-        font-weight: 700;
         color: #FF3F22 !important;
-        text-align: center;
-        margin-top: auto;
+        margin: 0;
+        text-align: left;
       }
 
       ul.liste-produits-promo li:hover .titre-produit {
         color: #000 !important;
+      }
+
+      .bouton-ajouter-panier {
+        align-self: flex-end;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        width: 100%;
+        border-radius: 6px;
+        padding: 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        margin-top: 5px;
+        transition: background-color 0.3s ease;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .bouton-ajouter-panier:hover {
+        background-color: #000000 !important;
+        color: #ffffff !important;
       }
 
       .barre-tri {
@@ -349,6 +389,11 @@ function afficher_produits_promotion() {
         ul.liste-produits-promo li .titre-produit{
           font-size: 14px;
         }
+        
+        .bouton-ajouter-panier {
+          padding: 8px 12px;
+          font-size: 14px;
+        }
       }
     </style>
 
@@ -392,9 +437,20 @@ function afficher_produits_promotion() {
               <li data-name="<?php echo esc_attr(get_the_title()); ?>" data-price="<?php echo esc_attr($product->get_price()); ?>">
                 <a href="<?php echo get_permalink(); ?>">
                   <?php echo $thumbnail; ?>
-                  <div class="titre-produit"><?php echo get_the_title(); ?></div>
-                  <div class="prix-produit"><?php echo $product->get_price_html(); ?></div>
                 </a>
+                <div class="info-produit">
+                  <div class="texte-produit">
+                    <h3 class="titre-produit"><?php echo get_the_title(); ?></h3>
+                    <p class="prix-produit"><?php echo $product->get_price_html(); ?></p>
+                  </div>
+                  <a href="<?php echo esc_url('?add-to-cart=' . $product->get_id()); ?>" 
+                     data-quantity="1" 
+                     class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
+                     data-product_id="<?php echo esc_attr($product->get_id()); ?>" 
+                     data-product_sku="<?php echo esc_attr($product->get_sku()); ?>" 
+                     aria-label="Ajouter '<?php echo esc_attr(get_the_title()); ?>' au panier" 
+                     rel="nofollow">Ajouter au panier</a>
+                </div>
               </li>
             <?php endwhile; ?>
           </ul>
@@ -471,11 +527,29 @@ function afficher_produits_promotion() {
 
 function afficher_filtres_promotion($filtres_actuels = []) {
   // Récupérer toutes les catégories parentes principales
+  // Exclure la catégorie promotion/promotions des filtres
+  $promo_term = get_term_by('slug', 'promotions', 'product_cat');
+  if (!$promo_term) {
+    $promo_term = get_term_by('slug', 'promotion', 'product_cat');
+  }
+  $exclude_id = $promo_term ? $promo_term->term_id : 0;
+  
+  // Récupérer les IDs des catégories à exclure
+  $slugs_to_exclude = ['acceuil', 'canyon', 'uncategorized', 'velo'];
+  $exclude_ids = [$exclude_id];
+  
+  foreach ($slugs_to_exclude as $slug) {
+    $term = get_term_by('slug', $slug, 'product_cat');
+    if ($term) {
+      $exclude_ids[] = $term->term_id;
+    }
+  }
+  
   $categories_principales = get_terms([
     'taxonomy' => 'product_cat',
     'parent' => 0,
     'hide_empty' => false,
-    'exclude' => [get_term_by('slug', 'promotion', 'product_cat')->term_id ?? 0],
+    'exclude' => $exclude_ids,
   ]);
 
   $sections = [

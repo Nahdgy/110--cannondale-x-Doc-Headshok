@@ -32,6 +32,7 @@ function mon_formulaire_inscription_shortcode() {
         $password = $_POST['password'];
         $civilite = sanitize_text_field($_POST['civilite']);
         $pratiques = isset($_POST['pratique']) && is_array($_POST['pratique']) ? array_map('sanitize_text_field', $_POST['pratique']) : [];
+        $type_compte = sanitize_text_field($_POST['type_compte']);
 
         // Validation
         if (empty($nom)) $errors[] = 'Le nom est obligatoire.';
@@ -44,6 +45,7 @@ function mon_formulaire_inscription_shortcode() {
         if (empty($pays)) $errors[] = 'Le pays est obligatoire.';
         if (empty($password) || strlen($password) < 6) $errors[] = 'Le mot de passe doit contenir au moins 6 caractères.';
         if (empty($pratiques)) $errors[] = 'Veuillez sélectionner au moins une pratique.';
+        if (empty($type_compte)) $errors[] = 'Veuillez sélectionner un type de compte.';
 
         // Vérifier si l'email existe déjà
         if (email_exists($email)) {
@@ -66,6 +68,7 @@ function mon_formulaire_inscription_shortcode() {
                 update_user_meta($user_id, 'civilite', $civilite);
                 update_user_meta($user_id, 'pratique', $pratiques);
                 update_user_meta($user_id, 'telephone', $telephone);
+                update_user_meta($user_id, 'type_compte', $type_compte);
                 
                 // Métadonnées d'adresse WordPress standard
                 update_user_meta($user_id, 'billing_address_1', $adresse_ligne1);
@@ -458,6 +461,15 @@ function mon_formulaire_inscription_shortcode() {
                             </label>
                         <?php endforeach; ?>
                     </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="type_compte">Type de compte <span class="required">*</span></label>
+                    <select id="type_compte" name="type_compte" required>
+                        <option value="">Sélectionner</option>
+                        <option value="particulier" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'particulier') ? 'selected' : ''; ?>>Particulier</option>
+                        <option value="magasin" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'magasin') ? 'selected' : ''; ?>>Magasin</option>
+                    </select>
                 </div>
             </div>
 

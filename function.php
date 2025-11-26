@@ -695,6 +695,14 @@ add_filter( 'woocommerce_order_item_display_meta_key', '__return_false' );
 add_action('wp_ajax_envoyer_form_roue', 'envoyer_form_roue');
 add_action('wp_ajax_nopriv_envoyer_form_roue', 'envoyer_form_roue');
 
+// Vérification de la connexion utilisateur
+add_action('wp_ajax_check_user_logged_in', 'check_user_logged_in');
+add_action('wp_ajax_nopriv_check_user_logged_in', 'check_user_logged_in');
+
+function check_user_logged_in() {
+	wp_send_json_success(['logged_in' => is_user_logged_in()]);
+}
+
 //Formulaire de dévoilage roue
 function envoyer_form_roue() {
 	// Récupération des données
@@ -2499,6 +2507,98 @@ function sauvegarder_restrictions_avant_modification($coupon_id, $coupon) {
 
 // Inclure le système de gestion des retours
 require_once get_template_directory() . '/gestion-retours.php';
+
+// ========== GESTION DU TYPE DE COMPTE (PARTICULIER / MAGASIN) ==========
+
+// Ajouter une colonne "Type de compte" dans la liste des utilisateurs
+add_filter('manage_users_columns', 'ajouter_colonne_type_compte');
+function ajouter_colonne_type_compte($columns) {
+    $columns['type_compte'] = 'Type de compte';
+    return $columns;
+}
+
+// Afficher le contenu de la colonne "Type de compte"
+add_filter('manage_users_custom_column', 'afficher_colonne_type_compte', 10, 3);
+function afficher_colonne_type_compte($value, $column_name, $user_id) {
+    if ($column_name == 'type_compte') {
+        $type_compte = get_user_meta($user_id, 'type_compte', true);
+        if ($type_compte == 'magasin') {
+            return '<span style="color: #2271b1; font-weight: bold;">🏪 Magasin</span>';
+        } elseif ($type_compte == 'particulier') {
+            return '<span style="color: #50575e;">👤 Particulier</span>';
+        } else {
+            return '<span style="color: #999;">Non renseigné</span>';
+        }
+    }
+    return $value;
+}
+
+// Ajouter un filtre dropdown dans la liste des utilisateurs
+add_action('restrict_manage_users', 'ajouter_filtre_type_compte');
+function ajouter_filtre_type_compte() {
+    $type_compte = isset($_GET['type_compte']) ? $_GET['type_compte'] : '';
+    ?>
+    <select name="type_compte" style="float: none; margin-left: 10px;">
+        <option value="">Tous les types de compte</option>
+        <option value="particulier" <?php selected($type_compte, 'particulier'); ?>>Particulier</option>
+        <option value="magasin" <?php selected($type_compte, 'magasin'); ?>>Magasin</option>
+    </select>
+    <?php
+}
+
+// Filtrer les utilisateurs par type de compte
+add_filter('pre_get_users', 'filtrer_utilisateurs_par_type_compte');
+function filtrer_utilisateurs_par_type_compte($query) {
+    global $pagenow;
+    
+    if (is_admin() && $pagenow == 'users.php' && isset($_GET['type_compte']) && $_GET['type_compte'] != '') {
+        $type_compte = $_GET['type_compte'];
+        $meta_query = array(
+            array(
+                'key' => 'type_compte',
+                'value' => $type_compte,
+                'compare' => '='
+            )
+        );
+        $query->set('meta_query', $meta_query);
+    }
+}
+
+// Afficher le champ "Type de compte" dans la page de détails utilisateur
+add_action('show_user_profile', 'afficher_type_compte_profil_admin');
+add_action('edit_user_profile', 'afficher_type_compte_profil_admin');
+function afficher_type_compte_profil_admin($user) {
+    $type_compte = get_user_meta($user->ID, 'type_compte', true);
+    ?>
+    <h3>Type de compte</h3>
+    <table class="form-table">
+        <tr>
+            <th><label for="type_compte">Type de compte</label></th>
+            <td>
+                <select name="type_compte" id="type_compte">
+                    <option value="">Sélectionner...</option>
+                    <option value="particulier" <?php selected($type_compte, 'particulier'); ?>>Particulier</option>
+                    <option value="magasin" <?php selected($type_compte, 'magasin'); ?>>Magasin</option>
+                </select>
+                <p class="description">Sélectionnez le type de compte de l'utilisateur.</p>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+// Sauvegarder le champ "Type de compte"
+add_action('personal_options_update', 'sauvegarder_type_compte_profil_admin');
+add_action('edit_user_profile_update', 'sauvegarder_type_compte_profil_admin');
+function sauvegarder_type_compte_profil_admin($user_id) {
+    if (!current_user_can('edit_user', $user_id)) {
+        return false;
+    }
+    
+    if (isset($_POST['type_compte'])) {
+        update_user_meta($user_id, 'type_compte', sanitize_text_field($_POST['type_compte']));
+    }
+}
 
 require HELLO_THEME_PATH . '/theme.php';
 

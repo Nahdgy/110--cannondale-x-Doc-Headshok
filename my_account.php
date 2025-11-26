@@ -374,6 +374,7 @@ function mon_compte_personnalise_shortcode() {
         wp_update_user($updated_data);
 
         update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
+        update_user_meta($user_id, 'type_compte', sanitize_text_field($_POST['type_compte']));
 
         if (!empty($_POST['pratique']) && is_array($_POST['pratique'])) {
             $pratiques_sanitized = array_map('sanitize_text_field', $_POST['pratique']);
@@ -415,6 +416,7 @@ function mon_compte_personnalise_shortcode() {
 
     // Récupération infos utilisateur
     $civilite = get_user_meta($user->ID, 'civilite', true);
+    $type_compte = get_user_meta($user->ID, 'type_compte', true);
     $pratique = get_user_meta($user->ID, 'pratique', true);
     if (!is_array($pratique)) {
         $pratique = $pratique ? [$pratique] : [];
@@ -1929,6 +1931,14 @@ function mon_compte_personnalise_shortcode() {
                                 </label>
                             <?php endforeach; ?>
                         </div>
+                    </div>
+
+                    <div>
+                        <label for="type_compte">Type de compte</label>
+                        <select id="type_compte" name="type_compte" class="disabled-input" disabled>
+                            <option value="particulier" <?php selected($type_compte, 'particulier'); ?>>Particulier</option>
+                            <option value="magasin" <?php selected($type_compte, 'magasin'); ?>>Magasin</option>
+                        </select>
                     </div>
 
                     <div>
