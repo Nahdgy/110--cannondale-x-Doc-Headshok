@@ -167,7 +167,7 @@ Sa modification peut influencer les performances : une meilleure stabitlité et 
         </span>
       </label>
       <label class="radio-btn" style="position:relative;">
-        <input type="checkbox" name="usage[]" value="Fourreau carbone"> Fourreau carbone (+499€/offert en révision 200h)
+        <input type="checkbox" name="usage[]" value="Fourreau carbone"> Fourreau carbone (+499€/MO offerte en révision 200h)
         <span class="info-toggle" style="margin-left:6px;cursor:pointer;display:inline-block;width:18px;height:18px;border-radius:50%;background:#FF3F22;color:#fff;text-align:center;line-height:18px;font-weight:medium;position:relative;" tabindex="0">?
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Remplacement du fourreau aluminium par un fourreau carbone
 
@@ -587,8 +587,8 @@ function updateNext7ButtonState() {
 // === EVENT LISTENERS ===
 document.addEventListener('DOMContentLoaded', function() {
   // Gestion des tooltips
-  document.querySelectorAll('.tooltip-toggle').forEach(toggle => {
-    const dialogue = toggle.nextElementSibling;
+  document.querySelectorAll('.info-toggle').forEach(toggle => {
+    const dialogue = toggle.querySelector('.info-dialogue');
     toggle.addEventListener('mouseenter', function() {
       dialogue.style.display = 'block';
     });
@@ -921,4 +921,3 @@ document.addEventListener('DOMContentLoaded', function() {
 	return ob_get_clean();
 }
 add_shortcode('form_hybrid', 'form_hybrid_shortcode');
-?>
