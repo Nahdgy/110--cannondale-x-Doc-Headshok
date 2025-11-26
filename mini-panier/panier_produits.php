@@ -153,7 +153,7 @@ function panier_produits_shortcode() {
             $product = $cart_item['data'];
             $qty = $cart_item['quantity'];
             $stock = $product->get_stock_quantity();
-            $subtotal = $cart_item['line_total'];
+            $subtotal = $cart_item['line_total'] + $cart_item['line_tax'];
         ?>
             <div class="panier-grid" data-key="<?php echo esc_attr($cart_item_key); ?>">
                 <!-- Colonne gauche : image -->
@@ -380,9 +380,15 @@ function maj_panier_ajax() {
 
     WC()->cart->calculate_totals();
 
+    $cart_item = $cart->get_cart_item($key);
+    $line_total_with_tax = 0;
+    if ($cart_item) {
+        $line_total_with_tax = $cart_item['line_total'] + $cart_item['line_tax'];
+    }
+
     wp_send_json([
-        "line_subtotal" => wc_price($cart->get_cart_item($key)['line_total'] ?? 0),
-        "cart_subtotal" => WC()->cart->get_cart_subtotal(),
+        "line_subtotal" => wc_price($line_total_with_tax),
+        "cart_subtotal" => wc_price(WC()->cart->get_subtotal() + WC()->cart->get_subtotal_tax()),
         "cart_total"    => WC()->cart->get_total(),
     ]);
 }
