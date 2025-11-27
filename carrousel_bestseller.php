@@ -75,6 +75,7 @@ function shortcode_carousel_bestseller() {
         }
         .carousel-item-price {
             font-weight: bold;
+            display: flex;
         }
         .carousel-item-footer {
             display: flex;
@@ -88,7 +89,7 @@ function shortcode_carousel_bestseller() {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             border: none;
@@ -96,6 +97,17 @@ function shortcode_carousel_bestseller() {
 		.add-to-cart-ajax:hover{
 			background: #FF3F22;
 		}
+        @media screen and (max-width: 768px) {
+            .carousel-item {
+                height: 300px;
+            }
+            .carousel-item img {
+                height: 140px;
+            }
+            .add-to-cart-ajax {
+                font-size: 12px;
+            }
+        }
     </style>
 
     <div class="carousel-wrapper">
