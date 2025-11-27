@@ -144,22 +144,58 @@ function header_personnalise_shortcode() {
 			}
 		});
 		
-		// Timeout hover menu déroulant principal BOUTIQUE
+		// Gestion des flèches principales (BOUTIQUE et ATELIER) en mode mobile
+		let currentMainMenu = null;
+		document.querySelectorAll('.dropdown > .arrow-orange').forEach(function(arrow) {
+			const dropdown = arrow.closest('.dropdown');
+			const menuContent = dropdown.querySelector('.dropdown-content');
+			
+			if (arrow && menuContent) {
+				arrow.addEventListener('click', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					
+					// Mode mobile uniquement
+					if (window.innerWidth <= 1129) {
+						// Ferme le menu actuellement ouvert s'il est différent
+						if (currentMainMenu && currentMainMenu !== menuContent) {
+							currentMainMenu.style.display = 'none';
+						}
+						
+						// Toggle du menu cliqué
+						if (menuContent.style.display === 'block') {
+							menuContent.style.display = 'none';
+							currentMainMenu = null;
+						} else {
+							menuContent.style.display = 'block';
+							currentMainMenu = menuContent;
+						}
+					}
+				});
+			}
+		});
+		
+		// Timeout hover menu déroulant principal BOUTIQUE (desktop uniquement)
 		var dropdownBoutique = document.querySelector('.dropdown');
 		if (dropdownBoutique) {
 			var menuContent = dropdownBoutique.querySelector('.dropdown-content');
 			let timerShowParent, timerHideParent;
 			dropdownBoutique.addEventListener('mouseenter', function() {
-				clearTimeout(timerHideParent);
-				timerShowParent = setTimeout(function() {
-					menuContent && (menuContent.style.display = 'block');
-				}, 500);
+				// Hover uniquement en mode desktop
+				if (window.innerWidth > 1129) {
+					clearTimeout(timerHideParent);
+					timerShowParent = setTimeout(function() {
+						menuContent && (menuContent.style.display = 'block');
+					}, 500);
+				}
 			});
 			dropdownBoutique.addEventListener('mouseleave', function() {
-				clearTimeout(timerShowParent);
-				timerHideParent = setTimeout(function() {
-					menuContent && (menuContent.style.display = 'none');
-				}, 500);
+				if (window.innerWidth > 1129) {
+					clearTimeout(timerShowParent);
+					timerHideParent = setTimeout(function() {
+						menuContent && (menuContent.style.display = 'none');
+					}, 500);
+				}
 			});
 		}
 	});
@@ -890,6 +926,13 @@ function header_personnalise_shortcode() {
 	top: 0;
 	}
 
+	/* Masquer les flèches des menus principaux en desktop */
+	@media screen and (min-width: 1130px) {
+		.dropdown > .arrow-orange {
+			display: none;
+		}
+	}
+	
 	/* Responsive pour les flèches en mode mobile */
 	@media screen and (max-width: 1129px) {
 		/* Garder les flèches à droite mais ajuster la direction */
@@ -1031,8 +1074,9 @@ function header_personnalise_shortcode() {
 		  <div class="menu-navbar">
 			<nav>
           		<a href="https://doc-headshok.com/">ACCUEIL</a>
-				<div class="dropdown">
+				<div class="dropdown" style="display: inline-flex; align-items: center;">
   					<a href="https://doc-headshok.com/boutique-produits">BOUTIQUE</a>
+  					<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
   					<ul class="dropdown-content">
 						<?php
 						// Définir les catégories principales
@@ -1085,8 +1129,9 @@ function header_personnalise_shortcode() {
 						<?php } ?>
   					</ul>
 				</div>
-				<div class="dropdown">
+				<div class="dropdown" style="display: inline-flex; align-items: center;">
   					<a href="https://doc-headshok.com/entretiens-2/">ATELIER</a>
+  					<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
   					<ul class="dropdown-content">
 						<li><a href="/atelier-mecanique/revision-fourches">FOURCHES</a></li>
 						<li><a href="/atelier-mecanique/revision-amortisseur">AMORTISSEUR</a></li>
