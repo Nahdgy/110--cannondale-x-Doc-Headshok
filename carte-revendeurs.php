@@ -361,7 +361,7 @@ function afficher_carte_revendeurs_shortcode($atts) {
         <div class="carte-revendeurs-wrapper">
             <div id="carte-map" style="height: <?php echo esc_attr($atts['hauteur']); ?>; width: 100%;"></div>
             <div class="carte-liste">
-                <h3>📍 Nos points de vente</h3>
+                <h3>📍 Trouvez votre partenaire</h3>
                 <div class="carte-liste-items">
                     <?php if (empty($lieux)): ?>
                         <p class="no-lieux">Aucun lieu disponible pour le moment.</p>
