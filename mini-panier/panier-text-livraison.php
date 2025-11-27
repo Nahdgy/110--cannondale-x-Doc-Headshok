@@ -61,19 +61,53 @@ function panier_text_livraison_shortcode() {
     </div>
 
     <script type="text/javascript">
-        function refreshPanierLivraison() {
-            jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
-                action: 'get_panier_livraison'
-            }, function(response) {
-                if (response.success) {
-                    jQuery('#panier-livraison .panier-livraison-text').html(response.data.message);
-                    jQuery('#panier-livraison .panier-livraison-progress-fill').css('width', response.data.percentage + '%');
+        (function() {
+            let refreshTimer = null;
+            let isRefreshing = false;
+            
+            function refreshPanierLivraison() {
+                // Empêcher les requêtes simultanées
+                if (isRefreshing) return;
+                
+                isRefreshing = true;
+                
+                jQuery.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    action: 'get_panier_livraison'
+                }, function(response) {
+                    if (response.success) {
+                        jQuery('#panier-livraison .panier-livraison-text').html(response.data.message);
+                        jQuery('#panier-livraison .panier-livraison-progress-fill').css('width', response.data.percentage + '%');
+                    }
+                }).fail(function() {
+                    console.error('Erreur lors du rafraîchissement du panier livraison');
+                }).always(function() {
+                    isRefreshing = false;
+                });
+            }
+
+            // Premier chargement
+            refreshPanierLivraison();
+            
+            // Rafraîchir lors de tous les événements panier WooCommerce
+            jQuery(document.body).on('updated_cart_totals wc_fragments_refreshed wc_fragment_refresh added_to_cart removed_from_cart updated_wc_div', function() {
+                // Debounce: attendre 300ms après le dernier événement
+                clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(refreshPanierLivraison, 300);
+            });
+            
+            // Écouter les mises à jour Ajax de WooCommerce (mini-panier latéral)
+            jQuery(document).on('ajaxComplete', function(event, xhr, settings) {
+                if (settings.url && settings.url.indexOf('admin-ajax.php') > -1) {
+                    // Vérifier si c'est une action liée au panier
+                    if (settings.data && (settings.data.indexOf('maj_panier') > -1 || 
+                        settings.data.indexOf('woocommerce_') > -1 ||
+                        settings.data.indexOf('add_to_cart') > -1)) {
+                        clearTimeout(refreshTimer);
+                        refreshTimer = setTimeout(refreshPanierLivraison, 300);
+                    }
                 }
             });
-        }
-
-        refreshPanierLivraison(); // premier chargement
-        setInterval(refreshPanierLivraison, 400);
+        })();
     </script>
     
     <?php
@@ -87,10 +121,10 @@ function ajax_get_panier_livraison() {
     if ( ! function_exists( 'WC' ) ) wp_send_json_error();
 
     $free_shipping_threshold = 149;
-    $cart_subtotal = WC()->cart->get_cart_subtotal(); // total TTC numérique
+    $cart_subtotal = WC()->cart->get_subtotal() + WC()->cart->get_subtotal_tax(); // total TTC numérique
 
     $percentage = min(100, ($cart_subtotal / $free_shipping_threshold) * 100);
-     var_dump($cart_subtotal);   
+    
     if ($cart_subtotal >= $free_shipping_threshold) {
         $message = "Félicitations 🎉 Vous bénéficiez de la <span class='highlight'>livraison gratuite à domicile</span> ou en point relais en France Métropolitaine !";
     } else {

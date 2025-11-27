@@ -309,6 +309,10 @@ function panier_produits_shortcode() {
 				if (resumeTotal && data.cart_total) {
 					resumeTotal.innerHTML = data.cart_total;
 				}
+				
+				// Déclencher l'événement WooCommerce pour synchroniser la barre de livraison
+				jQuery(document.body).trigger('wc_fragment_refresh');
+				
                 // Mise à jour du scroll après chaque modification
                 updateScroll();
             })

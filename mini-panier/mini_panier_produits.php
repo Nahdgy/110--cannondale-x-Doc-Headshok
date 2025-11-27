@@ -139,6 +139,9 @@ function mini_panier_produits_shortcode() {
 
                 if (resumeSousTotal && data.cart_subtotal) resumeSousTotal.innerHTML = data.cart_subtotal;
                 if (resumeTotal && data.cart_total) resumeTotal.innerHTML = data.cart_total;
+                
+                // Déclencher l'événement WooCommerce pour synchroniser la barre de livraison
+                jQuery(document.body).trigger('wc_fragment_refresh');
 
                 updateScroll();
             });
@@ -171,7 +174,7 @@ function mini_panier_produits_shortcode() {
                                         <button class="mini-plus">+</button>
                                     </div>
                                     <div class="mini-panier-supprimer">
-                                        <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector.png" 
+                                        <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector.png" 
                                             alt="Supprimer" class="mini-supprimer-btn">
                                     </div>
                                 </div>
