@@ -175,29 +175,32 @@ function header_personnalise_shortcode() {
 			}
 		});
 		
-		// Timeout hover menu déroulant principal BOUTIQUE (desktop uniquement)
-		var dropdownBoutique = document.querySelector('.dropdown');
-		if (dropdownBoutique) {
-			var menuContent = dropdownBoutique.querySelector('.dropdown-content');
+		// Timeout hover menu déroulant pour TOUS les dropdowns (desktop uniquement)
+		document.querySelectorAll('.dropdown').forEach(function(dropdown) {
+			var menuContent = dropdown.querySelector('.dropdown-content');
 			let timerShowParent, timerHideParent;
-			dropdownBoutique.addEventListener('mouseenter', function() {
-				// Hover uniquement en mode desktop
-				if (window.innerWidth > 1129) {
-					clearTimeout(timerHideParent);
-					timerShowParent = setTimeout(function() {
-						menuContent && (menuContent.style.display = 'block');
-					}, 500);
-				}
-			});
-			dropdownBoutique.addEventListener('mouseleave', function() {
-				if (window.innerWidth > 1129) {
-					clearTimeout(timerShowParent);
-					timerHideParent = setTimeout(function() {
-						menuContent && (menuContent.style.display = 'none');
-					}, 500);
-				}
-			});
-		}
+			
+			if (menuContent) {
+				dropdown.addEventListener('mouseenter', function() {
+					// Hover uniquement en mode desktop
+					if (window.innerWidth > 1129) {
+						clearTimeout(timerHideParent);
+						timerShowParent = setTimeout(function() {
+							menuContent.style.display = 'block';
+						}, 500);
+					}
+				});
+				
+				dropdown.addEventListener('mouseleave', function() {
+					if (window.innerWidth > 1129) {
+						clearTimeout(timerShowParent);
+						timerHideParent = setTimeout(function() {
+							menuContent.style.display = 'none';
+						}, 500);
+					}
+				});
+			}
+		});
 	});
 
 	document.addEventListener('DOMContentLoaded', () => {
@@ -817,6 +820,7 @@ function header_personnalise_shortcode() {
 	  
 	.dropdown {
   		margin:0.5rem 0rem;
+		position: relative;
 	}
 	.dropdown a{
 		margin: 0;
@@ -824,12 +828,15 @@ function header_personnalise_shortcode() {
 	.dropdown-content {
 	  display: none;
 	  position: absolute;
+	  top: 100%;
+	  left: 0;
 	  background-color: #f9f9f9;
 	  min-width: 160px;
 	  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 	  padding: 12px 16px;
 	  z-index: 1000000;
 	  list-style-type: none;
+	  margin-top: 5px;
 	}
 	.dropdown-content li{
 		margin-top:5px;
@@ -1133,13 +1140,13 @@ function header_personnalise_shortcode() {
   					<a href="https://doc-headshok.com/entretiens-2/">ATELIER</a>
   					<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
   					<ul class="dropdown-content">
-						<li><a href="/atelier-mecanique/revision-fourches">FOURCHES</a></li>
-						<li><a href="/atelier-mecanique/revision-amortisseur">AMORTISSEUR</a></li>
-						<li><a href="/atelier-mecanique/revision-tige-de-selle">TIGE DE SELLE</a></li>
-						<li><a href="/atelier-mecanique/revision-roue">ROUE</a></li>
-						<li><a href="https://doc-headshok.com/atelier-mecanique/">SERVICE ATELIER</a></li>
-						<li><a href="https://doc-headshok.com/canyon/">CANYON</a></li>
-						<li><a href="https://doc-headshok.com/nos-videos/">NOS VIDÉOS</a></li>
+						<li class="dropdown-sub"><a href="/atelier-mecanique/revision-fourches">FOURCHES</a></li>
+						<li class="dropdown-sub"><a href="/atelier-mecanique/revision-amortisseur">AMORTISSEUR</a></li>
+						<li class="dropdown-sub"><a href="/atelier-mecanique/revision-tige-de-selle">TIGE DE SELLE</a></li>
+						<li class="dropdown-sub"><a href="/atelier-mecanique/revision-roue">ROUE</a></li>
+						<li class="dropdown-sub"><a href="https://doc-headshok.com/atelier-mecanique/">SERVICE ATELIER</a></li>
+						<li class="dropdown-sub"><a href="https://doc-headshok.com/canyon/">CANYON</a></li>
+						<li class="dropdown-sub"><a href="https://doc-headshok.com/nos-videos/">NOS VIDÉOS</a></li>
   					</ul>
 				</div>
           		<a href="https://doc-headshok.com/contact/">CONTACT</a>
