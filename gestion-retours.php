@@ -399,25 +399,28 @@ function creer_demande_retour_ajax() {
     // Préparer les données
     $motif = sanitize_text_field($_POST['motif']);
     $description = sanitize_textarea_field($_POST['description']);
-    $produits_ids = isset($_POST['produits']) ? $_POST['produits'] : array();
     
-    if (empty($produits_ids)) {
+    // Décoder le JSON des produits
+    $produits_ids = isset($_POST['produits']) ? json_decode(stripslashes($_POST['produits']), true) : array();
+    
+    if (empty($produits_ids) || !is_array($produits_ids)) {
         wp_send_json_error('Veuillez sélectionner au moins un produit');
         return;
     }
     
-    // Calculer le montant total des produits concernés
+    // Calculer le montant total des produits concernés (avec taxes)
     $montant_total = 0;
     $produits_details = array();
     
     foreach ($order->get_items() as $item_id => $item) {
         if (in_array($item_id, $produits_ids)) {
-            $montant_total += $item->get_total();
+            $line_total_with_tax = $item->get_total() + $item->get_total_tax();
+            $montant_total += $line_total_with_tax;
             $produits_details[] = array(
                 'item_id' => $item_id,
                 'name' => $item->get_name(),
                 'quantity' => $item->get_quantity(),
-                'total' => $item->get_total()
+                'total' => $line_total_with_tax
             );
         }
     }

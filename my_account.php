@@ -1885,14 +1885,15 @@ function mon_compte_personnalise_shortcode() {
                                         echo '<option value="' . $order->get_id() . '" data-order-data=\'' . json_encode(array(
                                             'id' => $order->get_id(),
                                             'number' => $order->get_order_number(),
-                                            'items' => array_map(function($item) {
+                                            'items' => array_values(array_map(function($item) {
+                                                $line_total_with_tax = $item->get_total() + $item->get_total_tax();
                                                 return array(
                                                     'id' => $item->get_id(),
                                                     'name' => $item->get_name(),
                                                     'quantity' => $item->get_quantity(),
-                                                    'total' => $item->get_total()
+                                                    'total' => number_format($line_total_with_tax, 2, ',', ' ')
                                                 );
-                                            }, $order->get_items())
+                                            }, $order->get_items()))
                                         )) . '\'>';
                                         echo 'Commande #' . $order->get_order_number() . ' - ' . $date_completed->date('d/m/Y');
                                         echo '</option>';
