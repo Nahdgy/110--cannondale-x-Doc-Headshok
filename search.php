@@ -109,7 +109,7 @@ ul.liste-produits li .bouton-ajouter-panier:hover {
 }
 </style>
 
-<div class="search-results-container" style="max-width:1450px;margin:2rem auto;">
+<div class="search-results-container" style="max-width:1450px;margin:20vh auto;">
     <h2 style="font-family:'DIN Next LT Pro',sans-serif;font-weight:700;font-size:2rem;margin-bottom:1rem;">
         Résultats pour : "<?php echo esc_html($search); ?>"
     </h2>

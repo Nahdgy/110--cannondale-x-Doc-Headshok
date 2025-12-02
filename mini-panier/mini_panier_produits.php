@@ -218,23 +218,22 @@ function get_mini_panier_ajax() {
     if ($cart && !empty($cart->get_cart())) {
         foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
             $product = $cart_item['data'];
+            $line_total_with_tax = $cart_item['line_total'] + $cart_item['line_tax'];
             $items[] = [
                 'key'       => $cart_item_key,
                 'id'        => $product->get_id(),
                 'name'      => $product->get_name(),
                 'qty'       => $cart_item['quantity'],
                 'price'     => wc_price($product->get_price()),
-                'subtotal'  => wc_price($cart_item['line_total']),
+                'subtotal'  => wc_price($line_total_with_tax),
 				'image'     => $product->get_image_id() 
-										? wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') 
-										: 'https://cannonbale.com/wp-content/uploads/2023/10/2186-Garde-boue-arriere-Tesoro-Neo-K11078-Cannondale.jpg',
+								? wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') 
+								: 'https://cannonbale.com/wp-content/uploads/2023/10/2186-Garde-boue-arriere-Tesoro-Neo-K11078-Cannondale.jpg',
                 'permalink' => get_permalink($product->get_id()),
-				'stock'     => $product->get_stock_quantity(), // 👈 ajout ici
+				'stock'     => $product->get_stock_quantity(),
             ];
         }
-    }
-
-    wp_send_json([
+    }    wp_send_json([
         "success" => true,
         "items"   => $items,
         "cart_subtotal" => $cart ? $cart->get_cart_subtotal() : 0,
@@ -260,8 +259,14 @@ function maj_mini_panier_ajax() {
 
     WC()->cart->calculate_totals();
 
+    $cart_item = $cart->get_cart_item($key);
+    $line_total_with_tax = 0;
+    if ($cart_item) {
+        $line_total_with_tax = $cart_item['line_total'] + $cart_item['line_tax'];
+    }
+
     wp_send_json([
-        "line_subtotal" => wc_price($cart->get_cart_item($key)['line_total'] ?? 0),
+        "line_subtotal" => wc_price($line_total_with_tax),
         "cart_subtotal" => WC()->cart->get_cart_subtotal(),
         "cart_total"    => WC()->cart->get_total(),
     ]);

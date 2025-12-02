@@ -470,7 +470,7 @@ function mon_compte_personnalise_shortcode() {
     $customer_orders = wc_get_orders([
         'customer_id' => $user->ID,
         'return'      => 'ids',
-                'status'      => ['pending', 'processing', 'on-hold', 'completed']
+        'status'      => 'any'
     ]);
 
 	$en_attente_paiement = 0;
@@ -478,11 +478,11 @@ function mon_compte_personnalise_shortcode() {
     $passees = 0;
     foreach ($customer_orders as $order_id) {
         $order = wc_get_order($order_id);
-        if ($order->has_status('pending')) {
+        if ($order->has_status('pending') || $order->has_status('wc-pending')) {
             $en_attente_paiement++;
-        } elseif ($order->has_status(['processing', 'on-hold'])) {
+        } elseif ($order->has_status(['processing', 'on-hold', 'wc-processing', 'wc-on-hold', 'wc-livraison', 'wc-livraison-colissi', 'wc-lpc_anomaly', 'wc-lpc_delivered', 'wc-lpc_ready_to_ship', 'wc-lpc_transit'])) {
             $en_cours++;
-        } elseif ($order->has_status('completed')) {
+        } elseif ($order->has_status('completed') || $order->has_status('wc-completed')) {
             $passees++;
         }
     }
@@ -1869,11 +1869,11 @@ function mon_compte_personnalise_shortcode() {
                                 <select id="commande-select" name="order_id" required>
                                     <option value="">Choisir une commande...</option>
                                     <?php
-                                    // Récupérer les commandes éligibles (completed, moins de 30 jours)
+                                    // Récupérer toutes les commandes (sauf annulées et échouées)
                                     $eligible_orders = wc_get_orders(array(
                                         'customer_id' => $user->ID,
-                                        'status' => 'completed',
-                                        'limit' => 50,
+                                        'status' => array('completed', 'processing', 'on-hold', 'wc-completed', 'wc-processing', 'wc-on-hold', 'wc-livraison', 'wc-livraison-colissi', 'wc-lpc_delivered', 'wc-lpc_ready_to_ship', 'wc-lpc_transit'),
+                                        'limit' => -1,
                                         'orderby' => 'date',
                                         'order' => 'DESC'
                                     ));
@@ -1881,9 +1881,6 @@ function mon_compte_personnalise_shortcode() {
                                     foreach ($eligible_orders as $order) {
                                         $date_completed = $order->get_date_completed();
                                         if (!$date_completed) continue;
-                                        
-                                        $jours = (time() - $date_completed->getTimestamp()) / (60 * 60 * 24);
-                                        if ($jours > 30) continue;
                                         
                                         echo '<option value="' . $order->get_id() . '" data-order-data=\'' . json_encode(array(
                                             'id' => $order->get_id(),
