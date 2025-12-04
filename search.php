@@ -13,6 +13,14 @@ $query = new WP_Query($args);
 ?>
 
 <style>
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+body {
+    margin: 0;
+    padding: 0;
+}
 ul.liste-produits {
     list-style: none;
     padding: 0;
@@ -20,6 +28,8 @@ ul.liste-produits {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 @media screen and (max-width: 1023px) {
     ul.liste-produits {
@@ -28,7 +38,42 @@ ul.liste-produits {
 }
 @media screen and (max-width: 766px) {
     ul.liste-produits {
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 0;
+        width: 100%;
+    }
+    ul.liste-produits li {
+        min-height: 320px;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    ul.liste-produits li img {
+        max-height: 150px;
+        margin-bottom: 10px;
+    }
+    ul.liste-produits li .titre-produit {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    ul.liste-produits li .prix-produit {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    ul.liste-produits li .bouton-ajouter-panier {
+        font-size: 12px;
+        padding: 8px;
+    }
+    .search-results-container {
+        padding: 0 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 20vh auto !important;
+    }
+    .search-results-container h2 {
+        font-size: 1.5rem !important;
+        padding: 0 !important;
     }
 }
 ul.liste-produits li {
@@ -53,6 +98,8 @@ ul.liste-produits li a {
     text-decoration: none;
     display: block;
     width: 100%;
+    display: flex;
+    justify-content: center;
 }
 ul.liste-produits li img {
     max-width: 100%;
@@ -109,8 +156,8 @@ ul.liste-produits li .bouton-ajouter-panier:hover {
 }
 </style>
 
-<div class="search-results-container" style="max-width:1450px;margin:20vh auto;">
-    <h2 style="font-family:'DIN Next LT Pro',sans-serif;font-weight:700;font-size:2rem;margin-bottom:1rem;">
+<div class="search-results-container" style="max-width:1450px;margin:30vh auto;width:100%;box-sizing:border-box;padding:0 15px;">
+    <h2 style="font-family:'DIN Next LT Pro',sans-serif;font-weight:700;font-size:2rem;margin-bottom:1rem;padding:0;">
         Résultats pour : "<?php echo esc_html($search); ?>"
     </h2>
     <?php if ($query->have_posts()) : ?>

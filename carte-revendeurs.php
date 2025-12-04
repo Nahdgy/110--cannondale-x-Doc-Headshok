@@ -687,7 +687,7 @@ function afficher_carte_revendeurs_shortcode($atts) {
             }
             
             .carte-liste {
-                max-height: none;
+                max-height: 600px;
                 border-top: 3px solid #FF3F22;
             }
         }
