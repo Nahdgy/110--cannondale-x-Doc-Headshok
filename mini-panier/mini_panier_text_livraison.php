@@ -131,7 +131,7 @@ function ajax_get_mini_panier_livraison() {
     if ($cart_subtotal >= $free_shipping_threshold) {
         $message = "Félicitations 🎉 Vous bénéficiez de la <span class='highlight'>livraison gratuite à domicile</span> ou en point relais en France Métropolitaine !";
     } else {
-        $remaining = $free_shipping_threshold - $cart_subtotal;
+        $remaining = round($free_shipping_threshold - $cart_subtotal, 2);
 
         // ✅ on découpe en spans pour flex aligné en row
         $message = '
