@@ -114,10 +114,61 @@ Il est donc important de corriger rapidemment le voile pour éviter l'aggravatio
   </div>
 </div>
 <script>
+// === VARIABLES AJAX PRESTATIONS ===
+window.ajax_object = window.ajax_object || {
+    ajax_url: '/wp-admin/admin-ajax.php',
+    nonce: '',
+    user_logged_in: true // Sera vérifié côté serveur
+};
+
+// === FONCTION SYNCHRONISATION ===
+function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
+    const remarque = formData.get('remarque') || '';
+    
+    const prestationData = {
+        action: 'sauvegarder_prestation_ajax',
+        type_prestation: typePrestation,
+        modele_velo: 'Roue',
+        annee_velo: new Date().getFullYear(),
+        description: `${typePrestation} - ${remarque}`,
+        prix_total: '19',
+        numero_suivi: numeroSuivi,
+        statut: 'attente'
+    };
+
+    console.log('🔄 Envoi synchronisation:', prestationData);
+
+    return fetch(window.ajax_object.ajax_url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(prestationData)
+    })
+    .then(response => {
+        console.log('📡 Réponse HTTP:', response.status, response.statusText);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📄 Données reçues:', data);
+        if (data.success) {
+            console.log('✅ Prestation synchronisée:', typePrestation);
+        } else {
+            console.error('❌ Erreur synchronisation:', data);
+        }
+        return data;
+    })
+    .catch(error => {
+        console.error('❌ Erreur réseau:', error);
+    });
+}
+
+// === GESTION DES ÉVÉNEMENTS ===
 document.getElementById('toggle-menu1').addEventListener('click', function() {
     var content = document.getElementById('menu-content1');
     content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
 });
+
 document.getElementById('open-modal1').onclick = function() {
   // Vérifier si l'utilisateur est connecté via AJAX
   var xhr = new XMLHttpRequest();
@@ -136,9 +187,11 @@ document.getElementById('open-modal1').onclick = function() {
   };
   xhr.send();
 };
+
 document.getElementById('close-modal1').onclick = function() {
   document.getElementById('modal-form1').style.display = 'none';
 };
+
 document.getElementById('demande-form1').onsubmit = function(e) {
   e.preventDefault();
   
@@ -166,8 +219,17 @@ document.getElementById('demande-form1').onsubmit = function(e) {
         var response = JSON.parse(xhr.responseText);
         
         if (response.success && response.data && response.data.order_number) {
+          var orderNumber = response.data.order_number;
+          
+          // Synchroniser la prestation avec le back office
+          if (typeof synchroniserPrestation !== 'undefined') {
+            synchroniserPrestation(formData, 'Dévoilage roue', orderNumber).then(function() {
+              console.log('✅ Synchronisation terminée');
+            });
+          }
+          
           // Afficher le numéro de commande dans la page de remerciement
-          document.getElementById('order-number-display-roue').textContent = response.data.order_number;
+          document.getElementById('order-number-display-roue').textContent = orderNumber;
           
           // Fermer le modal du formulaire
           document.getElementById('modal-form1').style.display = 'none';

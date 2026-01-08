@@ -62,10 +62,12 @@ add_action('wp_ajax_sauvegarder_prestation_ajax', 'sauvegarder_prestation_ajax_h
 add_action('wp_ajax_nopriv_sauvegarder_prestation_ajax', 'sauvegarder_prestation_ajax_handler');
 
 function sauvegarder_prestation_ajax_handler() {
-    // Vérifier le nonce pour la sécurité
-    if (!wp_verify_nonce($_POST['nonce'], 'sauvegarder_prestation_nonce')) {
-        wp_send_json_error('Erreur de sécurité');
-        return;
+    // Vérifier le nonce seulement s'il est fourni (pour compatibilité avec Elementor)
+    if (isset($_POST['nonce']) && !empty($_POST['nonce'])) {
+        if (!wp_verify_nonce($_POST['nonce'], 'sauvegarder_prestation_nonce')) {
+            wp_send_json_error('Erreur de sécurité');
+            return;
+        }
     }
     
     $user_id = get_current_user_id();
