@@ -2457,13 +2457,37 @@ function mon_compte_personnalise_shortcode() {
                                 echo '<p><strong>Prestations :</strong> ' . esc_html($prestation->prestations) . '</p>';
                             }
                             
+                            if ($prestation->prestations_choisies) {
+                                echo '<p><strong>Prestations choisies :</strong> ' . esc_html($prestation->prestations_choisies) . '</p>';
+                            }
+                            
                             if ($prestation->options_supplementaires) {
                                 echo '<p><strong>Options :</strong> ' . esc_html($prestation->options_supplementaires) . '</p>';
+                            }
+                            
+                            if ($prestation->options_choisies) {
+                                echo '<p><strong>Options choisies :</strong> ' . esc_html($prestation->options_choisies) . '</p>';
+                            }
+                            
+                            if ($prestation->type_prestation_choisie) {
+                                echo '<p><strong>Type de prestation :</strong> ' . esc_html($prestation->type_prestation_choisie) . '</p>';
                             }
                             
                             if ($prestation->modele_velo || $prestation->annee_velo) {
                                 $modele_annee = trim($prestation->modele_velo . ' (' . $prestation->annee_velo . ')');
                                 echo '<p><strong>Vélo :</strong> ' . esc_html($modele_annee) . '</p>';
+                            }
+                            
+                            if ($prestation->date_derniere_revision) {
+                                echo '<p><strong>Date de la dernière révision :</strong> ' . date('d/m/Y', strtotime($prestation->date_derniere_revision)) . '</p>';
+                            }
+                            
+                            if ($prestation->poids_pilote) {
+                                echo '<p><strong>Poids du pilote :</strong> ' . esc_html($prestation->poids_pilote) . ' kg</p>';
+                            }
+                            
+                            if ($prestation->remarques) {
+                                echo '<p><strong>Remarques :</strong> ' . esc_html($prestation->remarques) . '</p>';
                             }
                             
                             if ($prestation->numero_suivi) {

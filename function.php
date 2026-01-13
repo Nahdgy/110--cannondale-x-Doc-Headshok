@@ -89,6 +89,12 @@ function sauvegarder_prestation_ajax_handler() {
         description text,
         modele_velo varchar(255),
         annee_velo varchar(50),
+        prestations_choisies text,
+        options_choisies text,
+        type_prestation_choisie varchar(255),
+        date_derniere_revision varchar(50),
+        poids_pilote varchar(50),
+        remarques text,
         statut varchar(50) DEFAULT 'attente',
         date_creation datetime DEFAULT CURRENT_TIMESTAMP,
         prix_total decimal(10,2) DEFAULT 0,
@@ -117,6 +123,12 @@ function sauvegarder_prestation_ajax_handler() {
         'description' => isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '',
         'modele_velo' => isset($_POST['modele_velo']) ? sanitize_text_field($_POST['modele_velo']) : '',
         'annee_velo' => isset($_POST['annee_velo']) ? sanitize_text_field($_POST['annee_velo']) : '',
+        'prestations_choisies' => isset($_POST['prestations_choisies']) ? sanitize_text_field($_POST['prestations_choisies']) : '',
+        'options_choisies' => isset($_POST['options_choisies']) ? sanitize_text_field($_POST['options_choisies']) : '',
+        'type_prestation_choisie' => isset($_POST['type_prestation_choisie']) ? sanitize_text_field($_POST['type_prestation_choisie']) : '',
+        'date_derniere_revision' => isset($_POST['date_derniere_revision']) ? sanitize_text_field($_POST['date_derniere_revision']) : '',
+        'poids_pilote' => isset($_POST['poids_pilote']) ? sanitize_text_field($_POST['poids_pilote']) : '',
+        'remarques' => isset($_POST['remarques']) ? sanitize_textarea_field($_POST['remarques']) : '',
         'statut' => isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : 'attente',
         'prix_total' => isset($_POST['prix_total']) ? floatval($_POST['prix_total']) : 0,
         'numero_suivi' => $numero_suivi,
@@ -389,8 +401,8 @@ function afficher_page_prestations_admin() {
     </div>
     
     <!-- Modal pour les détails -->
-    <div id="modal-details" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; max-width: 600px; width: 90%;">
+    <div id="modal-details" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; overflow: hidden;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
             <h3>Détails de la prestation</h3>
             <div id="contenu-details"></div>
             <button onclick="fermerModal()" class="button">Fermer</button>
@@ -408,6 +420,8 @@ function afficher_page_prestations_admin() {
             if (response.success) {
                 document.getElementById('contenu-details').innerHTML = response.data;
                 document.getElementById('modal-details').style.display = 'block';
+                // Bloquer le scroll de la page
+                document.body.style.overflow = 'hidden';
             } else {
                 alert('Erreur lors du chargement des détails');
             }
@@ -416,6 +430,8 @@ function afficher_page_prestations_admin() {
     
     function fermerModal() {
         document.getElementById('modal-details').style.display = 'none';
+        // Rétablir le scroll de la page
+        document.body.style.overflow = '';
     }
     
     // Fermer le modal en cliquant en dehors
@@ -495,28 +511,81 @@ function obtenir_details_prestation_ajax() {
     $details = '<table style="width: 100%; border-collapse: collapse;">';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">#' . $prestation->id . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Utilisateur:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($user_info) . '</td></tr>';
-    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_prestation) . '</td></tr>';
     
-    // Affichage différencié pour type de fourche et modèle
-    if (!empty($prestation->type_fourche)) {
-        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type de fourche:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_fourche) . '</td></tr>';
+    if ($prestation->numero_suivi) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">N° suivi:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong style="color:#FF3F22;">' . esc_html($prestation->numero_suivi) . '</strong></td></tr>';
     }
     
+    $details .= '<tr><td colspan="2" style="padding: 12px 8px; background: #f0f0f0; font-weight: bold; border-bottom: 1px solid #ddd;">INFORMATIONS PRESTATION</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_prestation) . '</td></tr>';
+    
+    // Type de fourche
+    if (!empty($prestation->type_fourche)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Modèle de fourche:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_fourche) . '</td></tr>';
+    }
+    
+    // Prestations choisies
+    if (!empty($prestation->prestations_choisies)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Prestations choisies:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><span style="color:#0073aa; font-weight:600;">' . esc_html($prestation->prestations_choisies) . '</span></td></tr>';
+    }
+    
+    // Options choisies
+    if (!empty($prestation->options_choisies)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Options choisies:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><span style="color:#0073aa;">' . esc_html($prestation->options_choisies) . '</span></td></tr>';
+    }
+    
+    // Type de prestation (Express/Standard)
+    if (!empty($prestation->type_prestation_choisie)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Type de prestation:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->type_prestation_choisie) . '</td></tr>';
+    }
+    
+    $details .= '<tr><td colspan="2" style="padding: 12px 8px; background: #f0f0f0; font-weight: bold; border-bottom: 1px solid #ddd;">INFORMATIONS VÉLO</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Modèle vélo:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->modele_velo) . '</td></tr>';
     $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Année vélo:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->annee_velo) . '</td></tr>';
-    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Statut:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->statut) . '</td></tr>';
-    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Date création:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . date('d/m/Y H:i:s', strtotime($prestation->date_creation)) . '</td></tr>';
     
-    if ($prestation->description) {
+    $details .= '<tr><td colspan="2" style="padding: 12px 8px; background: #f0f0f0; font-weight: bold; border-bottom: 1px solid #ddd;">INFORMATIONS TECHNIQUES</td></tr>';
+    
+    // Date de dernière révision
+    if (!empty($prestation->date_derniere_revision)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Date dernière révision:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . date('d/m/Y', strtotime($prestation->date_derniere_revision)) . '</td></tr>';
+    }
+    
+    // Poids du pilote
+    if (!empty($prestation->poids_pilote)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Poids du pilote:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->poids_pilote) . ' kg</td></tr>';
+    }
+    
+    // Remarques
+    if (!empty($prestation->remarques)) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; vertical-align: top;">Remarques client:</td><td style="padding: 8px; border-bottom: 1px solid #ddd; background: #fffbcc;">' . nl2br(esc_html($prestation->remarques)) . '</td></tr>';
+    }
+    
+    // Description
+    if (!empty($prestation->description)) {
         $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; vertical-align: top;">Description:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . nl2br(esc_html($prestation->description)) . '</td></tr>';
     }
     
-    if ($prestation->prix_total > 0) {
-        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Prix total:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . wc_price($prestation->prix_total) . '</td></tr>';
-    }
+    $details .= '<tr><td colspan="2" style="padding: 12px 8px; background: #f0f0f0; font-weight: bold; border-bottom: 1px solid #ddd;">GESTION</td></tr>';
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Statut:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">';
     
-    if ($prestation->numero_suivi) {
-        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">N° suivi:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . esc_html($prestation->numero_suivi) . '</td></tr>';
+    $statut_colors = array(
+        'attente' => '#f39c12',
+        'en_cours' => '#3498db',
+        'terminee' => '#27ae60'
+    );
+    $statut_color = isset($statut_colors[$prestation->statut]) ? $statut_colors[$prestation->statut] : '#95a5a6';
+    $statut_labels = array(
+        'attente' => 'En attente',
+        'en_cours' => 'En cours',
+        'terminee' => 'Terminée'
+    );
+    $details .= '<span style="color:' . $statut_color . '; font-weight:bold;">' . ($statut_labels[$prestation->statut] ?? ucfirst($prestation->statut)) . '</span>';
+    $details .= '</td></tr>';
+    
+    $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Date création:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">' . date('d/m/Y H:i:s', strtotime($prestation->date_creation)) . '</td></tr>';
+    
+    if ($prestation->prix_total > 0) {
+        $details .= '<tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Prix total:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong style="color:#27ae60; font-size:18px;">' . wc_price($prestation->prix_total) . '</strong></td></tr>';
     }
     
     $details .= '</table>';

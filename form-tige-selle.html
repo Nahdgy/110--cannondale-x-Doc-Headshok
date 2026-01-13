@@ -217,6 +217,9 @@ function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
     const modele = formData.get('modele') || '';
     const annee = formData.get('annee') || '';
     const prestations = formData.getAll('prestations[]').join(', ');
+    const dateRevision = formData.get('date_revision') || '';
+    const poidsPilote = formData.get('poids_pilote') || '';
+    const remarques = formData.get('remarques') || '';
     
     const prestationData = {
         action: 'sauvegarder_prestation_ajax',
@@ -224,9 +227,13 @@ function synchroniserPrestation(formData, typePrestation, numeroSuivi = '') {
         type_prestation: typePrestation,
         modele_velo: modele,
         annee_velo: annee,
+        prestations_choisies: prestations,
+        date_derniere_revision: dateRevision,
+        poids_pilote: poidsPilote,
+        remarques: remarques,
         description: `${typePrestation} - ${prestations} demandé pour ${modele} (${annee})`,
         prix_total: formData.get('prix_total') || '0',
-        numero_suivi: numeroSuivi, // Utiliser le numéro de commande reçu
+        numero_suivi: numeroSuivi,
         statut: 'attente'
     };
 
