@@ -1,0 +1,656 @@
+add_shortcode('produits_marque', 'afficher_produits_marque');
+
+function afficher_produits_marque() {
+  ob_start();
+
+  $parent = get_term_by('slug', 'marques', 'product_cat');
+  $produits = wc_get_products([
+    'status' => 'publish',
+    'limit' => -1,
+    'category' => [$parent ? $parent->slug : ''],
+  ]);
+
+  // Filtrage par catégorie via GET
+  if (isset($_GET['filtre']) && is_array($_GET['filtre']) && count($_GET['filtre']) > 0) {
+    $filtres = array_map('strtolower', array_map('sanitize_text_field', $_GET['filtre']));
+    $produits = array_filter($produits, function($prod) use ($filtres) {
+      $cats = $prod->get_category_ids();
+      $all_slugs = [];
+      foreach ($cats as $cat_id) {
+        $term = get_term($cat_id, 'product_cat');
+        while ($term && $term->parent != 0) {
+          $all_slugs[] = strtolower($term->slug);
+          $term = get_term($term->parent, 'product_cat');
+        }
+        if ($term) {
+          $all_slugs[] = strtolower($term->slug);
+        }
+      }
+      foreach ($filtres as $filtre) {
+        if (in_array($filtre, $all_slugs)) return true;
+      }
+      return false;
+    });
+    $produits = array_values($produits);
+  }
+
+  $html_filtres = afficher_filtres_marque();
+
+  if (!empty($produits)) {
+    ?>
+    <style>
+      ul.liste-categories {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+
+	ul.liste-categories li {
+	  background-color: #F7F7F7;
+	  border-radius: 6px;
+	  padding: 15px;
+	  box-sizing: border-box;
+	  position: relative;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  text-align: center;
+	  min-height: 400px;
+	  transition: transform 0.3s ease;
+	}
+
+      ul.liste-categories li:hover {
+        transform: scale(1.03);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      }
+
+      ul.liste-categories li a {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+      }
+
+      ul.liste-categories li img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 18px;
+        border-radius: 6px;
+        background: #fff;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        object-fit: contain;
+      }
+
+      ul.liste-categories li .titre-categorie {
+        font-family: 'din-next-lt-pro', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: #000000;
+        text-align: center;
+        margin-top: auto;
+      }
+
+      .info-produit {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        height: 100%;
+        flex-grow: 1;
+        width: 100%;
+      }
+
+      .texte-produit {
+        text-align: left;
+        width: 100%;
+      }
+
+      .texte-produit h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 10px 0;
+        color: #000 !important;
+        text-align: left;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .texte-produit p {
+        font-size: 14px;
+        color: #444;
+        margin: 0;
+        text-align: left;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .bouton-ajouter-panier {
+        align-self: flex-end;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        width: 100%;
+        border-radius: 6px;
+        padding: 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        margin-top: 5px;
+        transition: background-color 0.3s ease;
+        font-family: 'din-next-lt-pro', sans-serif;
+      }
+
+      .bouton-ajouter-panier:hover {
+        background-color: #FF3F22 !important;
+        color: #ffffff !important;
+      }
+
+      /*.btn-ajouter {
+        background-color: black;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 18px;
+        cursor: pointer;
+      }*/
+
+      .btn-voir-plus {
+        display: block;
+        margin: 30px auto 0 auto;
+        background-color: #000;
+        color: #fff;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-family: 'din-next-lt-pro', sans-serif;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn-voir-plus:hover {
+        background-color: #FF3F22;
+        color: #fff;
+      }
+
+      .barre-tri {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      #nombre-produits {
+        font-family: 'din-next-lt-pro', sans-serif;
+        font-weight: 300;
+        font-size: 24px;
+        color: black;
+        margin-right: 2rem;
+      }
+
+      .toggle-titre {
+        color: black !important;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      #form-filtres {
+        height: 600px;
+        overflow-y: scroll;
+        position: relative;
+        width: 100%;
+        scrollbar-color: black #F8F8F8;
+      }
+
+      .filtre-groupe {
+        margin-right: 1rem;
+        min-width: 200px;
+      }
+
+      .tri-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tri-container label {
+        font-family: 'din-next-lt-pro', sans-serif;
+        font-weight: 300;
+        font-size: 16px;
+        color: #000;
+        margin-bottom: 0;
+      }
+
+      #tri-sous-categories {
+        width: 160px;
+        padding: 6px 8px;
+        font-family: 'din-next-lt-pro', sans-serif;
+        font-size: 14px;
+      }
+
+      .separator-red {
+        border: none;
+        border-bottom: 2px solid #FF3F22;
+        margin: 0 0 20px 0;
+        width: 100%;
+      }
+
+
+	
+	/* Dropdown filters styles */
+	.btn-toggle-filtres {
+	  background: #FF3F22;
+	  color: white;
+	  border: none;
+	  padding: 8px 16px;
+	  border-radius: 4px;
+	  cursor: pointer;
+	  font-size: 14px;
+	  display: flex;
+	  align-items: center;
+	  gap: 8px;
+	  transition: background-color 0.3s ease;
+	  margin-left: 15px;
+	}
+	
+	.btn-toggle-filtres:hover {
+	  background: #e6391e;
+	}
+	
+	.section-filtres-collapsed {
+	  max-height: 0;
+	  overflow: hidden;
+	  transition: max-height 0.3s ease-out;
+	  opacity: 0;
+	}
+	
+	.section-filtres-expanded {
+	  max-height: 500px;
+	  overflow: visible;
+	  transition: max-height 0.3s ease-in;
+	  opacity: 1;
+	  padding: 15px 0;
+	}
+	
+	#filtres-colonne {
+	  background: #f8f9fa;
+	  border: 1px solid #dee2e6;
+	  border-radius: 8px;
+	  padding: 20px;
+	  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+	
+	/* Responsive Design */
+	@media screen and (max-width: 1129px) {
+	  ul.liste-categories {
+		grid-template-columns: repeat(2, 1fr);
+	  }
+	  
+	  .btn-toggle-filtres {
+	    margin-left: 0;
+	  }
+	  
+	  .barre-tri {
+	    flex-direction: column;
+	    align-items: stretch;
+	    gap: 15px;
+	  }
+	  
+	  .barre-tri > div:first-child {
+	    display: flex;
+	    justify-content: space-between;
+	    align-items: center;
+	    width: 100%;
+	  }
+	  
+	  .tri-container {
+	    justify-content: center;
+	    flex-wrap: wrap;
+	  }
+	  
+	  #form-filtres {
+	    display: flex !important;
+	    flex-direction: row;
+	    flex-wrap: wrap;
+	    gap: 15px;
+	    overflow-x: auto;
+	    padding: 15px;
+	    background: #fff;
+	    border-radius: 8px;
+	    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+	    height: auto !important;
+	    margin-bottom: 20px;
+	  }
+	  
+	  .filtre-groupe {
+	    min-width: 200px !important;
+	    flex-shrink: 0;
+	    margin-bottom: 0 !important;
+	    margin-right: 0 !important;
+	    background: #f8f8f8;
+	    border-radius: 6px;
+	    padding: 12px;
+	  }
+	  
+	  .toggle-titre {
+	    font-size: 14px !important;
+	    color: #FF3F22;
+	    font-weight: 600;
+	    margin-bottom: 8px;
+	  }
+	  
+	  .filtre-options {
+	    max-height: 150px;
+	  }
+	  
+	  .separator-red {
+	    display: none;
+	  }
+	}
+	
+	@media screen and (max-width: 768px) {
+	  ul.liste-categories {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+	  }
+	  
+	  ul.liste-categories li {
+		min-height: 0px;
+	  }
+	  
+	  .texte-produit h3 {
+		font-size: 14px;
+	  }
+	  
+	  .bouton-ajouter-panier {
+		padding: 8px 12px;
+		font-size: 14px;
+	  }
+	  
+	  .btn-toggle-filtres {
+	    width: 100%;
+	    justify-content: center;
+	  }
+	  
+	  .tri-container label {
+	    text-align: center;
+	  }
+	  
+	  #form-filtres {
+	    flex-direction: column !important;
+	    overflow-x: visible;
+		overflow-y: auto;
+	  }
+	  
+	  .filtre-groupe {
+	    min-width: auto !important;
+	    width: 100%;
+	  }
+	  
+	  #section-filtres.section-filtres-expanded {
+	    max-height: 400px;
+	    overflow-y: auto;
+	  }
+
+    .barre-tri {
+				   flex-direction: column;
+				   gap: 10px;
+			   }
+
+         #tri-sous-categories {
+				width: 100px;
+			}
+	}
+    </style>
+
+    <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px;">
+      <div class="barre-tri">
+        <div style="display: flex; align-items: center;">
+          <div id="nombre-produits"><?php echo count($produits); ?> résultats</div>
+          <button id="toggle-filtres" class="btn-toggle-filtres">
+            <span id="filtres-icon">🔽</span> Filtres
+          </button>
+        </div>
+        <div class="tri-container">
+          <label for="tri-sous-categories">Trier par :</label>
+          <select id="tri-sous-categories">
+            <option value="default">Tri par défaut</option>
+            <option value="alpha">Ordre alphabétique A-Z</option>
+            <option value="alpha-desc">Ordre alphabétique Z-A</option>
+          </select>
+        </div>
+      </div>
+      <hr class="separator-red">
+
+      <!-- Section filtres déroulante -->
+      <div id="section-filtres" class="section-filtres-collapsed">
+        <div id="filtres-colonne" style="width:100%;">
+          <?php echo $html_filtres; ?>
+        </div>
+      </div>
+      
+      <div class="contenu-principal">
+        <ul class="liste-categories" id="liste-sous-categories">
+            <?php
+                $limite_affichage = 18;
+                $all_produits = [];
+                foreach ($produits as $product) {
+                  $image_url = $product->get_image_id() ? wp_get_attachment_url($product->get_image_id()) : wc_placeholder_img_src('medium');
+                  $all_produits[] = [
+                    'id' => $product->get_id(),
+                    'sku' => $product->get_sku(),
+                    'name' => $product->get_name(),
+                    'permalink' => get_permalink($product->get_id()),
+                    'image_url' => $image_url,
+                    'price_html' => $product->get_price_html(),
+                  ];
+                }
+                // Affichage initial (limité)
+                for ($i = 0; $i < min($limite_affichage, count($all_produits)); $i++) :
+                  $p = $all_produits[$i];
+              ?>
+                <li data-name="<?php echo esc_attr($p['name']); ?>">
+                  <a href="<?php echo esc_url($p['permalink']); ?>">
+                    <img src="<?php echo esc_url($p['image_url']); ?>" alt="<?php echo esc_attr($p['name']); ?>">
+                  </a>
+                  <div class="info-produit">
+                    <div class="texte-produit">
+                      <h3><?php echo esc_html($p['name']); ?></h3>
+                      <p><?php echo $p['price_html']; ?></p>
+                    </div>
+                    <a href="<?php echo esc_url('?add-to-cart=' . $p['id']); ?>" 
+                       data-quantity="1" 
+                       class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
+                       data-product_id="<?php echo esc_attr($p['id']); ?>" 
+                       data-product_sku="<?php echo esc_attr($p['sku']); ?>" 
+                       aria-label="Ajouter '<?php echo esc_attr($p['name']); ?>' au panier" 
+                       rel="nofollow">Ajouter au panier</a>
+                  </div>
+                </li>
+              <?php endfor; ?>
+          </ul>
+          <?php if (count($produits) > $limite_affichage) : ?>
+            <button class="btn-voir-plus" id="voir-plus">Voir plus</button>
+          <?php endif; ?>
+      </div>
+    </div>
+
+    <?php if (count($produits) > $limite_affichage) : ?>
+      <script>
+        window.allProduitsMarque = <?php echo json_encode($all_produits); ?>;
+      </script>
+    <?php endif; ?>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const triSelect = document.getElementById('tri-sous-categories');
+        const liste = document.getElementById('liste-sous-categories');
+
+        triSelect.addEventListener('change', function () {
+          const items = Array.from(liste.querySelectorAll('li'));
+
+          if (this.value === 'alpha') {
+            items.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+          } else if (this.value === 'alpha-desc') {
+            items.sort((a, b) => b.dataset.name.localeCompare(a.dataset.name));
+          } else {
+            return;
+          }
+
+          items.forEach(item => liste.appendChild(item));
+        });
+
+        // Dropdown filters functionality
+        const toggleBtn = document.getElementById('toggle-filtres');
+        const filtresSection = document.getElementById('section-filtres');
+        const filtresIcon = document.getElementById('filtres-icon');
+        
+        if (toggleBtn && filtresSection) {
+          toggleBtn.addEventListener('click', function() {
+            const isCollapsed = filtresSection.classList.contains('section-filtres-collapsed');
+            
+            if (isCollapsed) {
+              filtresSection.classList.remove('section-filtres-collapsed');
+              filtresSection.classList.add('section-filtres-expanded');
+              filtresIcon.textContent = '🔼';
+              toggleBtn.innerHTML = '<span id="filtres-icon">🔼</span> Masquer les filtres';
+            } else {
+              filtresSection.classList.remove('section-filtres-expanded');
+              filtresSection.classList.add('section-filtres-collapsed');
+              filtresIcon.textContent = '🔽';
+              toggleBtn.innerHTML = '<span id="filtres-icon">🔽</span> Filtres';
+            }
+          });
+        }
+
+        document.querySelectorAll(".toggle-titre").forEach((title) => {
+          title.addEventListener("click", () => {
+            const section = document.getElementById(title.dataset.target);
+            const arrow = title.querySelector("span");
+            const isOpen = section.style.display === "block";
+            section.style.display = isOpen ? "none" : "block";
+            arrow.textContent = isOpen ? "˅" : "˄";
+          });
+        });
+
+        const cacherFiltres = document.getElementById("cacher-filtres");
+        cacherFiltres?.addEventListener("click", () => {
+          document.querySelectorAll("#form-filtres .filtre-options").forEach(section => {
+            section.style.display = "none";
+          });
+          document.querySelectorAll("#form-filtres .toggle-titre span").forEach(span => {
+            span.textContent = " ˅";
+          });
+        });
+
+        const voirPlusBtn = document.getElementById("voir-plus");
+        if (voirPlusBtn) {
+          voirPlusBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            const liste = document.getElementById('liste-sous-categories');
+            if (!window.allProduitsMarque) return;
+            liste.innerHTML = '';
+            window.allProduitsMarque.forEach(function(p) {
+              const li = document.createElement('li');
+              li.setAttribute('data-name', p.name);
+              li.innerHTML = `
+                <a href="${p.permalink}">
+                  <img src="${p.image_url}" alt="${p.name}">
+                </a>
+                <div class="info-produit">
+                  <div class="texte-produit">
+                    <h3>${p.name}</h3>
+                    <p>${p.price_html}</p>
+                  </div>
+                  <a href="?add-to-cart=${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter '${p.name}' au panier" rel="nofollow">Ajouter au panier</a>
+                </div>
+              `;
+              liste.appendChild(li);
+            });
+            voirPlusBtn.style.display = 'none';
+          });
+        }
+      });
+    </script>
+    <?php
+  } else {
+    echo '<p>Aucun produit trouvé dans la catégorie marques.</p>';
+  }
+
+  return ob_get_clean();
+}
+
+function afficher_filtres_marque() {
+  // Récupère la catégorie parent "marques"
+  $categorie_marques = get_term_by('slug', 'marques', 'product_cat');
+  $sous_categories = get_terms([
+    'taxonomy' => 'product_cat',
+    'parent' => $categorie_marques ? $categorie_marques->term_id : 0,
+    'hide_empty' => false,
+  ]);
+
+  $sections = [
+    'Filtres appliqués' => [],
+    'Disponibilité' => ['en-stock'],
+    'Marques' => $sous_categories,
+  ];
+
+  $html = '<form id="form-filtres">';
+
+  foreach ($sections as $titre => $options) {
+    $id = 'section-' . sanitize_title($titre);
+    $html .= '<div class="filtre-groupe" style="margin-bottom: 20px;">';
+    $html .= '<h4 class="toggle-titre" data-target="' . $id . '">' . esc_html($titre) . ' <span>˅</span></h4>';
+    $html .= '<div class="filtre-options" id="' . $id . '" style="display:none;">';
+
+    if ($titre === 'Filtres appliqués') {
+      $html .= '<div class="filtres-appliques" id="filtres-appliques" style="margin-bottom: 5px; display:flex; flex-wrap:wrap; gap:6px;">';
+      $filtres_actuels = isset($_GET['filtre']) ? (array)$_GET['filtre'] : [];
+      if (!empty($filtres_actuels)) {
+        foreach ($filtres_actuels as $slug) {
+          $html .= '<span style="background:#FF3F22;color:#fff;padding:2px 8px;border-radius:4px;margin-right:4px;">' . esc_html($slug) . '</span>';
+        }
+      }
+      $html .= '</div>';
+      $html .= '<span id="reset" style="cursor:pointer; color:#FF3F22;">Tout effacer</span>';
+    } else {
+      foreach ($options as $opt) {
+        if (is_object($opt)) {
+          $slug = $opt->slug;
+          $label = $opt->name;
+        } else {
+          $slug = sanitize_title($opt);
+          $label = ucfirst($opt);
+        }
+        $html .= '<label style="display:block; margin-bottom: 5px; font-family: din-next-lt-pro, sans-serif; font-weight: 400; font-size: 14px; color: #000;">';
+        $html .= '<input type="checkbox" name="filtre[]" value="' . esc_attr($slug) . '" style="margin-right: 6px;">';
+        $html .= esc_html($label) . '</label>';
+      }
+    }
+
+    $html .= '</div><hr class="separator-red"></div>';
+  }
+
+  $html .= '<button type="submit" style="margin-top:10px;">Filtrer</button>';
+  $html .= '</form>';
+
+  $html .= "<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const resetBtn = document.getElementById('reset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          document.querySelectorAll('#form-filtres input[type=checkbox]').forEach(cb => cb.checked = false);
+          document.getElementById('form-filtres').submit();
+        });
+      }
+    });
+  </script>";
+
+  return $html;
+}
