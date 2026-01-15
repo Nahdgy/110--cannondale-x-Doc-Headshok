@@ -2643,6 +2643,7 @@ add_action('show_user_profile', 'afficher_type_compte_profil_admin');
 add_action('edit_user_profile', 'afficher_type_compte_profil_admin');
 function afficher_type_compte_profil_admin($user) {
     $type_compte = get_user_meta($user->ID, 'type_compte', true);
+    $raison_sociale = get_user_meta($user->ID, 'raison_sociale', true);
     ?>
     <h3>Type de compte</h3>
     <table class="form-table">
@@ -2655,6 +2656,13 @@ function afficher_type_compte_profil_admin($user) {
                     <option value="magasin" <?php selected($type_compte, 'magasin'); ?>>Magasin</option>
                 </select>
                 <p class="description">Sélectionnez le type de compte de l'utilisateur.</p>
+            </td>
+        </tr>
+        <tr>
+            <th><label for="raison_sociale">Raison sociale</label></th>
+            <td>
+                <input type="text" name="raison_sociale" id="raison_sociale" value="<?php echo esc_attr($raison_sociale); ?>" class="regular-text" placeholder="Nom de l'entreprise (facultatif)">
+                <p class="description">Raison sociale de l'utilisateur (facultatif).</p>
             </td>
         </tr>
     </table>
@@ -2671,6 +2679,15 @@ function sauvegarder_type_compte_profil_admin($user_id) {
     
     if (isset($_POST['type_compte'])) {
         update_user_meta($user_id, 'type_compte', sanitize_text_field($_POST['type_compte']));
+    }
+    
+    if (isset($_POST['raison_sociale'])) {
+        $raison_sociale = sanitize_text_field($_POST['raison_sociale']);
+        if (!empty($raison_sociale)) {
+            update_user_meta($user_id, 'raison_sociale', $raison_sociale);
+        } else {
+            delete_user_meta($user_id, 'raison_sociale');
+        }
     }
 }
 

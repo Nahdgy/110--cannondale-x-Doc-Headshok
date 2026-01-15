@@ -375,6 +375,16 @@ function mon_compte_personnalise_shortcode() {
 
         update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
         update_user_meta($user_id, 'type_compte', sanitize_text_field($_POST['type_compte']));
+        
+        // Raison sociale (facultatif)
+        if (isset($_POST['raison_sociale'])) {
+            $raison_sociale = sanitize_text_field($_POST['raison_sociale']);
+            if (!empty($raison_sociale)) {
+                update_user_meta($user_id, 'raison_sociale', $raison_sociale);
+            } else {
+                delete_user_meta($user_id, 'raison_sociale');
+            }
+        }
 
         if (!empty($_POST['pratique']) && is_array($_POST['pratique'])) {
             $pratiques_sanitized = array_map('sanitize_text_field', $_POST['pratique']);
@@ -417,6 +427,7 @@ function mon_compte_personnalise_shortcode() {
     // Récupération infos utilisateur
     $civilite = get_user_meta($user->ID, 'civilite', true);
     $type_compte = get_user_meta($user->ID, 'type_compte', true);
+    $raison_sociale = get_user_meta($user->ID, 'raison_sociale', true);
     $pratique = get_user_meta($user->ID, 'pratique', true);
     if (!is_array($pratique)) {
         $pratique = $pratique ? [$pratique] : [];
@@ -2140,6 +2151,11 @@ function mon_compte_personnalise_shortcode() {
                             <option value="particulier" <?php selected($type_compte, 'particulier'); ?>>Particulier</option>
                             <option value="magasin" <?php selected($type_compte, 'magasin'); ?>>Magasin</option>
                         </select>
+                    </div>
+
+                    <div class="full-width">
+                        <label for="raison_sociale">Raison sociale (facultatif)</label>
+                        <input type="text" id="raison_sociale" name="raison_sociale" value="<?php echo esc_attr($raison_sociale); ?>" class="disabled-input" disabled placeholder="Nom de votre entreprise">
                     </div>
 
                     <div>

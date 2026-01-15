@@ -33,6 +33,7 @@ function mon_formulaire_inscription_shortcode() {
         $civilite = sanitize_text_field($_POST['civilite']);
         $pratiques = isset($_POST['pratique']) && is_array($_POST['pratique']) ? array_map('sanitize_text_field', $_POST['pratique']) : [];
         $type_compte = sanitize_text_field($_POST['type_compte']);
+        $raison_sociale = isset($_POST['raison_sociale']) ? sanitize_text_field($_POST['raison_sociale']) : '';
 
         // Validation
         if (empty($nom)) $errors[] = 'Le nom est obligatoire.';
@@ -69,6 +70,9 @@ function mon_formulaire_inscription_shortcode() {
                 update_user_meta($user_id, 'pratique', $pratiques);
                 update_user_meta($user_id, 'telephone', $telephone);
                 update_user_meta($user_id, 'type_compte', $type_compte);
+                if (!empty($raison_sociale)) {
+                    update_user_meta($user_id, 'raison_sociale', $raison_sociale);
+                }
                 
                 // Métadonnées d'adresse WordPress standard
                 update_user_meta($user_id, 'billing_address_1', $adresse_ligne1);
@@ -548,6 +552,14 @@ function mon_formulaire_inscription_shortcode() {
 
         <form method="post" action="">
             <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="type_compte">Type de compte <span class="required">*</span></label>
+                    <select id="type_compte" name="type_compte" required>
+                        <option value="">Sélectionner</option>
+                        <option value="particulier" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'particulier') ? 'selected' : ''; ?>>Particulier</option>
+                        <option value="magasin" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'magasin') ? 'selected' : ''; ?>>Magasin</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="civilite">Civilité <span class="required">*</span></label>
                     <select id="civilite" name="civilite" required>
@@ -559,6 +571,11 @@ function mon_formulaire_inscription_shortcode() {
 
                 <div class="form-group">
                     <!-- Espacement -->
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="raison_sociale">Raison sociale (facultatif)</label>
+                    <input type="text" id="raison_sociale" name="raison_sociale" placeholder="Nom de votre entreprise" value="<?php echo isset($_POST['raison_sociale']) ? esc_attr($_POST['raison_sociale']) : ''; ?>">
                 </div>
 
                 <div class="form-group">
@@ -629,15 +646,6 @@ function mon_formulaire_inscription_shortcode() {
                             </label>
                         <?php endforeach; ?>
                     </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="type_compte">Type de compte <span class="required">*</span></label>
-                    <select id="type_compte" name="type_compte" required>
-                        <option value="">Sélectionner</option>
-                        <option value="particulier" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'particulier') ? 'selected' : ''; ?>>Particulier</option>
-                        <option value="magasin" <?php echo (isset($_POST['type_compte']) && $_POST['type_compte'] == 'magasin') ? 'selected' : ''; ?>>Magasin</option>
-                    </select>
                 </div>
             </div>
 
