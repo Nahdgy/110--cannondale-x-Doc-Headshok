@@ -133,6 +133,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
         </span>
       </label>
     </div>
+    <div id="prix-total-step2" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
       <button type="button" id="next-2">Suivant</button>
@@ -491,8 +492,8 @@ function updateRadioSelected() {
 }
 	// Prix des prestations et options
 const prixPrestation = {
-  'Révision 100 heures': 109,
-  'Révision 200 heures': 179,
+  'Révision 100 heures ou tous les ans': 109,
+  'Révision 200 heures ou tous les 2 ans': 179,
   'Remplacement filet rapporté (hélicoil)': 17.50,
   'Full package': 579
 };
@@ -531,20 +532,26 @@ function calculerTotal() {
   return total;
 }
 
-function afficherTotalStep3() {
+function afficherTotal() {
   const total = calculerTotal();
-  document.getElementById('prix-total-step3').textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  const displayElement = document.getElementById('prix-total-step2') || document.getElementById('prix-total-step3');
+  if (displayElement) {
+    displayElement.textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  }
 }
 
 // Mettre à jour le total à chaque changement de prestation ou option
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
-    checkbox.addEventListener('change', afficherTotalStep3);
+    checkbox.addEventListener('change', afficherTotal);
   });
   document.querySelectorAll('input[name="usage[]"]').forEach(function(cb) {
-    cb.addEventListener('change', afficherTotalStep3);
+    cb.addEventListener('change', afficherTotal);
   });
-  afficherTotalStep3();
+  document.querySelectorAll('input[name="type_prestation"]').forEach(function(radio) {
+    radio.addEventListener('change', afficherTotal);
+  });
+  afficherTotal();
 });
 // Désactivation dynamique des options supplémentaires selon la prestation sélectionnée
   function updateOptionsState() {
@@ -670,7 +677,7 @@ document.getElementById('next-2').onclick = function() {
   const checkedPrestations = Array.from(document.querySelectorAll('input[name="prestations[]"]:checked'));
   if(checkedPrestations.length === 0) return;
   currentStep = 2; showStep(currentStep);
-  afficherTotalStep3();
+  afficherTotal();
 };
 
 // Navigation étape 3
@@ -680,7 +687,7 @@ document.getElementById('prev-3').onclick = function() {
 document.getElementById('next-3').onclick = function() {
   if(!document.querySelector('input[name="type_prestation"]:checked')) return;
   currentStep = 3; showStep(currentStep);
-  afficherTotalStep3();
+  afficherTotal();
 };
 
 // Navigation étape 4

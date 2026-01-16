@@ -122,6 +122,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Réfection système Headshok"> Réfection système Headshok</label>
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Remplacement filet rapporté (hélicoil)"> Remplacement filet rapporté (hélicoil)</label>
     </div>
+    <div id="prix-total-step2" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
       <button type="button" id="next-2" class="button-disabled" disabled>Suivant</button>
@@ -509,9 +510,12 @@ function calculerTotal() {
   return total;
 }
 
-function afficherTotalStep4() {
+function afficherTotal() {
   const total = calculerTotal();
-  document.getElementById('prix-total-step3').textContent = `Total estimé : ${total} €`;
+  const displayElement = document.getElementById('prix-total-step2') || document.getElementById('prix-total-step3');
+  if (displayElement) {
+    displayElement.textContent = `Total estimé : ${total} €`;
+  }
 }
 
 // === VALIDATION FUNCTIONS ===
@@ -626,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateNext7ButtonState();
   updateRadioSelected();
   updateProgressBar(0);
-  afficherTotalStep4();
+  afficherTotal();
   
   // Event listeners pour validation
   document.querySelectorAll('input[name="type_fourche"]').forEach(input => {
@@ -636,21 +640,21 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name="prestations[]"]').forEach(cb => {
     cb.addEventListener('change', () => {
       updateNext2ButtonState();
-      afficherTotalStep4();
+      afficherTotal();
     });
   });
   
   document.querySelectorAll('input[name="type_prestation"]').forEach(cb => {
     cb.addEventListener('change', () => {
       updateNext3ButtonState();
-      afficherTotalStep4();
+      afficherTotal();
     });
   });
   
   document.querySelectorAll('input[name="usage[]"]').forEach(cb => {
     cb.addEventListener('change', () => {
       updateNext4ButtonState();
-      afficherTotalStep4();
+      afficherTotal();
     });
   });
   

@@ -126,6 +126,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Système DL50"> Système DL50</label>
       <label class="radio-btn"><input type="checkbox" name="prestations[]" value="Full package"> Full package</label>
     </div>
+    <div id="prix-total-step2" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-2">Précédent</button>
       <button type="button" id="next-2">Suivant</button>
@@ -490,23 +491,26 @@ function calculerTotal() {
   return total;
 }
 
-function afficherTotalStep4() {
+function afficherTotal() {
   const total = calculerTotal();
-  document.getElementById('prix-total-step4').textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  const displayElement = document.getElementById('prix-total-step2') || document.getElementById('prix-total-step4');
+  if (displayElement) {
+    displayElement.textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  }
 }
 
 // Mettre à jour le total à chaque changement de prestation ou option
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name="prestations[]"]').forEach(function(checkbox) {
-    checkbox.addEventListener('change', afficherTotalStep4);
+    checkbox.addEventListener('change', afficherTotal);
   });
   document.querySelectorAll('input[name="usage[]"]').forEach(function(cb) {
-    cb.addEventListener('change', afficherTotalStep4);
+    cb.addEventListener('change', afficherTotal);
   });
   document.querySelectorAll('input[name="type_prestation"]').forEach(function(radio) {
-    radio.addEventListener('change', afficherTotalStep4);
+    radio.addEventListener('change', afficherTotal);
   });
-  afficherTotalStep4();
+  afficherTotal();
 });
 	// Désactivation dynamique des options supplémentaires selon la prestation sélectionnée
   function updateOptionsState() {
