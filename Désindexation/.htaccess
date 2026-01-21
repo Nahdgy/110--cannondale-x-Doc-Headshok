@@ -1,0 +1,204 @@
+# ============================================================================
+# FICHIER .HTACCESS - REDIRECTIONS 301
+# Migration de 110cannondale.com vers doc-headshok.com
+# Généré le 21/01/2026
+# ============================================================================
+
+# Activer le module de réécriture
+RewriteEngine On
+RewriteBase /
+
+# ============================================================================
+# REDIRECTION GLOBALE DU DOMAINE
+# Si quelqu'un accède à 110cannondale.com, rediriger vers doc-headshok.com
+# ============================================================================
+
+# Forcer HTTPS et rediriger tout le domaine 110cannondale.com vers doc-headshok.com
+RewriteCond %{HTTP_HOST} ^(www\.)?110cannondale\.com$ [NC]
+RewriteRule ^(.*)$ https://doc-headshok.com/$1 [R=301,L]
+
+# ============================================================================
+# REDIRECTIONS SPÉCIFIQUES PAR PAGE
+# Correspondance entre anciennes et nouvelles URLs
+# ============================================================================
+
+# Page d'accueil
+Redirect 301 /index.php https://doc-headshok.com/
+Redirect 301 /fr/ https://doc-headshok.com/
+
+# ============================================================================
+# REDIRECTIONS DES CATÉGORIES
+# ============================================================================
+
+# Catégories principales
+Redirect 301 /2-home/ https://doc-headshok.com/
+Redirect 301 /6-mon-velo/ https://doc-headshok.com/detail-velo/
+Redirect 301 /7-velo-vtt/ https://doc-headshok.com/product-category/velo/
+Redirect 301 /8-velo-route/ https://doc-headshok.com/product-category/velo/route/
+
+# Marques
+Redirect 301 /3_cannondale https://doc-headshok.com/marque/cannondale/
+Redirect 301 /5__sram https://doc-headshok.com/marque/sram/
+Redirect 301 /8_sram https://doc-headshok.com/marque/sram/
+Redirect 301 /5_shimano https://doc-headshok.com/marque/shimano/
+Redirect 301 /14__shimano https://doc-headshok.com/marque/shimano/
+Redirect 301 /11_fox https://doc-headshok.com/marque/fox/
+Redirect 301 /13_bosch https://doc-headshok.com/marque/bosch/
+Redirect 301 /12_absoluteblack https://doc-headshok.com/marque/absoluteblack/
+Redirect 301 /15__garbaruk https://doc-headshok.com/marque/garbaruk/
+Redirect 301 /15_garbaruk https://doc-headshok.com/marque/garbaruk/
+Redirect 301 /11__syntace https://doc-headshok.com/marque/syntace/
+Redirect 301 /6__fsa https://doc-headshok.com/marque/fsa/
+Redirect 301 /7_fsa https://doc-headshok.com/marque/fsa/
+Redirect 301 /4__mavic https://doc-headshok.com/marques/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - AMORTISSEURS ARRIERE
+# ============================================================================
+
+Redirect 301 /amortisseurs-arriere/1535-kit-reducteur-fox-prophet-cannondale.html https://doc-headshok.com/20-reducteurarriereamortisse/amortisseurfoxk91091/
+Redirect 301 /amortisseurs-arriere/1536-kit-reducteur-fox-claymore-cannondale.html https://doc-headshok.com/20-reducteurarriereamortisse/amortisseurfoxk91091/
+Redirect 301 /amortisseurs-arriere/1539-bague-montage-pour-amortisseur-arriere-rockshox.html https://doc-headshok.com/20-reducteurarriereamortisse/amortisseurr ockshoxk91011/
+Redirect 301 /amortisseurs-arriere/29-kit-insert-reducteurs-fox-803-03-017-cannondale-jekyll-trigger-scalpel.html https://doc-headshok.com/20-reducteurarriereamortisse/amortisseurfoxk91091/
+Redirect 301 /amortisseurs-arriere/639-indicateur-sag-jekyll-trigger-scarlet-kp326-cannondale.html https://doc-headshok.com/product-category/composants/amortisseurs_arrieres/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - AXES ROUES
+# ============================================================================
+
+Redirect 301 /axe-roue-arriere/1177-axe-pour-velo-d-entrainement-cp2851u10os-cannondale.html https://doc-headshok.com/product-category/roue/axes-serrage/axe-roue-arriere/
+Redirect 301 /axe-roue-arriere/1456-axe-pour-velo-d-entrainement-cp2801u10os-cannondale.html https://doc-headshok.com/product-category/roue/axes-serrage/axe-roue-arriere/
+Redirect 301 /axe-roue-arriere/1580-roulements-roue-arriere-hollowgram-130x5mm-cannondale.html https://doc-headshok.com/product-category/cadre/roulements/roue-roulements/
+Redirect 301 /axe-roue-arriere/1581-roulements-roue-avant-hollowgram-110x5mm-cannondale.html https://doc-headshok.com/product-category/cadre/roulements/roue-roulements/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - BAGAGERIE
+# ============================================================================
+
+Redirect 301 /bagagerie/1095-sacoche-de-selle-cp101u10os-cannondale.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1183-sacoche-de-selle-cp151u10os-cannondale.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1184-micro-sacoche-de-selle-cp1151u10os-cannondale.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1199-sacoche-de-potence-cp1103u10os-cannondale.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1651-sacoche-tube-superieur-klickfix-4030572107735.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1653-sacoche-tube-superieur-compartiment-telephone-klickfix-4030572107339.html https://doc-headshok.com/product-category/equipement/bagagerie/
+Redirect 301 /bagagerie/1689-eclairage-arriere-gurpil-gp-120-120-lumenes-usb-noir.html https://doc-headshok.com/product-category/equipement/produits_connectes/
+Redirect 301 /bagagerie/1690-eclairage-avant-moon-titan-mini-noir.html https://doc-headshok.com/product-category/equipement/produits_connectes/
+Redirect 301 /bagagerie/523-speedsleev-bande-de-maintienprotection.html https://doc-headshok.com/product-category/equipement/bagagerie/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - BEQUILLES
+# ============================================================================
+
+Redirect 301 /bequille/1288-bequille-si-v3-cp1619u10os-cannondale.html https://doc-headshok.com/product-category/equipement/bequilles/
+Redirect 301 /bequille/1354-support-de-bequille-flip-chip-k31010-cannondale.html https://doc-headshok.com/product-category/equipement/bequilles/
+Redirect 301 /bequille/1455-bequille-centrale-eileen-3-c4kscm01blk-cannondale.html https://doc-headshok.com/product-category/equipement/bequilles/
+Redirect 301 /bequille/1473-bequille-si-ka056-cannondale.html https://doc-headshok.com/product-category/equipement/bequilles/
+Redirect 301 /bequille/1661-bequille-si-v2-cannondale-cp1607u00os.html https://doc-headshok.com/product-category/equipement/bequilles/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - BOSCH
+# ============================================================================
+
+Redirect 301 /bosch/1418-chargeur-rapide-6a-bosch.html https://doc-headshok.com/product-category/composants/electrique/
+Redirect 301 /bosch/1435-chargeur-smart-system-4a-bosch.html https://doc-headshok.com/product-category/composants/electrique/
+Redirect 301 /bosch/1579-kit-powermore-250.html https://doc-headshok.com/product-category/composants/electrique/
+
+# ============================================================================
+# REDIRECTIONS PAR MODÈLE DE VÉLO
+# ============================================================================
+
+# CAAD Series
+Redirect 301 /caad-4-1999-/1660-cone-de-direction-1-18.html https://doc-headshok.com/product-category/velo/route/caad-4-1999/
+Redirect 301 /caad12-2016-2020/1166-corps-de-roue-libre-k81079-kp415-cannondale.html https://doc-headshok.com/product-category/velo/route/caad12-2016-2020/
+Redirect 301 /caad13-2020-2025/1077-arceau-frein-sur-jante-k31000-cannondale.html https://doc-headshok.com/product-category/velo/route/caad13-2020-2025/
+Redirect 301 /caad13-2020-2025/1433-guide-cables-caad13-k32190-cannondale.html https://doc-headshok.com/product-category/velo/route/caad13-2020-2025/
+Redirect 301 /caad13-2020-2025/1472-arret-de-cable-caad13-k32140-cannondale.html https://doc-headshok.com/product-category/velo/route/caad13-2020-2025/
+Redirect 301 /caad13-2020-2025/403-kit-circlips-hollowgram-si-bb30-qc616.html https://doc-headshok.com/product-category/velo/route/caad13-2020-2025/
+
+# Canvas Neo
+Redirect 301 /canvas-neo-2019-2021/1089-kit-guides-cables-k32250-cannondale.html https://doc-headshok.com/product-category/cadre/guide-cable/
+Redirect 301 /canvas-neo-2019-2021/1444-cache-batterie-bosch-gen4-625wh-k3441110-cannondale.html https://doc-headshok.com/product-category/composants/electrique/
+
+# Cadre Optimo
+Redirect 301 /cadre-optimo-2017-2025/1394-jeu-de-direction-caadx-optimo-ck3557u00os-cannondale.html https://doc-headshok.com/product-category/velo/route/cadre-optimo-2017-2025/
+
+# Beast of the East
+Redirect 301 /beast-of-the-east-2016-2019/781-cache-derailleur-avant-beast-of-the-east-kp424-cannondale.html https://doc-headshok.com/product-category/cadre/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - CASQUES
+# ============================================================================
+
+Redirect 301 /casques-cannondale/1156-casque-hunter-mips-ch4109u10-cannondale.html https://doc-headshok.com/product-category/equipement/casques/
+Redirect 301 /casques-cannondale/1181-casque-ryker-ch4200u-cannondale.html https://doc-headshok.com/product-category/equipement/casques/
+Redirect 301 /casques-cannondale/1265-casque-terrus-ch4303u-cannondale.html https://doc-headshok.com/product-category/equipement/casques/
+Redirect 301 /casques-cannondale/1373-casque-vtt-intent-mips-ch4100u-cannondale.html https://doc-headshok.com/product-category/equipement/casques/
+Redirect 301 /casques-cannondale/1634-casque-vtt-intent-ch4150u-cannondale.html https://doc-headshok.com/product-category/equipement/casques/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - CHAÎNES
+# ============================================================================
+
+Redirect 301 /chaine/1506-chaine-shimano-9v-cn-e6070-9-4524667669166.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1590-chaine-shimano-10v-cn-e6090.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1591-chaine-shimano-hg-linkglide-11v-10v-9v.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1592-chaine-shimano-hyperglide-12-v.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1593-chaine-shimano-hg40-6-7-8-v.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1595-shimano-chaine-678-vitesses.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1596-shimano-attache-rapide-quick-link-12-vitesses.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1598-chaine-sram-force-12v-002518038000-710845824814.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1602-chaine-sram-red-12v-002518037001-710845871443.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1604-chaine-sram-red-11v-002518005003-710845727627.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1606-chaine-sram-nx-eagle-002518031011-710845813085.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1609-chaine-sram-pc1130-11v-002518006000-710845753374.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1631-chaine-sram-xx1-eagle-pc1290-002518039010-710845825446.html https://doc-headshok.com/product-category/transmission/chaines/
+Redirect 301 /chaine/1655-shimano-attache-rapide-quick-link-11-vitesses.html https://doc-headshok.com/product-category/transmission/chaines/
+
+# ============================================================================
+# REDIRECTIONS DES PRODUITS - CINTRES ET GUIDOLINE
+# ============================================================================
+
+Redirect 301 /cintres-guidoline/1110-cintre-carbone-vtt-hollowgram-save-cp2301u1080-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1151-cintre-one-road-cp2400u10-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1190-support-compteur-cintre-save-knot-k12018-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1203-cintre-hollowgram-knot-systembar-cannondale.html https://doc-headshok.com/cintresystembarxcone/
+Redirect 301 /cintres-guidoline/1208-insert-compteur-lumiere-pour-systembar-k12008-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1211-guidoline-knurltack-cp3301u0os-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1322-cintre-momo-design-systembar-r-one-cp2552u10-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+Redirect 301 /cintres-guidoline/1353-guidoline-suedecush-cp3201u10os-cannondale.html https://doc-headshok.com/product-category/composants/cintres/
+
+# ============================================================================
+# REDIRECTIONS GÉNÉRIQUES - PAGES SYSTÈME
+# ============================================================================
+
+# Pages systèmes et compte
+Redirect 301 /login https://doc-headshok.com/mon-compte/
+Redirect 301 /mon-compte https://doc-headshok.com/mon-compte/
+Redirect 301 /mon-compte/ https://doc-headshok.com/mon-compte/
+Redirect 301 /commande https://doc-headshok.com/commander/
+Redirect 301 /panier https://doc-headshok.com/panier/
+Redirect 301 /contact https://doc-headshok.com/contact/
+Redirect 301 /cgv https://doc-headshok.com/cgv/
+Redirect 301 /mentions-legales https://doc-headshok.com/mentions-legales/
+
+# Pages institutionnelles
+Redirect 301 /livraison https://doc-headshok.com/livraisons-et-retour/
+Redirect 301 /livraisons https://doc-headshok.com/livraisons-et-retour/
+Redirect 301 /retours https://doc-headshok.com/livraisons-et-retour/
+Redirect 301 /faq https://doc-headshok.com/faq/
+Redirect 301 /magasins https://doc-headshok.com/magasins-partenaires/
+Redirect 301 /partenaires https://doc-headshok.com/magasins-partenaires/
+
+# ============================================================================
+# REDIRECTIONS PAR DÉFAUT
+# ============================================================================
+
+# Toutes les autres pages non spécifiées redirigent vers la page d'accueil
+# Cette règle doit rester en dernier
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.*)$ https://doc-headshok.com/ [R=301,L]
+
+# ============================================================================
+# FIN DU FICHIER .HTACCESS
+# ============================================================================
