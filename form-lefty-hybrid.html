@@ -105,6 +105,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Super Max"> Super Max</label>
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Olaf"> Olaf</label>
     </div>
+    <div id="prix-total-step1" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <span></span>
       <button type="button" id="next-1" class="button-disabled" disabled>Suivant</button>
@@ -136,6 +137,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="radio" name="type_prestation" value="Express 24H-48H ouvrés"> Express 24H-48H ouvrés (+25€)</label>
       <label class="radio-btn"><input type="radio" name="type_prestation" value="Normal 5 à 7 jours"> Normal 5 à 7 jours (sans frais)</label>
     </div>
+    <div id="prix-total-step3" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-3">Précédent</button>
       <button type="button" id="next-3" class="button-disabled" disabled>Suivant</button>
@@ -187,9 +189,8 @@ Il permet :
             <span class="info-dialogue" style="display:none;position:absolute;left:24px;top:-8px;z-index:10;background:#fff;border:1px solid #FF3F22;padding:10px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);color:#222;min-width:220px;font-size:0.98em;">Aucune option supplémentaire sélectionnée.</span>
         </span>
       </label>
-  <div id="prix-total-step3" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
-
     </div>
+    <div id="prix-total-step4" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-4">Précédent</button>
       <button type="button" id="next-4" class="button-disabled" disabled>Suivant</button>
@@ -206,6 +207,7 @@ Il permet :
       <label class="radio-btn"><input type="radio" name="pratique" value="Gravel"> Gravel</label>
       <label class="radio-btn"><input type="radio" name="pratique" value="Autres"> Autres</label>
     </div>
+    <div id="prix-total-step5" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-5">Précédent</button>
       <button type="button" id="next-5" class="button-disabled" disabled>Suivant</button>
@@ -223,6 +225,7 @@ Il permet :
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Claquement"> Claquement</label>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Aucun symptôme"> Aucun symptôme</label>
     </div>
+    <div id="prix-total-step6" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-6">Précédent</button>
       <button type="button" id="next-6">Suivant</button>
@@ -257,6 +260,7 @@ Il permet :
       <input type="file" id="fichier" name="fichier" style="padding:8px 0;">
       <input type="hidden" name="url" value="<?php echo home_url( add_query_arg( null, null ) ); ?>">
     </div>
+    <div id="prix-total-step7" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-7">Précédent</button>
       <button type="button" id="next-7" class="button-disabled" disabled>Voir le résumé</button>
@@ -419,6 +423,7 @@ function showStep(step) {
   });
   updateProgressBar(step);
   updateRadioSelected();
+  afficherTotal();
   
   // Mise à jour du numéro d'étape affiché
   document.getElementById('progress-step').textContent = step + 1;
@@ -512,10 +517,13 @@ function calculerTotal() {
 
 function afficherTotal() {
   const total = calculerTotal();
-  const displayElement = document.getElementById('prix-total-step2') || document.getElementById('prix-total-step3');
-  if (displayElement) {
-    displayElement.textContent = `Total estimé : ${total} €`;
-  }
+  const elementIds = ['prix-total-step1', 'prix-total-step2', 'prix-total-step3', 'prix-total-step4', 'prix-total-step5', 'prix-total-step6', 'prix-total-step7'];
+  elementIds.forEach(function(id) {
+    const displayElement = document.getElementById(id);
+    if (displayElement) {
+      displayElement.textContent = `Total estimé : ${total} €`;
+    }
+  });
 }
 
 // === VALIDATION FUNCTIONS ===

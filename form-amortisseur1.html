@@ -112,6 +112,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
   <!-- Étape 2 -->
   <div class="form-step" id="step-2">
     <h3>Informations complémentaires</h3>
+    <div id="prix-total-step-2" style="margin:0 0 18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div style="margin-bottom:18px;">
       <label for="date-revision" style="font-weight:600;display:block;margin-bottom:6px;">Date de la dernière révision</label>
       <input type="date" id="date-revision" name="date_revision" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;width:100%;max-width:320px;">
@@ -145,6 +146,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
   <!-- Étape 3 : Résumé -->
   <div class="form-step" id="step-3">
     <h3>Résumé de votre demande</h3>
+    <div id="prix-total-step-3" style="margin:0 0 18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div id="resume-content" style="margin-bottom:18px;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-3">Précédent</button>
@@ -292,7 +294,12 @@ function calculerPrixTotal() {
 
 function afficherPrixTotal() {
   const prix = calculerPrixTotal();
-  document.getElementById('prix-total-affichage').textContent = 'Total estimé : ' + prix.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  const texte = 'Total estimé : ' + prix.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+  const affichages = ['prix-total-affichage', 'prix-total-step-2', 'prix-total-step-3'];
+  affichages.forEach(id => {
+    const elem = document.getElementById(id);
+    if (elem) elem.textContent = texte;
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -308,6 +315,7 @@ let currentStep = 0;
 function showStep(index) {
   steps.forEach((step, i) => step.classList.toggle('active', i === index));
   updateProgressBar(index);
+  afficherPrixTotal();
   // Focus sur le formulaire pour le centrer à chaque changement d'étape
   const form = document.getElementById('multi-step-form');
   if(form) {

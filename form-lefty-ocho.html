@@ -106,6 +106,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Lefty Ocho 29 120mm"> Lefty Ocho 29 120mm</label>
       <label class="radio-btn"><input type="radio" name="type_fourche" value="Lefty Oliver"> Lefty Oliver</label>
     </div>
+    <div id="prix-total-step1" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <span></span>
       <button type="button" id="next-1">Suivant</button>
@@ -136,6 +137,7 @@ if (empty($adresse_ligne1) || empty($ville) || empty($code_postal) || empty($pay
       <label class="radio-btn"><input type="radio" name="type_prestation" value="Express 24H-48H ouvrés" required> Express 24H-48H ouvrés (+25€)</label>
       <label class="radio-btn"><input type="radio" name="type_prestation" value="Normal 5 à 7 jours"> Normal 5 à 7 jours (sans frais)</label>
     </div>
+    <div id="prix-total-step3" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-3">Précédent</button>
       <button type="button" id="next-3">Suivant</button>
@@ -237,6 +239,7 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
       <label class="radio-btn"><input type="radio" name="pratique" value="Gravel"> Gravel</label>
       <label class="radio-btn"><input type="radio" name="pratique" value="Autres"> Autres</label>
     </div>
+    <div id="prix-total-step5" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-5">Précédent</button>
       <button type="button" id="next-5">Suivant</button>
@@ -253,6 +256,7 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Claquement"> Claquement</label>
       <label class="radio-btn"><input type="checkbox" name="symptomes[]" value="Aucun symptôme"> Aucun symptôme</label>
     </div>
+    <div id="prix-total-step6" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-6">Précédent</button>
       <button type="button" id="next-6">Suivant</button>
@@ -286,6 +290,7 @@ Une plus grande roue vous permet d’avoir une meilleure stabilité.</span>
       <input type="file" id="fichier" name="fichier" style="padding:8px 0;">
       <input type="hidden" name="url" value="<?php echo home_url( add_query_arg( null, null ) ); ?>">
     </div>
+    <div id="prix-total-step7" style="margin:18px 0;font-weight:600;font-size:1.1em;color:#FF3F22;"></div>
     <div class="form-pagination">
       <button type="button" id="prev-7">Précédent</button>
       <button type="button" id="next-7">Suivant</button>
@@ -487,10 +492,13 @@ function calculerTotal() {
 
 function afficherTotal() {
   const total = calculerTotal();
-  const displayElement = document.getElementById('prix-total-step2') || document.getElementById('prix-total-step4');
-  if (displayElement) {
-    displayElement.textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
-  }
+  const elementIds = ['prix-total-step1', 'prix-total-step2', 'prix-total-step3', 'prix-total-step4', 'prix-total-step5', 'prix-total-step6', 'prix-total-step7'];
+  elementIds.forEach(function(id) {
+    const displayElement = document.getElementById(id);
+    if (displayElement) {
+      displayElement.textContent = 'Total estimé : ' + total.toLocaleString('fr-FR', {style:'currency',currency:'EUR'}) + ' TTC';
+    }
+  });
 }
 
 // Mettre à jour le total à chaque changement de prestation, option ou type de prestation
@@ -550,6 +558,7 @@ let currentStep = 0;
 function showStep(index) {
   steps.forEach((step, i) => step.classList.toggle('active', i === index));
   updateProgressBar(index);
+  afficherTotal();
   // Focus sur le formulaire pour le centrer à chaque changement d'étape
   const form = document.getElementById('multi-step-form');
   if(form) {
