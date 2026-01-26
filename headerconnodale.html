@@ -56,63 +56,74 @@ function header_personnalise_shortcode() {
 			});
 		}
 
-		// Gestion des sous-dropdowns Boutique au clic sur la flèche
+		// Gestion des sous-dropdowns Boutique au clic sur la flèche OU sur le lien
 		let currentSubMenu = null;
 		document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
 			const submenu = sub.querySelector('.dropdown-content-sub');
 			const arrow = sub.querySelector('.arrow-orange');
+			const link = sub.querySelector('a');
 			
-			if (arrow) {
-				// Gestion du clic sur la flèche
-				arrow.addEventListener('click', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					
-					// Ferme le sous-menu actuellement ouvert s'il est différent
-					if (currentSubMenu && currentSubMenu !== submenu) {
-						currentSubMenu.style.display = 'none';
-					}
-					
-					// Toggle du sous-menu cliqué
-					if (submenu.style.display === 'grid') {
-						submenu.style.display = 'none';
-						currentSubMenu = null;
-						// Réactiver le scroll de la page
-						if (window.innerWidth <= 1129) {
-							document.body.style.overflow = '';
-						}
-					} else {
-						submenu.style.display = 'grid';
-						currentSubMenu = submenu;
-						
-						// Désactiver le scroll de la page en mode mobile quand un sous-menu s'ouvre
-						if (window.innerWidth <= 1129) {
-							document.body.style.overflow = 'hidden';
-						}
-						
-						// Ajustement de position en mode mobile pour éviter les débordements
-						if (window.innerWidth <= 1129) {
-							const rect = sub.getBoundingClientRect();
-							const menuHeight = submenu.offsetHeight || 300;
-							const viewportHeight = window.innerHeight;
-							
-							// Si le sous-menu dépasse en bas, le positionner vers le haut
-							if (rect.bottom + menuHeight > viewportHeight) {
-								submenu.style.top = 'auto';
-								submenu.style.bottom = '100%';
-								submenu.style.marginTop = '0';
-								submenu.style.marginBottom = '5px';
-							} else {
-								submenu.style.top = '100%';
-								submenu.style.bottom = 'auto';
-								submenu.style.marginTop = '5px';
-								submenu.style.marginBottom = '0';
-							}
-						}
-					}
-				});
+			// Fonction pour toggler le sous-menu
+			function toggleSubMenu(e) {
+				e.preventDefault();
+				e.stopPropagation();
 				
-				// Empêche la propagation du clic sur le sous-menu pour éviter sa fermeture
+				// Ferme le sous-menu actuellement ouvert s'il est différent
+				if (currentSubMenu && currentSubMenu !== submenu) {
+					currentSubMenu.style.display = 'none';
+				}
+				
+				// Toggle du sous-menu cliqué
+				if (submenu.style.display === 'grid') {
+					submenu.style.display = 'none';
+					currentSubMenu = null;
+					// Réactiver le scroll de la page
+					if (window.innerWidth <= 1129) {
+						document.body.style.overflow = '';
+					}
+				} else {
+					submenu.style.display = 'grid';
+					currentSubMenu = submenu;
+					
+					// Désactiver le scroll de la page en mode mobile quand un sous-menu s'ouvre
+					if (window.innerWidth <= 1129) {
+						document.body.style.overflow = 'hidden';
+					}
+					
+					// Ajustement de position en mode mobile pour éviter les débordements
+					if (window.innerWidth <= 1129) {
+						const rect = sub.getBoundingClientRect();
+						const menuHeight = submenu.offsetHeight || 300;
+						const viewportHeight = window.innerHeight;
+						
+						// Si le sous-menu dépasse en bas, le positionner vers le haut
+						if (rect.bottom + menuHeight > viewportHeight) {
+							submenu.style.top = 'auto';
+							submenu.style.bottom = '100%';
+							submenu.style.marginTop = '0';
+							submenu.style.marginBottom = '5px';
+						} else {
+							submenu.style.top = '100%';
+							submenu.style.bottom = 'auto';
+							submenu.style.marginTop = '5px';
+							submenu.style.marginBottom = '0';
+						}
+					}
+				}
+			}
+			
+			// Appliquer le comportement au lien si un sous-menu existe
+			if (submenu && link) {
+				link.addEventListener('click', toggleSubMenu);
+			}
+			
+			// Appliquer également à la flèche si elle existe
+			if (arrow) {
+				arrow.addEventListener('click', toggleSubMenu);
+			}
+			
+			// Empêche la propagation du clic sur le sous-menu pour éviter sa fermeture
+			if (submenu) {
 				submenu.addEventListener('click', function(e) {
 					e.stopPropagation();
 				});
@@ -1129,7 +1140,7 @@ function header_personnalise_shortcode() {
 		  <div class="menu-navbar">
 			<nav>
           		<a href="https://doc-headshok.com/">ACCUEIL</a>
-				<div class="dropdown" style="display: inline-flex; align-items: center;">
+				<div class="dropdown">
   					<a href="https://doc-headshok.com/boutique-produits">BOUTIQUE</a>
   					<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
   					<ul class="dropdown-content">
@@ -1185,7 +1196,7 @@ function header_personnalise_shortcode() {
 						<?php } ?>
   					</ul>
 				</div>
-				<div class="dropdown" style="display: inline-flex; align-items: center;">
+				<div class="dropdown">
   					<a href="https://doc-headshok.com/entretiens-2/">ATELIER</a>
   					<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
   					<ul class="dropdown-content">
