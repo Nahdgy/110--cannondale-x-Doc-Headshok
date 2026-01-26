@@ -394,29 +394,31 @@ function header_personnalise_shortcode() {
 						position: absolute;
 						left: 100%;
 						top: 0;
-						min-width: 760px;
+						min-width: 1080px;
 						max-height: 400px;
 						overflow-y: auto;
 						background: #f9f9f9;
 						box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
-						padding: 10px 18px;
+						padding: 12px 15px;
 						z-index: 100;
-						border-radius: 0 8px 8px 8px;
+						border-radius: 20px;
+						border: solid, 1px, black;
 						list-style-type: none;
 						transition: opacity 0.2s;
 						word-break: break-word;
 						white-space: normal;
 						display: none;
+						grid-template-columns: repeat(3, 1fr);
+						gap: 4px 8px;
 				}
 				/* L'affichage est maintenant géré par JavaScript au clic */
 				.header-menu .dropdown-content-sub li {
-						margin: 6px 0;
+						margin: 0;
 				}
 				.header-menu .dropdown-content-sub a {
 						color: #222 !important;
-						font-size: 15px;
+						font-size: 12px;
 						text-decoration: none;
-						padding: 4px 8px;
 						border-radius: 4px;
 						display: block;
 						transition: background 0.2s;
@@ -424,6 +426,24 @@ function header_personnalise_shortcode() {
 				.header-menu .dropdown-content-sub a:hover {
 						background: #ececec;
 						color: #FF3F22 !important;
+				}
+				/* Style de la barre de défilement pour les sous-menus */
+				.header-menu .dropdown-content-sub::-webkit-scrollbar {
+						width: 10px;
+				}
+				.header-menu .dropdown-content-sub::-webkit-scrollbar-track {
+						background: transparent;
+						margin: 8px 0;
+				}
+				.header-menu .dropdown-content-sub::-webkit-scrollbar-thumb {
+						background: #FF3F22;
+						border-radius: 10px;
+						border: 2px solid transparent;
+						background-clip: content-box;
+				}
+				.header-menu .dropdown-content-sub::-webkit-scrollbar-thumb:hover {
+						background: #e6381e;
+						background-clip: content-box;
 				}
 				/* Pour éviter que le sous-menu ne soit coupé */
 				.header-menu .dropdown-content {
@@ -444,6 +464,7 @@ function header_personnalise_shortcode() {
 						margin-top: 5px;
 						margin-left: 0;
 						box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.15);
+						grid-template-columns: repeat(2, 1fr);
 					}
 					
 					.header-menu .dropdown-sub {
@@ -475,43 +496,30 @@ function header_personnalise_shortcode() {
 				position: absolute;
 				left: 100%;
 				top: 0;
-				width: 760px;
+				min-width: 600px;
 				max-height: 400px;
 				overflow-y: auto;
 				background: #f9f9f9;
 				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
-				padding: 10px 18px;
+				padding: 12px 15px;
 				z-index: 2;
-				border-radius: 0 8px 8px 8px;
+				border-radius: 20px;
 				list-style-type: none;
 				transition: opacity 0.2s;
 				word-break: break-word;
 				white-space: normal;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 4px 8px;
 			}
 		/* L'affichage des sous-menus est maintenant géré par JavaScript au clic */
-		/* Style de la barre de défilement pour les sous-menus */
-		.dropdown-content-sub::-webkit-scrollbar {
-			width: 8px;
-		}
-		.dropdown-content-sub::-webkit-scrollbar-track {
-			background: #f1f1f1;
-			border-radius: 4px;
-		}
-		.dropdown-content-sub::-webkit-scrollbar-thumb {
-			background: #FF3F22;
-			border-radius: 4px;
-		}
-		.dropdown-content-sub::-webkit-scrollbar-thumb:hover {
-			background: #e6381e;
-		}
 		.dropdown-content-sub li {
-			margin: 6px 0;
+			margin: 0;
 		}
 		.dropdown-content-sub a {
 			color: #222 !important;
-			font-size: 15px;
+			font-size: 14px;
 			text-decoration: none;
-			padding: 4px 8px;
+			padding: 4px 6px;
 			border-radius: 4px;
 			display: block;
 			transition: background 0.2s;
@@ -519,6 +527,24 @@ function header_personnalise_shortcode() {
 		.dropdown-content-sub a:hover {
 			background: #ececec;
 			color: #FF3F22 !important;
+		}
+		/* Style de la barre de défilement pour les sous-menus */
+		.dropdown-content-sub::-webkit-scrollbar {
+			width: 10px;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-track {
+			background: transparent;
+			margin: 8px 0;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-thumb {
+			background: #FF3F22;
+			border-radius: 10px;
+			border: 2px solid transparent;
+			background-clip: content-box;
+		}
+		.dropdown-content-sub::-webkit-scrollbar-thumb:hover {
+			background: #e6381e;
+			background-clip: content-box;
 		}
 		/* Pour éviter que le sous-menu ne soit coupé */
 		.dropdown-content {
@@ -539,6 +565,7 @@ function header_personnalise_shortcode() {
 				margin-left: 0;
 				box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.15);
 				background: #f9f9f9;
+				grid-template-columns: repeat(2, 1fr);
 			}
 			
 			.dropdown-sub {
@@ -606,7 +633,7 @@ function header_personnalise_shortcode() {
       justify-content: center;
       gap: 15px;
 	  margin: 0 2vw;  
-	  max-width: 20vw;
+	  max-width: 1080px;
     }
 	.logos img{
 	  height: 30px;
@@ -720,6 +747,7 @@ function header_personnalise_shortcode() {
 			flex-direction:row;
       		justify-content: space-between;
       		align-items: center;
+			position: relative;
 		 }
 		  .menu-navbar nav{
 			  display: flex;
@@ -828,19 +856,39 @@ function header_personnalise_shortcode() {
 	.dropdown-content {
 	  display: none;
 	  position: absolute;
-	  top: 100%;
-	  left: 0;
 	  background-color: #f9f9f9;
 	  min-width: 160px;
 	  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 	  padding: 12px 16px;
 	  z-index: 1000000;
 	  list-style-type: none;
-	  margin-top: 5px;
+	  border-radius: 20px;
+	  border: 1px solid black;
 	}
-	.dropdown-content li{
-		margin-top:5px;
-	 }
+	
+	/* Mode mobile - comportement par défaut */
+	@media screen and (max-width: 1129px) {
+	  .dropdown-content {
+	    top: 100%;
+	    left: 0;
+	    margin-top: 5px;
+	  }
+	}
+	
+	/* Mode desktop - positionnement sous le conteneur-reduit */
+	@media screen and (min-width: 1130px) {
+	  .dropdown {
+	    position: static;
+	  }
+	  .dropdown-content {
+	    top: 100%;
+	    left: 0;
+	    margin-top: 0.5vh;
+	  }
+	}
+	.dropdown-content li a{
+		font-size: 12px;
+	}
 	.dropdown:hover .dropdown-content {
 	  display: block;
 	}
