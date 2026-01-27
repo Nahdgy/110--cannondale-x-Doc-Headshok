@@ -190,32 +190,43 @@ function panier_produits_shortcode() {
     </div>
 
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Ajout de l'animation spinner
-        const style = document.createElement('style');
-        style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-        document.head.appendChild(style);
-        const panierContainer = document.querySelector(".panier-produits");
+    (function() {
+        // Empêcher l'exécution multiple si déjà initialisé
+        if (window.panierProduitsInitialized) return;
+        window.panierProduitsInitialized = true;
 
-        function updateScroll() {
-            const rows = panierContainer.querySelectorAll(".panier-grid").length;
-            if (rows > 3) {
-                panierContainer.style.maxHeight = "400px";
-                panierContainer.style.overflowY = "auto";
-            } else {
-                panierContainer.style.maxHeight = "none";
-                panierContainer.style.overflowY = "hidden";
+        document.addEventListener("DOMContentLoaded", function() {
+            // Ajout de l'animation spinner
+            if (!document.getElementById('panier-spinner-style')) {
+                const style = document.createElement('style');
+                style.id = 'panier-spinner-style';
+                style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+                document.head.appendChild(style);
             }
-        }
+            const panierContainer = document.querySelector(".panier-produits");
 
-        document.querySelectorAll(".panier-grid").forEach(function(row) {
+            function updateScroll() {
+                const rows = panierContainer.querySelectorAll(".panier-grid").length;
+                if (rows > 3) {
+                    panierContainer.style.maxHeight = "400px";
+                    panierContainer.style.overflowY = "auto";
+                } else {
+                    panierContainer.style.maxHeight = "none";
+                    panierContainer.style.overflowY = "hidden";
+                }
+            }
+
+            document.querySelectorAll(".panier-grid").forEach(function(row) {
+            // Éviter d'attacher les événements plusieurs fois
+            if (row.dataset.eventsAttached === 'true') return;
+            row.dataset.eventsAttached = 'true';
+            
             let moinsBtn = row.querySelector(".moins");
             let plusBtn = row.querySelector(".plus");
             let input = row.querySelector("input");
             let prixDiv = row.querySelector(".panier-prix");
             let supBtn = row.querySelector(".supprimer-btn");
             let isUpdating = false; // Flag pour éviter les clics multiples
-            let timeoutId = null; // Pour gérer le délai de debounce
 
             moinsBtn.addEventListener("click", function() {
                 if (isUpdating) return; // Ignorer si une mise à jour est en cours
@@ -230,17 +241,13 @@ function panier_produits_shortcode() {
                     q--;
                     input.value = q;
                     
-                    // Debounce pour éviter les appels multiples
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(function() {
-                        majPanier(row.dataset.key, q, prixDiv, null, function() {
-                            isUpdating = false;
-                            moinsBtn.disabled = false;
-                            plusBtn.disabled = false;
-                            moinsBtn.style.opacity = "1";
-                            plusBtn.style.opacity = "1";
-                        });
-                    }, 300);
+                    majPanier(row.dataset.key, q, prixDiv, null, function() {
+                        isUpdating = false;
+                        moinsBtn.disabled = false;
+                        plusBtn.disabled = false;
+                        moinsBtn.style.opacity = "1";
+                        plusBtn.style.opacity = "1";
+                    });
                 }
             });
 
@@ -256,17 +263,13 @@ function panier_produits_shortcode() {
                 q++;
                 input.value = q;
                 
-                // Debounce pour éviter les appels multiples
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(function() {
-                    majPanier(row.dataset.key, q, prixDiv, null, function() {
-                        isUpdating = false;
-                        moinsBtn.disabled = false;
-                        plusBtn.disabled = false;
-                        moinsBtn.style.opacity = "1";
-                        plusBtn.style.opacity = "1";
-                    });
-                }, 300);
+                majPanier(row.dataset.key, q, prixDiv, null, function() {
+                    isUpdating = false;
+                    moinsBtn.disabled = false;
+                    plusBtn.disabled = false;
+                    moinsBtn.style.opacity = "1";
+                    plusBtn.style.opacity = "1";
+                });
             });
 
             supBtn.addEventListener("click", function() {
@@ -278,13 +281,13 @@ function panier_produits_shortcode() {
                 supBtn.style.animation = "spin 1s linear infinite";
                 majPanier(row.dataset.key, 0, prixDiv, row);
             });
-        });
+            });
 
-        function majPanier(cartKey, qty, prixDiv, row = null, callback = null) {
+            function majPanier(cartKey, qty, prixDiv, row = null, callback = null) {
             fetch("<?php echo esc_url(admin_url('admin-ajax.php')); ?>", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                body: "action=maj_panier&key=" + cartKey + "&qty=" + qty
+                body: "action=maj_panier_full&key=" + cartKey + "&qty=" + qty
             })
             .then(res => res.json())
             .then(data => {
@@ -325,52 +328,48 @@ function panier_produits_shortcode() {
             });
         }
 
-    // Initialisation du scroll
-    updateScroll();
-    // La requête AJAX n'est plus lancée en continu, mais uniquement lors d'une action utilisateur (ex: mise à jour panier)
-    });
+            // Fonction pour déplacer le prix sur mobile
+            function deplacerPrixMobile() {
+            if (window.innerWidth <= 530) {
+                document.querySelectorAll(".panier-grid").forEach(function(row) {
+                    const info = row.querySelector(".panier-info");
+                    const prix = row.querySelector(".panier-prix");
+                    if (info && prix && !prix.classList.contains("moved")) {
+                        // Déplacer juste après le nom du produit
+                        const nom = row.querySelector(".panier-nom");
+                        if (nom) {
+                            nom.insertAdjacentElement("afterend", prix);
+                            prix.classList.add("moved"); // éviter de le bouger plusieurs fois
+                            prix.style.textAlign = "left"; // adapter l'affichage mobile
+                            prix.style.marginTop = "5px";
+                        }
+                    }
+                });
+            }
+        }
 
-	document.addEventListener("DOMContentLoaded", function() {
-		function deplacerPrixMobile() {
-			if (window.innerWidth <= 530) {
-				document.querySelectorAll(".panier-grid").forEach(function(row) {
-					const info = row.querySelector(".panier-info");
-					const prix = row.querySelector(".panier-prix");
-					if (info && prix && !prix.classList.contains("moved")) {
-						// Déplacer juste après le nom du produit
-						const nom = row.querySelector(".panier-nom");
-						if (nom) {
-							nom.insertAdjacentElement("afterend", prix);
-							prix.classList.add("moved"); // éviter de le bouger plusieurs fois
-							prix.style.textAlign = "left"; // adapter l'affichage mobile
-							prix.style.marginTop = "5px";
-						}
-					}
-				});
-			}
-		}
+            // Exécuter le déplacement prix mobile au chargement
+            deplacerPrixMobile();
 
-		// Exécuter au chargement
-		deplacerPrixMobile();
+            // Réexécuter si on redimensionne
+            window.addEventListener("resize", deplacerPrixMobile);
 
-		// Réexécuter si on redimensionne
-		window.addEventListener("resize", deplacerPrixMobile);
-	});
-        // Ajout de l'animation spinner
-        (function(){
-            const style = document.createElement('style');
-            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-            document.head.appendChild(style);
-        })();
-        </script>
+            // Initialisation du scroll
+            updateScroll();
+            // La requête AJAX n'est plus lancée en continu, mais uniquement lors d'une action utilisateur (ex: mise à jour panier)
+        });
+    })();
+    </script>
     <?php
     return ob_get_clean();
 }
 add_shortcode('panier_produits', 'panier_produits_shortcode');
 
-// AJAX
-add_action('wp_ajax_maj_panier', 'maj_panier_ajax');
-add_action('wp_ajax_nopriv_maj_panier', 'maj_panier_ajax');
+// =====================
+// ✅ AJAX MAJ Panier Full
+// =====================
+add_action('wp_ajax_maj_panier_full', 'maj_panier_ajax');
+add_action('wp_ajax_nopriv_maj_panier_full', 'maj_panier_ajax');
 function maj_panier_ajax() {
     $cart = WC()->cart;
     $key = sanitize_text_field($_POST['key']);
@@ -392,7 +391,7 @@ function maj_panier_ajax() {
 
     wp_send_json([
         "line_subtotal" => wc_price($line_total_with_tax),
-        "cart_subtotal" => wc_price(WC()->cart->get_subtotal() + WC()->cart->get_subtotal_tax()),
+        "cart_subtotal" => WC()->cart->get_cart_subtotal(),
         "cart_total"    => WC()->cart->get_total(),
     ]);
 }
