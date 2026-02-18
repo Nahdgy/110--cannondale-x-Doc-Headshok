@@ -1,21 +1,29 @@
 add_shortcode('produits_par_modele', 'afficher_produits_par_modele');
 
 function afficher_produits_par_modele() {
-  ob_start();
 
-  if (!isset($_GET['modele'])) {
-    return '<p>Aucun modèle sélectionné.</p>';
-  }
+    ob_start();
 
-  $slug = sanitize_text_field($_GET['modele']);
-  $term = get_term_by('slug', $slug, 'product_cat');
+    $modele   = get_query_var('modele');
+    $pratique = get_query_var('pratique');
 
-  if (!$term) {
-    return '<p>Modèle introuvable.</p>';
-  }
+    if (!$modele && isset($_GET['modele'])) {
+        $modele = sanitize_text_field($_GET['modele']);
+    }
 
-  $modele_slug = sanitize_file_name($slug);
-  
+    if (!$modele) {
+        echo '<p>Aucun modèle sélectionné.</p>';
+        return ob_get_clean();
+    }
+
+    $slug = sanitize_text_field($modele);
+    $term = get_term_by('slug', $slug, 'product_cat');
+
+    if (!$term) {
+        echo '<p>Modèle introuvable.</p>';
+        return ob_get_clean();
+    }
+
   // Récupération des champs personnalisés de la catégorie
   $chemin_pdf = '';
   $pdf_id = get_term_meta($term->term_id, 'category_pdf', true);
@@ -662,7 +670,7 @@ function afficher_produits_par_modele() {
 									<h3>${p.title}</h3>
 									<p>${p.price_html}</p>
 								</div>
-								<a href="?add-to-cart=${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter “${p.name}” au panier" rel="nofollow">Ajouter au panier</a>
+								<a href="<?php echo esc_url(home_url('/?add-to-cart=')); ?>${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter “${p.name}” au panier" rel="nofollow">Ajouter au panier</a>
 							</div>
 						`;
 						grille.appendChild(div);

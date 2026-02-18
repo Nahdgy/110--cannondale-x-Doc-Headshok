@@ -4,7 +4,6 @@
  *
  * @package HelloElementor
  */
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -22,6 +21,170 @@ define( 'HELLO_THEME_STYLE_PATH', HELLO_THEME_ASSETS_PATH . 'css/' );
 define( 'HELLO_THEME_STYLE_URL', HELLO_THEME_ASSETS_URL . 'css/' );
 define( 'HELLO_THEME_IMAGES_PATH', HELLO_THEME_ASSETS_PATH . 'images/' );
 define( 'HELLO_THEME_IMAGES_URL', HELLO_THEME_ASSETS_URL . 'images/' );
+
+// Supprimer le robots natif WordPress
+add_action( 'init', function() {
+    remove_action( 'wp_head', 'wp_robots', 1 );
+});
+
+// Forcer noindex sur catégories et tags produits
+add_filter( 'rank_math/frontend/robots', function( $robots ) {
+
+    if ( is_tax( 'product_tag' ) || is_tax( 'product_cat' ) ) {
+        $robots['index'] = 'noindex';
+        $robots['follow'] = 'follow';
+    }
+
+    return $robots;
+});
+add_filter( 'rank_math/frontend/canonical', function( $canonical ) {
+
+    if ( isset($_GET['pratique']) && isset($_GET['modele']) ) {
+        return home_url( add_query_arg( null, null ) );
+    }
+
+    return $canonical;
+
+});
+// Rewrite URL propre vers page dynamique
+add_action('init', function() {
+
+    add_rewrite_rule(
+        '^velo/([^/]+)/([^/]+)/?$',
+        'index.php?pagename=detail-velo&pratique=$matches[1]&modele=$matches[2]',
+        'top'
+    );
+
+});
+
+// Autoriser les query vars
+add_filter('query_vars', function($vars) {
+    $vars[] = 'pratique';
+    $vars[] = 'modele';
+    return $vars;
+});
+add_action('template_redirect', function() {
+
+    if (is_page('detail-velo') && isset($_GET['modele']) && isset($_GET['pratique'])) {
+
+        $url = home_url('/velo/' . sanitize_text_field($_GET['pratique']) . '/' . sanitize_text_field($_GET['modele']) . '/');
+
+        wp_redirect($url, 301);
+        exit;
+    }
+
+});
+
+//Système de redirection des pages wordpress product-category
+add_action('template_redirect', function() {
+
+    if (is_product_category()) {
+
+        $term = get_queried_object();
+
+        if (!$term || empty($term->slug)) {
+            return;
+        }
+
+        // Récupérer la hiérarchie
+        $ancestors = get_ancestors($term->term_id, 'product_cat');
+        $ancestors = array_reverse($ancestors);
+
+        $segments = [];
+
+        foreach ($ancestors as $ancestor_id) {
+            $ancestor = get_term($ancestor_id, 'product_cat');
+            if ($ancestor && !is_wp_error($ancestor)) {
+                $segments[] = $ancestor->slug;
+            }
+        }
+
+        $segments[] = $term->slug;
+
+        // On suppose que la structure est velo/pratique/modele
+        if (count($segments) >= 3) {
+
+            $pratique = $segments[1];
+            $modele   = $segments[2];
+
+            $new_url = home_url('/velo/' . $pratique . '/' . $modele . '/');
+
+            wp_redirect($new_url, 301);
+            exit;
+        }
+    }
+
+});
+
+//Système de redirection des page wordpress product-tag
+add_action('template_redirect', function() {
+
+    if (is_product_tag()) {
+
+        $tag = get_queried_object();
+
+        if (!$tag || empty($tag->term_id)) {
+            return;
+        }
+
+        // Chercher un produit avec ce tag
+        $args = [
+            'post_type'      => 'product',
+            'posts_per_page' => 1,
+            'tax_query' => [
+                [
+                    'taxonomy' => 'product_tag',
+                    'field'    => 'term_id',
+                    'terms'    => $tag->term_id,
+                ],
+            ],
+        ];
+
+        $query = new WP_Query($args);
+
+        if ($query->have_posts()) {
+
+            $query->the_post();
+
+            $categories = wp_get_post_terms(get_the_ID(), 'product_cat');
+
+            if (!empty($categories)) {
+
+                foreach ($categories as $cat) {
+
+                    $ancestors = get_ancestors($cat->term_id, 'product_cat');
+                    $ancestors = array_reverse($ancestors);
+
+                    $segments = [];
+
+                    foreach ($ancestors as $ancestor_id) {
+                        $ancestor = get_term($ancestor_id, 'product_cat');
+                        if ($ancestor && !is_wp_error($ancestor)) {
+                            $segments[] = $ancestor->slug;
+                        }
+                    }
+
+                    $segments[] = $cat->slug;
+
+                    if (count($segments) >= 3) {
+
+                        $pratique = $segments[1];
+                        $modele   = $segments[2];
+
+                        $new_url = home_url('/velo/' . $pratique . '/' . $modele . '/');
+
+                        wp_redirect($new_url, 301);
+                        exit;
+                    }
+                }
+            }
+
+            wp_reset_postdata();
+        }
+    }
+
+});
+
 
 // Configuration optimisée pour snippets Elementor avec code inline
 // Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
@@ -2690,6 +2853,145 @@ function sauvegarder_type_compte_profil_admin($user_id) {
         }
     }
 }
+
+// ========== NAVIGATION ENTRE COMMANDES WOOCOMMERCE (ADMIN) ==========
+
+// Affiche des flèches précédent/suivant sur la page de détail d'une commande.
+add_action('woocommerce_admin_order_data_after_order_details', 'cannondale_render_order_navigation_arrows_admin');
+add_action('admin_footer', 'cannondale_position_order_navigation_near_title_action');
+
+function cannondale_render_order_navigation_arrows_admin($order) {
+    if (!is_a($order, 'WC_Order')) {
+        return;
+    }
+
+    if (!current_user_can('edit_shop_orders') && !current_user_can('manage_woocommerce')) {
+        return;
+    }
+
+    $previous_order_id = cannondale_get_adjacent_order_id($order, 'previous');
+    $next_order_id = cannondale_get_adjacent_order_id($order, 'next');
+
+    if (!$previous_order_id && !$next_order_id) {
+        return;
+    }
+
+    $previous_url = $previous_order_id ? cannondale_get_order_admin_edit_url($previous_order_id) : '';
+    $next_url = $next_order_id ? cannondale_get_order_admin_edit_url($next_order_id) : '';
+
+    echo '<div id="cannondale-order-nav-admin" style="margin: 12px 0 0; display: inline-flex; align-items: center; gap: 6px;">';
+
+    if ($previous_url) {
+        echo '<a href="' . esc_url($previous_url) . '" class="page-title-action" aria-label="Commande précédente" title="Commande précédente">← Précédent</a>';
+    } else {
+        echo '<span class="page-title-action disabled" aria-hidden="true" style="opacity:.55; cursor:not-allowed;">← Précédent</span>';
+    }
+
+    if ($next_url) {
+        echo '<a href="' . esc_url($next_url) . '" class="page-title-action" aria-label="Commande suivante" title="Commande suivante">Suivant →</a>';
+    } else {
+        echo '<span class="page-title-action disabled" aria-hidden="true" style="opacity:.55; cursor:not-allowed;">Suivant →</span>';
+    }
+
+    echo '</div>';
+}
+
+function cannondale_position_order_navigation_near_title_action() {
+    if (!is_admin()) {
+        return;
+    }
+
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen) {
+        return;
+    }
+
+    $is_order_screen = in_array($screen->id, array('shop_order', 'woocommerce_page_wc-orders'), true)
+        || (isset($screen->post_type) && $screen->post_type === 'shop_order');
+
+    if (!$is_order_screen) {
+        return;
+    }
+
+    ?>
+    <script>
+    (function () {
+        var nav = document.getElementById('cannondale-order-nav-admin');
+        if (!nav) {
+            return;
+        }
+
+        var titleAction = document.querySelector('.wrap .page-title-action');
+        var heading = document.querySelector('.wrap h1.wp-heading-inline, .wrap h1');
+
+        nav.style.margin = '0 0 0 6px';
+
+        if (titleAction && titleAction.parentNode) {
+            titleAction.insertAdjacentElement('afterend', nav);
+            return;
+        }
+
+        if (heading && heading.parentNode) {
+            heading.insertAdjacentElement('afterend', nav);
+        }
+    })();
+    </script>
+    <?php
+}
+
+function cannondale_get_adjacent_order_id($current_order, $direction = 'previous') {
+    if (!is_a($current_order, 'WC_Order')) {
+        return 0;
+    }
+
+    $created_at = $current_order->get_date_created();
+
+    if (!$created_at) {
+        return 0;
+    }
+
+    $status_keys = array_keys(wc_get_order_statuses());
+
+    $args = array(
+        'limit' => 1,
+        'return' => 'ids',
+        'type' => $current_order->get_type(),
+        'status' => $status_keys,
+        'exclude' => array($current_order->get_id()),
+        'orderby' => 'date',
+    );
+
+    $date_string = $created_at->date('Y-m-d H:i:s');
+
+    if ($direction === 'next') {
+        $args['order'] = 'DESC';
+        $args['date_created'] = '<' . $date_string;
+    } else {
+        $args['order'] = 'ASC';
+        $args['date_created'] = '>' . $date_string;
+    }
+
+    $order_ids = wc_get_orders($args);
+
+    if (empty($order_ids)) {
+        return 0;
+    }
+
+    return (int) $order_ids[0];
+}
+
+function cannondale_get_order_admin_edit_url($order_id) {
+    if (class_exists('Automattic\\WooCommerce\\Utilities\\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()) {
+        return admin_url('admin.php?page=wc-orders&action=edit&id=' . absint($order_id));
+    }
+
+    return admin_url('post.php?post=' . absint($order_id) . '&action=edit');
+}
+
+//Ajout du non index au page d'article tag et de catégorie
+
+
+
 
 require HELLO_THEME_PATH . '/theme.php';
 
