@@ -133,9 +133,10 @@ add_action('template_redirect', function() {
             'posts_per_page' => 1,
             'tax_query' => [
                 [
-                    'taxonomy' => 'product_tag',
-                    'field'    => 'term_id',
-                    'terms'    => $tag->term_id,
+                    'taxonomy'         => 'product_cat',
+                    'field'            => 'term_id',
+                    'terms'            => $term->term_id,
+                    'include_children' => false,
                 ],
             ],
         ];

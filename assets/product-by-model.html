@@ -16,7 +16,18 @@ function afficher_produits_par_modele() {
         return ob_get_clean();
     }
 
-    $slug = sanitize_text_field($modele);
+	$slug = sanitize_text_field($modele);
+	$modele_slug = $slug;
+	$instance_id = 'pm_' . preg_replace('/[^A-Za-z0-9_]/', '', wp_generate_password(8, false, false));
+	$tri_select_id = 'tri-sous-categories-' . $instance_id;
+	$grille_id = 'grille-produits-modele-' . $instance_id;
+	$voir_plus_id = 'voir-plus-' . $instance_id;
+	$nombre_produits_id = 'nombre-produits-' . $instance_id;
+	$modal_id = 'modalZoom-' . $instance_id;
+	$image_zoom_id = 'imageZoomee-' . $instance_id;
+	$zoom_instructions_id = 'zoom-instructions-' . $instance_id;
+	$open_zoom_function = 'ouvrirImageZoom_' . $instance_id;
+	$close_zoom_function = 'fermerImageZoom_' . $instance_id;
     $term = get_term_by('slug', $slug, 'product_cat');
 
     if (!$term) {
@@ -32,24 +43,29 @@ function afficher_produits_par_modele() {
   }
   
   // Récupération de la galerie d'images de la catégorie
-  $gallery_ids = get_term_meta($term->term_id, 'category_gallery', true);
-  $category_images = [];
-  if ($gallery_ids) {
-    $gallery_array = explode(',', $gallery_ids);
-    foreach ($gallery_array as $image_id) {
-      if ($image_id) {
-        $image_url = wp_get_attachment_image_url($image_id, 'medium');
-        $image_full_url = wp_get_attachment_image_url($image_id, 'full');
-        if ($image_url) {
-          $category_images[] = [
-            'medium' => $image_url,
-            'full' => $image_full_url,
-            'title' => get_the_title($image_id)
-          ];
-        }
-      }
-    }
-  }
+	$gallery_ids = get_term_meta($term->term_id, 'category_gallery', true);
+	$category_images = [];
+	if (!empty($gallery_ids)) {
+		if (is_array($gallery_ids)) {
+			$gallery_array = $gallery_ids;
+		} else {
+			$gallery_array = explode(',', (string) $gallery_ids);
+		}
+
+		$gallery_array = array_filter(array_map('absint', $gallery_array));
+
+		foreach ($gallery_array as $image_id) {
+			$image_url = wp_get_attachment_image_url($image_id, 'medium');
+			$image_full_url = wp_get_attachment_image_url($image_id, 'full');
+			if ($image_url) {
+				$category_images[] = [
+					'medium' => $image_url,
+					'full' => $image_full_url ?: $image_url,
+					'title' => get_the_title($image_id)
+				];
+			}
+		}
+	}
   
   // Récupération du tableau personnalisé de la catégorie
   $table_data = get_term_meta($term->term_id, 'category_table', true);
@@ -115,7 +131,7 @@ function afficher_produits_par_modele() {
   // 👉 Ensuite, afficher le HTML
   ?>
   <style>
-		#voir-plus {
+		#<?php echo esc_attr($voir_plus_id); ?> {
 			display: block;
 			margin: 20px auto 0;
 			background-color: #000;
@@ -127,7 +143,7 @@ function afficher_produits_par_modele() {
 			border-radius: 4px;
 			cursor: pointer;
 		}
-		#voir-plus:hover {
+		#<?php echo esc_attr($voir_plus_id); ?>:hover {
 			background-color: #FF3F22;
 			color: #fff;
 		}
@@ -215,7 +231,7 @@ function afficher_produits_par_modele() {
 	align-items: center;
 	margin-bottom: 5px;
 	}
-	#nombre-produits {
+	#<?php echo esc_attr($nombre_produits_id); ?> {
 	font-family: 'din-next-lt-pro', sans-serif;
 	font-weight: 300;
 	font-size: 24px;
@@ -234,7 +250,7 @@ function afficher_produits_par_modele() {
 	color: #000;
 	margin-bottom: 0;
 	}
-	#tri-sous-categories {
+	#<?php echo esc_attr($tri_select_id); ?> {
 	width: 160px;
 	padding: 6px 8px;
 	font-family: 'din-next-lt-pro', sans-serif;
@@ -345,7 +361,7 @@ function afficher_produits_par_modele() {
 	}
 
 	/* MODAL ZOOM IMAGE */
-	#modalZoom {
+	#<?php echo esc_attr($modal_id); ?> {
 	  display: none;
 	  position: fixed;
 	  z-index: 9999;
@@ -373,7 +389,7 @@ function afficher_produits_par_modele() {
 	  align-items: center;
 	}
 
-	#modalZoom img {
+	#<?php echo esc_attr($modal_id); ?> img {
 	  max-height: 60vh;
 	  max-width: 50vw;
 	  height: auto;
@@ -384,7 +400,7 @@ function afficher_produits_par_modele() {
 	  transform-origin: center center;
 	}
 
-	#modalZoom .close {
+	#<?php echo esc_attr($modal_id); ?> .close {
 	  position: absolute;
 	  top: 20px;
 	  right: 35px;
@@ -396,7 +412,7 @@ function afficher_produits_par_modele() {
 	  z-index: 10001;
 	}
 
-	.zoom-instructions {
+	#<?php echo esc_attr($zoom_instructions_id); ?> {
 	  position: absolute;
 	  bottom: 20px;
 	  left: 50%;
@@ -479,7 +495,7 @@ function afficher_produits_par_modele() {
 			gap: 20px;
 		}
 		
-		#modalZoom img {
+		#<?php echo esc_attr($modal_id); ?> img {
 			max-width: 90vw;
 			max-height: 70vh;
 		}
@@ -504,7 +520,7 @@ function afficher_produits_par_modele() {
           flex-direction: column;
           gap: 10px;
         }
-        #tri-sous-categories {
+		#<?php echo esc_attr($tri_select_id); ?> {
           width: 100px;
         }
       }
@@ -527,7 +543,7 @@ function afficher_produits_par_modele() {
 		  // Afficher d'abord les images de la galerie de catégorie
 		  if (!empty($category_images)) {
 		    foreach ($category_images as $img) {
-		      echo '<img src="' . esc_url($img['medium']) . '" alt="' . esc_attr($img['title']) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($img['full']) . '&quot;)">';
+		      echo '<img src="' . esc_url($img['medium']) . '" alt="' . esc_attr($img['title']) . '" class="modele-image" onclick="' . esc_attr($open_zoom_function) . '(&quot;' . esc_url($img['full']) . '&quot;)">';
 		    }
 		  } else {
 		    // Si pas d'images dans la galerie de catégorie, utiliser l'ancienne méthode
@@ -546,7 +562,7 @@ function afficher_produits_par_modele() {
 		        $images_query->the_post();
 		        $image_url = wp_get_attachment_image_src(get_the_ID(), 'medium')[0];
 		        $image_full_url = wp_get_attachment_image_src(get_the_ID(), 'full')[0];
-		        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr(get_the_title()) . '" class="modele-image" onclick="ouvrirImageZoom(&quot;' . esc_url($image_full_url) . '&quot;)">';
+		        echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr(get_the_title()) . '" class="modele-image" onclick="' . esc_attr($open_zoom_function) . '(&quot;' . esc_url($image_full_url) . '&quot;)">';
 		      }
 		      wp_reset_postdata();
 		    } else {
@@ -579,13 +595,13 @@ function afficher_produits_par_modele() {
   <div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px; margin-bottom: 2%;">
     <div class="barre-tri">
       <div style="display: flex; align-items: center;">
-        <div id="nombre-produits">
+				<div id="<?php echo esc_attr($nombre_produits_id); ?>">
           <span class="produits-affiches"><?php echo $produits_total; ?> résultats</span>
         </div>
       </div>
       <div class="tri-container">
-        <label for="tri-sous-categories">Trier par :</label>
-        <select id="tri-sous-categories">
+				<label for="<?php echo esc_attr($tri_select_id); ?>">Trier par :</label>
+				<select id="<?php echo esc_attr($tri_select_id); ?>">
           <option value="default">Tri par défaut</option>
           <option value="alpha">Ordre alphabétique A-Z</option>
           <option value="alpha-desc">Ordre alphabétique Z-A</option>
@@ -598,7 +614,7 @@ function afficher_produits_par_modele() {
 
   // 👉 Puis afficher les produits
 	if ($loop->have_posts()) {
-		echo '<div class="grille-produits-modele" id="grille-produits-modele">';
+		echo '<div class="grille-produits-modele" id="' . esc_attr($grille_id) . '">';
 		$i = 0;
 		while ($loop->have_posts() && $i < $limite_affichage) {
 			$loop->the_post();
@@ -627,7 +643,7 @@ function afficher_produits_par_modele() {
 		}
 		echo '</div>';
 			if ($produits_total > $limite_affichage) {
-				echo '<button id="voir-plus">Voir plus</button>';
+				echo '<button id="' . esc_attr($voir_plus_id) . '">Voir plus</button>';
 			}
 		wp_reset_postdata();
 	} else {
@@ -635,14 +651,17 @@ function afficher_produits_par_modele() {
 	}
 	if ($produits_total > $limite_affichage) : ?>
 		<script>
-			window.allProduitsByModel = <?php echo json_encode($all_produits); ?>;
+			window.allProduitsByModel = window.allProduitsByModel || {};
+			window.allProduitsByModel[<?php echo wp_json_encode($instance_id); ?>] = <?php echo wp_json_encode($all_produits); ?>;
 		</script>
 	<?php endif; ?>
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
-			const triSelect = document.getElementById('tri-sous-categories');
-			const grille = document.getElementById('grille-produits-modele');
-			const voirPlusBtn = document.getElementById('voir-plus');
+			const instanceId = <?php echo wp_json_encode($instance_id); ?>;
+			const triSelect = document.getElementById(<?php echo wp_json_encode($tri_select_id); ?>);
+			const grille = document.getElementById(<?php echo wp_json_encode($grille_id); ?>);
+			const voirPlusBtn = document.getElementById(<?php echo wp_json_encode($voir_plus_id); ?>);
+			const allProduitsByModel = (window.allProduitsByModel && window.allProduitsByModel[instanceId]) ? window.allProduitsByModel[instanceId] : null;
 			if (triSelect && grille) {
 				triSelect.addEventListener('change', function () {
 					const items = Array.from(grille.querySelectorAll('.produit-modele'));
@@ -656,11 +675,11 @@ function afficher_produits_par_modele() {
 					items.forEach(item => grille.appendChild(item));
 				});
 			}
-			if (voirPlusBtn && window.allProduitsByModel) {
+			if (voirPlusBtn && allProduitsByModel) {
 				voirPlusBtn.addEventListener('click', function (e) {
 					e.preventDefault();
 					grille.innerHTML = '';
-					window.allProduitsByModel.forEach(function(p) {
+					allProduitsByModel.forEach(function(p) {
 						const div = document.createElement('div');
 						div.className = 'produit-modele';
 						div.innerHTML = `
@@ -685,14 +704,14 @@ function afficher_produits_par_modele() {
 
 	
 
-	<div id="modalZoom" onclick="fermerImageZoom()">
+	<div id="<?php echo esc_attr($modal_id); ?>" onclick="<?php echo esc_attr($close_zoom_function); ?>()">
 	  <span class="close">&times;</span>
 	  <div class="modal-content-container">
 	    <div class="main-image-container">
-	      <img id="imageZoomee" src="" onclick="event.stopPropagation();">
+	      <img id="<?php echo esc_attr($image_zoom_id); ?>" src="" onclick="event.stopPropagation();">
 	    </div>
 	  </div>
-	  <div class="zoom-instructions">
+	  <div id="<?php echo esc_attr($zoom_instructions_id); ?>">
 	    Cliquez sur l'image pour zoomer (Niveau 1/3)
 	  </div>
 	</div>
@@ -710,11 +729,11 @@ function afficher_produits_par_modele() {
 		}
 
 		// Fonction globale pour ouvrir le zoom
-		window.ouvrirImageZoom = function(src) {
+		window[<?php echo wp_json_encode($open_zoom_function); ?>] = function(src) {
 		  console.log('Fonction ouvrirImageZoom appelée avec:', src);
 		  
-		  const modal = document.getElementById("modalZoom");
-		  const img = document.getElementById("imageZoomee");
+		  const modal = document.getElementById(<?php echo wp_json_encode($modal_id); ?>);
+		  const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		  
 		  console.log('Éléments trouvés:', { modal, img }); // Debug
 		  
@@ -753,8 +772,8 @@ function afficher_produits_par_modele() {
 		}
 
 		// Fonction globale pour fermer le zoom
-		window.fermerImageZoom = function() {
-		  const modal = document.getElementById("modalZoom");
+		window[<?php echo wp_json_encode($close_zoom_function); ?>] = function() {
+		  const modal = document.getElementById(<?php echo wp_json_encode($modal_id); ?>);
 		  if (modal) {
 		    modal.style.display = "none";
 		    zoomLevel = 0;
@@ -765,7 +784,7 @@ function afficher_produits_par_modele() {
 		function handleImageClick(e) {
 		  e.stopPropagation();
 		  
-		  const img = document.getElementById("imageZoomee");
+		  const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		  
 		  // Vérifier que l'image existe
 		  if (!img) {
@@ -812,7 +831,7 @@ function afficher_produits_par_modele() {
 
 		// Gérer le mouvement de la souris pour déplacer le point de zoom
 		function handleMouseMove(e) {
-		  const img = document.getElementById("imageZoomee");
+		  const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		  
 		  if (!img || zoomLevel === 0) {
 		    return;
@@ -828,7 +847,7 @@ function afficher_produits_par_modele() {
 		}
 
 		function setupClickZoom() {
-		  const img = document.getElementById("imageZoomee");
+		  const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		  
 		  // Vérifier que l'image existe
 		  if (!img) {
@@ -846,7 +865,7 @@ function afficher_produits_par_modele() {
 		}
 
 		function setupMouseMove() {
-		  const img = document.getElementById("imageZoomee");
+		  const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		  
 		  // Vérifier que l'image existe
 		  if (!img) {
@@ -864,7 +883,7 @@ function afficher_produits_par_modele() {
 		}
 
 		function updateZoomInstructions() {
-		  const instructions = document.querySelector('.zoom-instructions');
+		  const instructions = document.getElementById(<?php echo wp_json_encode($zoom_instructions_id); ?>);
 		  
 		  // Vérifier que l'élément existe
 		  if (!instructions) {
@@ -885,7 +904,7 @@ function afficher_produits_par_modele() {
 		window.addEventListener('resize', function() {
 		  if (!isDesktop()) {
 		    // Sur mobile/tablette, réinitialiser le zoom
-		    const img = document.getElementById("imageZoomee");
+		    const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
 		    if (img) {
 		      zoomLevel = 0;
 		      img.style.transform = 'scale(1)';
