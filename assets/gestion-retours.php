@@ -30,6 +30,16 @@ function verifier_table_retours_avoirs() {
 add_action('admin_init', 'verifier_table_retours_avoirs');
 add_action('wp_loaded', 'verifier_table_retours_avoirs');
 
+// Statuts WooCommerce autorisés pour créer une demande de retour
+function obtenir_statuts_commande_autorises_retour() {
+    return array(
+        'completed',
+        'lpc_delivered',
+        'wc-completed',
+        'wc-lpc_delivered'
+    );
+}
+
 // Générer un numéro de retour unique
 function generer_numero_retour() {
     $prefix = 'RET';
@@ -379,8 +389,9 @@ function creer_demande_retour_ajax() {
         return;
     }
     
-    // Vérifier que la commande est éligible au retour (completed, moins de 30 jours)
-    if (!$order->has_status('completed')) {
+    // Vérifier que la commande est éligible au retour (statuts autorisés, moins de 30 jours)
+    $statuts_autorises = obtenir_statuts_commande_autorises_retour();
+    if (!$order->has_status($statuts_autorises)) {
         wp_send_json_error('Cette commande n\'est pas encore livrée');
         return;
     }
