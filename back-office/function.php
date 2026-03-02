@@ -2860,6 +2860,8 @@ function sauvegarder_type_compte_profil_admin($user_id) {
 // Affiche des flèches précédent/suivant sur la page de détail d'une commande.
 add_action('woocommerce_admin_order_data_after_order_details', 'cannondale_render_order_navigation_arrows_admin');
 add_action('admin_footer', 'cannondale_position_order_navigation_near_title_action');
+add_action('admin_head', 'cannondale_order_quantity_highlight_styles');
+add_action('admin_footer', 'cannondale_order_quantity_highlight_script');
 
 function cannondale_render_order_navigation_arrows_admin($order) {
     if (!is_a($order, 'WC_Order')) {
@@ -2940,45 +2942,220 @@ function cannondale_position_order_navigation_near_title_action() {
     <?php
 }
 
+function cannondale_order_quantity_highlight_styles() {
+    if (!is_admin()) {
+        return;
+    }
+
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen) {
+        return;
+    }
+
+    $is_order_screen = in_array($screen->id, array('shop_order', 'woocommerce_page_wc-orders'), true)
+        || (isset($screen->post_type) && $screen->post_type === 'shop_order');
+
+    if (!$is_order_screen) {
+        return;
+    }
+    ?>
+    <style>
+        .woocommerce_order_items td.item_quantity .view.cannondale-qty-highlight,
+        .woocommerce_order_items td.quantity .view.cannondale-qty-highlight,
+        #woocommerce-order-items td.item_quantity .view.cannondale-qty-highlight,
+        #woocommerce-order-items td.quantity .view.cannondale-qty-highlight {
+            display: inline-block;
+            background: #ff6a00;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .woocommerce_order_items td.item_quantity .view.cannondale-qty-highlight .times,
+        .woocommerce_order_items td.quantity .view.cannondale-qty-highlight .times,
+        #woocommerce-order-items td.item_quantity .view.cannondale-qty-highlight .times,
+        #woocommerce-order-items td.quantity .view.cannondale-qty-highlight .times {
+            color: #fff;
+            opacity: 0.95;
+        }
+    </style>
+    <?php
+}
+
+function cannondale_order_quantity_highlight_script() {
+    if (!is_admin()) {
+        return;
+    }
+
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen) {
+        return;
+    }
+
+    $is_order_screen = in_array($screen->id, array('shop_order', 'woocommerce_page_wc-orders'), true)
+        || (isset($screen->post_type) && $screen->post_type === 'shop_order');
+
+    if (!$is_order_screen) {
+        return;
+    }
+    ?>
+    <script>
+    (function () {
+        function extractQty(text) {
+            if (!text) {
+                return 0;
+            }
+
+            var clean = String(text).replace(/\s+/g, ' ').trim();
+            var match = clean.match(/(\d+(?:[\.,]\d+)?)/);
+            if (!match) {
+                return 0;
+            }
+
+            return parseFloat(match[1].replace(',', '.')) || 0;
+        }
+
+        function applyQtyHighlight() {
+            var nodes = document.querySelectorAll(
+                '.woocommerce_order_items td.item_quantity .view,' +
+                '.woocommerce_order_items td.quantity .view,' +
+                '#woocommerce-order-items td.item_quantity .view,' +
+                '#woocommerce-order-items td.quantity .view'
+            );
+
+            nodes.forEach(function (node) {
+                node.classList.remove('cannondale-qty-highlight');
+                var hasTimesMarker = !!node.querySelector('.times');
+                if (!hasTimesMarker) {
+                    return;
+                }
+
+                var qty = extractQty(node.textContent);
+
+                if (qty > 1) {
+                    node.classList.add('cannondale-qty-highlight');
+                }
+            });
+        }
+
+        applyQtyHighlight();
+        setTimeout(applyQtyHighlight, 250);
+        setTimeout(applyQtyHighlight, 800);
+
+        var orderItemsRoot = document.getElementById('woocommerce-order-items') || document.querySelector('.woocommerce_order_items');
+        if (orderItemsRoot && 'MutationObserver' in window) {
+            var observer = new MutationObserver(function () {
+                applyQtyHighlight();
+            });
+
+            observer.observe(orderItemsRoot, { childList: true, subtree: true, characterData: true });
+        }
+
+        document.addEventListener('wc_backbone_modal_loaded', applyQtyHighlight);
+        document.addEventListener('updated_wc_div', applyQtyHighlight);
+    })();
+    </script>
+    <?php
+}
+
 function cannondale_get_adjacent_order_id($current_order, $direction = 'previous') {
     if (!is_a($current_order, 'WC_Order')) {
         return 0;
     }
 
-    $created_at = $current_order->get_date_created();
-
-    if (!$created_at) {
+    $current_order_id = (int) $current_order->get_id();
+    if ($current_order_id <= 0) {
         return 0;
     }
+
+    global $wpdb;
 
     $status_keys = array_keys(wc_get_order_statuses());
 
-    $args = array(
-        'limit' => 1,
-        'return' => 'ids',
-        'type' => $current_order->get_type(),
-        'status' => $status_keys,
-        'exclude' => array($current_order->get_id()),
-        'orderby' => 'date',
-    );
-
-    $date_string = $created_at->date('Y-m-d H:i:s');
-
-    if ($direction === 'next') {
-        $args['order'] = 'DESC';
-        $args['date_created'] = '<' . $date_string;
-    } else {
-        $args['order'] = 'ASC';
-        $args['date_created'] = '>' . $date_string;
-    }
-
-    $order_ids = wc_get_orders($args);
-
-    if (empty($order_ids)) {
+    if (empty($status_keys)) {
         return 0;
     }
 
-    return (int) $order_ids[0];
+    $is_next = ($direction === 'next');
+    $date_operator = $is_next ? '>' : '<';
+    $id_operator = $is_next ? '>' : '<';
+    $sort_direction = $is_next ? 'ASC' : 'DESC';
+    $status_placeholders = implode(', ', array_fill(0, count($status_keys), '%s'));
+
+    if (class_exists('Automattic\\WooCommerce\\Utilities\\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()) {
+        $table = $wpdb->prefix . 'wc_orders';
+
+        $current_created_gmt = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT date_created_gmt FROM {$table} WHERE id = %d LIMIT 1",
+                $current_order_id
+            )
+        );
+
+        if (empty($current_created_gmt)) {
+            return 0;
+        }
+
+        $query = "SELECT id
+                  FROM {$table}
+                  WHERE type = %s
+                    AND status IN ({$status_placeholders})
+                    AND (
+                        date_created_gmt {$date_operator} %s
+                        OR (date_created_gmt = %s AND id {$id_operator} %d)
+                    )
+                  ORDER BY date_created_gmt {$sort_direction}, id {$sort_direction}
+                  LIMIT 1";
+
+        $params = array_merge(
+            array($current_order->get_type()),
+            $status_keys,
+            array($current_created_gmt, $current_created_gmt, $current_order_id)
+        );
+        $order_id = (int) $wpdb->get_var($wpdb->prepare($query, $params));
+
+        return $order_id > 0 ? $order_id : 0;
+    }
+
+    $table = $wpdb->posts;
+
+    $current_created = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COALESCE(NULLIF(post_date_gmt, '0000-00-00 00:00:00'), post_date)
+             FROM {$table}
+             WHERE ID = %d
+             LIMIT 1",
+            $current_order_id
+        )
+    );
+
+    if (empty($current_created)) {
+        return 0;
+    }
+
+    $query = "SELECT ID
+              FROM {$table}
+              WHERE post_type = %s
+                AND post_status IN ({$status_placeholders})
+                AND (
+                    COALESCE(NULLIF(post_date_gmt, '0000-00-00 00:00:00'), post_date) {$date_operator} %s
+                    OR (
+                        COALESCE(NULLIF(post_date_gmt, '0000-00-00 00:00:00'), post_date) = %s
+                        AND ID {$id_operator} %d
+                    )
+                )
+              ORDER BY COALESCE(NULLIF(post_date_gmt, '0000-00-00 00:00:00'), post_date) {$sort_direction}, ID {$sort_direction}
+              LIMIT 1";
+
+    $params = array_merge(
+        array($current_order->get_type()),
+        $status_keys,
+        array($current_created, $current_created, $current_order_id)
+    );
+    $order_id = (int) $wpdb->get_var($wpdb->prepare($query, $params));
+
+    return $order_id > 0 ? $order_id : 0;
 }
 
 function cannondale_get_order_admin_edit_url($order_id) {
@@ -2988,11 +3165,6 @@ function cannondale_get_order_admin_edit_url($order_id) {
 
     return admin_url('post.php?post=' . absint($order_id) . '&action=edit');
 }
-
-//Ajout du non index au page d'article tag et de catégorie
-
-
-
 
 require HELLO_THEME_PATH . '/theme.php';
 
