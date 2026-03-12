@@ -775,6 +775,7 @@ if ( ! function_exists( 'hello_elementor_setup' ) ) {
 		if ( apply_filters( 'hello_elementor_register_menus', true ) ) {
 			register_nav_menus( [ 'menu-1' => esc_html__( 'Header', 'hello-elementor' ) ] );
 			register_nav_menus( [ 'menu-2' => esc_html__( 'Footer', 'hello-elementor' ) ] );
+            register_nav_menus( [ 'header_personnalise_menu' => esc_html__( 'Header Personnalisé (Doc Headshok)', 'hello-elementor' ) ] );
 		}
 
 		if ( apply_filters( 'hello_elementor_post_type_support', true ) ) {

@@ -1,5 +1,40 @@
 function header_personnalise_shortcode() {
   ob_start();
+	$header_menu_location = 'header_personnalise_menu';
+	$header_menu_fallback_location = 'menu-1';
+	$header_menu_items_by_parent = array();
+	$header_menu_has_items = false;
+
+	$menu_locations = get_nav_menu_locations();
+	$header_menu_id = 0;
+
+	if (isset($menu_locations[$header_menu_location])) {
+		$header_menu_id = (int) $menu_locations[$header_menu_location];
+	} elseif (isset($menu_locations[$header_menu_fallback_location])) {
+		$header_menu_id = (int) $menu_locations[$header_menu_fallback_location];
+	}
+
+	if ($header_menu_id > 0) {
+		$menu_items = wp_get_nav_menu_items($header_menu_id);
+		if (!empty($menu_items) && !is_wp_error($menu_items)) {
+			foreach ($menu_items as $menu_item) {
+				$parent_id = (int) $menu_item->menu_item_parent;
+				if (!isset($header_menu_items_by_parent[$parent_id])) {
+					$header_menu_items_by_parent[$parent_id] = array();
+				}
+				$header_menu_items_by_parent[$parent_id][] = $menu_item;
+			}
+
+			foreach ($header_menu_items_by_parent as $parent_id => $items_group) {
+				usort($items_group, function($a, $b) {
+					return (int) $a->menu_order <=> (int) $b->menu_order;
+				});
+				$header_menu_items_by_parent[$parent_id] = $items_group;
+			}
+
+			$header_menu_has_items = !empty($header_menu_items_by_parent[0]);
+		}
+	}
   ?>
 	<script src="https://www.google.com/recaptcha/api.js?render=6LcP-tQrAAAAAAtI4Hwc5OdpwrnB7T9BCO_YsG1Y"></script>
 	<script>
@@ -137,83 +172,60 @@ function header_personnalise_shortcode() {
 			if (arrow) arrow.addEventListener('click', openSubPanel);
 		});
 
-		// Gestion des sous-dropdowns Boutique au clic sur la flèche OU sur le lien
+		// Gestion des sous-dropdowns Boutique au hover (desktop uniquement)
 		let currentSubMenu = null;
 		document.querySelectorAll('.dropdown-sub').forEach(function(sub) {
 			const submenu = sub.querySelector('.dropdown-content-sub');
-			const arrow = sub.querySelector('.arrow-orange');
-			const link = sub.querySelector('a');
-			
-			// Fonction pour toggler le sous-menu
-			function toggleSubMenu(e) {
-				if (window.innerWidth <= 1129) {
-					e.preventDefault();
-					e.stopPropagation();
-					return;
-				}
-				e.preventDefault();
-				e.stopPropagation();
-				
-				// Ferme le sous-menu actuellement ouvert s'il est différent
-				if (currentSubMenu && currentSubMenu !== submenu) {
-					currentSubMenu.style.display = 'none';
-				}
-				
-				// Toggle du sous-menu cliqué
-				if (submenu.style.display === 'grid') {
+			let timerShowSub;
+			let timerHideSub;
+
+			if (!submenu) return;
+
+			function clearSubmenuHideTimer() {
+				clearTimeout(timerHideSub);
+			}
+
+			function scheduleSubmenuClose() {
+				clearTimeout(timerShowSub);
+				timerHideSub = setTimeout(function() {
 					submenu.style.display = 'none';
-					currentSubMenu = null;
-					// Réactiver le scroll de la page
-					if (window.innerWidth <= 1129) {
-						document.body.style.overflow = '';
+					if (currentSubMenu === submenu) {
+						currentSubMenu = null;
 					}
-				} else {
+				}, 300);
+			}
+			
+			function openSubMenuOnHover() {
+				if (window.innerWidth <= 1129) return;
+				clearSubmenuHideTimer();
+				timerShowSub = setTimeout(function() {
+					// Ferme le sous-menu actuellement ouvert s'il est différent
+					if (currentSubMenu && currentSubMenu !== submenu) {
+						currentSubMenu.style.display = 'none';
+					}
 					submenu.style.display = 'grid';
 					currentSubMenu = submenu;
-					
-					// Désactiver le scroll de la page en mode mobile quand un sous-menu s'ouvre
-					if (window.innerWidth <= 1129) {
-						document.body.style.overflow = 'hidden';
-					}
-					
-					// Ajustement de position en mode mobile pour éviter les débordements
-					if (window.innerWidth <= 1129) {
-						const rect = sub.getBoundingClientRect();
-						const menuHeight = submenu.offsetHeight || 300;
-						const viewportHeight = window.innerHeight;
-						
-						// Si le sous-menu dépasse en bas, le positionner vers le haut
-						if (rect.bottom + menuHeight > viewportHeight) {
-							submenu.style.top = 'auto';
-							submenu.style.bottom = '100%';
-							submenu.style.marginTop = '0';
-							submenu.style.marginBottom = '5px';
-						} else {
-							submenu.style.top = '100%';
-							submenu.style.bottom = 'auto';
-							submenu.style.marginTop = '5px';
-							submenu.style.marginBottom = '0';
-						}
-					}
+				}, 120);
+			}
+
+			function onZoneLeave(e) {
+				if (window.innerWidth <= 1129) return;
+				const nextTarget = e.relatedTarget;
+				if (nextTarget && (sub.contains(nextTarget) || submenu.contains(nextTarget))) {
+					return;
 				}
+				scheduleSubmenuClose();
 			}
 			
-			// Appliquer le comportement au lien si un sous-menu existe
-			if (submenu && link) {
-				link.addEventListener('click', toggleSubMenu);
-			}
-			
-			// Appliquer également à la flèche si elle existe
-			if (arrow) {
-				arrow.addEventListener('click', toggleSubMenu);
-			}
+			sub.addEventListener('mouseenter', openSubMenuOnHover);
+			sub.addEventListener('mouseleave', onZoneLeave);
+			submenu.addEventListener('mouseenter', clearSubmenuHideTimer);
+			submenu.addEventListener('mouseleave', onZoneLeave);
 			
 			// Empêche la propagation du clic sur le sous-menu pour éviter sa fermeture
-			if (submenu) {
-				submenu.addEventListener('click', function(e) {
-					e.stopPropagation();
-				});
-			}
+			submenu.addEventListener('click', function(e) {
+				e.stopPropagation();
+			});
 		});
 		
 		// Ferme tous les sous-menus si on clique ailleurs
@@ -279,31 +291,35 @@ function header_personnalise_shortcode() {
 			}
 		});
 		
-		// Timeout hover menu déroulant pour TOUS les dropdowns (desktop uniquement)
+		// Renfort JS desktop: evite la fermeture immediate lors du passage lien -> menu.
 		document.querySelectorAll('.dropdown').forEach(function(dropdown) {
-			var menuContent = dropdown.querySelector('.dropdown-content');
-			let timerShowParent, timerHideParent;
-			
-			if (menuContent) {
-				dropdown.addEventListener('mouseenter', function() {
-					// Hover uniquement en mode desktop
-					if (window.innerWidth > 1129) {
-						clearTimeout(timerHideParent);
-						timerShowParent = setTimeout(function() {
-							menuContent.style.display = 'block';
-						}, 500);
-					}
-				});
-				
-				dropdown.addEventListener('mouseleave', function() {
-					if (window.innerWidth > 1129) {
-						clearTimeout(timerShowParent);
-						timerHideParent = setTimeout(function() {
-							menuContent.style.display = 'none';
-						}, 500);
-					}
-				});
+			const menuContent = dropdown.querySelector('.dropdown-content');
+			let closeParentTimer;
+
+			if (!menuContent) return;
+
+			function clearParentCloseTimer() {
+				clearTimeout(closeParentTimer);
 			}
+
+			function openParentMenu() {
+				if (window.innerWidth <= 1129) return;
+				clearParentCloseTimer();
+				menuContent.style.display = 'block';
+			}
+
+			function scheduleParentMenuClose() {
+				if (window.innerWidth <= 1129) return;
+				clearParentCloseTimer();
+				closeParentTimer = setTimeout(function() {
+					menuContent.style.display = 'none';
+				}, 450);
+			}
+
+			dropdown.addEventListener('mouseenter', openParentMenu);
+			dropdown.addEventListener('mouseleave', scheduleParentMenuClose);
+			menuContent.addEventListener('mouseenter', openParentMenu);
+			menuContent.addEventListener('mouseleave', scheduleParentMenuClose);
 		});
 	});
 
@@ -594,14 +610,38 @@ function header_personnalise_shortcode() {
 		   =========================== */
 		.actions-header {
 			display: flex;
-			align-items: center;
-			gap: 10%;
-			height: 2rem;
+			align-items: flex-end;
+			gap: 16px;
+			height: auto;
 		}
 
 		.actions-header a {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			line-height: 1;
+		}
+
+		.header-action-item {
 			display: flex;
-			align-items: flex-end;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+			min-width: 58px;
+		}
+
+		.header-action-item img {
+			display: block;
+		}
+
+		.icon-sub-title {
+			margin: 0;
+			font-size: 10px;
+			line-height: 1.1;
+			text-align: center;
+			color: #222;
+			font-family: 'DIN Next LT Pro', sans-serif;
+			white-space: nowrap;
 		}
 
 		.burger-icon {
@@ -715,7 +755,7 @@ function header_personnalise_shortcode() {
 		}
 
 		.dropdown-content li a {
-			font-size: 12px;
+			font-size: 14px;
 		}
 
 		.dropdown-sub {
@@ -770,6 +810,8 @@ function header_personnalise_shortcode() {
 			word-break: break-word;
 			white-space: normal;
 			grid-template-columns: repeat(3, 1fr);
+			grid-template-rows: repeat(16, auto);
+			grid-auto-flow: column;
 		}
 
 		.dropdown-content-sub li {
@@ -836,7 +878,7 @@ function header_personnalise_shortcode() {
 		}
 
 		.header-menu .dropdown-content-sub a {
-			font-size: 12px;
+			font-size: 14px;
 		}
 
 		/* ===========================
@@ -1086,7 +1128,7 @@ function header_personnalise_shortcode() {
 			.dropdown-content {
 				top: 100%;
 				left: 0;
-				margin-top: 0.5vh;
+				margin-top: 0;
 			}
 
 			.dropdown > .arrow-orange {
@@ -1229,6 +1271,8 @@ function header_personnalise_shortcode() {
 				margin-left: 0;
 				background: #fff;
 				grid-template-columns: repeat(2, 1fr);
+				grid-template-rows: repeat(16, auto);
+				grid-auto-flow: column;
 			}
 
 			.header-menu .dropdown-content-sub {
@@ -1238,6 +1282,8 @@ function header_personnalise_shortcode() {
 				margin-left: 0;
 				background: #fff;
 				grid-template-columns: repeat(2, 1fr);
+				grid-template-rows: repeat(16, auto);
+				grid-auto-flow: column;
 			}
 
 			.header-menu .dropdown-sub, 
@@ -1301,17 +1347,19 @@ function header_personnalise_shortcode() {
 					<img src='https://doc-headshok.com/wp-content/uploads/2025/08/Logo_canyon2.png' class="logos-en-ligne">
 			</div>
 		</a>
-      	<div class="actions-header">
-			<div>
+		<div class="actions-header">
+			<div class="header-action-item">
 				<a href="https://doc-headshok.com/mon-compte/">
 				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Icon.png" alt="Compte">
 				</a>
+				<p class="icon-sub-title">Mon Compte</p>
 			</div>
-        	<div style="position:relative;">
+	        	<div class="header-action-item" style="position:relative;">
   				<a href="https://doc-headshok.com/panier/" id="ouvrir-panier" style="position:relative;display:inline-block;">
     				<img src="https://doc-headshok.com/wp-content/uploads/2025/06/Shopping-bag.png" alt="Panier" style="position:relative;">
     				<span id="panier-count" style="position:absolute;top:-7px;right:-7px;background:#FF3F22;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;padding:0 6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);z-index:2;">0</span>
   				</a>
+				<p class="icon-sub-title">Mon Panier</p>
 			</div>
         <!-- Drawer vertical à droite -->
 		<div id="drawer-overlay" class="drawer-overlay"></div>
@@ -1347,6 +1395,57 @@ function header_personnalise_shortcode() {
 		</div>
 		  <div class="menu-navbar">
 			<nav>
+				<?php if ($header_menu_has_items): ?>
+					<?php foreach ($header_menu_items_by_parent[0] as $top_item): ?>
+						<?php
+						$top_id = (int) $top_item->ID;
+						$top_children = isset($header_menu_items_by_parent[$top_id]) ? $header_menu_items_by_parent[$top_id] : array();
+						$top_classes = is_array($top_item->classes) ? array_filter($top_item->classes) : array();
+						$top_style = in_array('menu-promo', $top_classes, true) ? ' style="color: #FF3F22 !important;"' : '';
+						$top_target = !empty($top_item->target) ? ' target="' . esc_attr($top_item->target) . '"' : '';
+						$top_rel = !empty($top_item->xfn) ? ' rel="' . esc_attr($top_item->xfn) . '"' : '';
+						?>
+						<?php if (!empty($top_children)): ?>
+							<div class="dropdown">
+								<a href="<?php echo esc_url($top_item->url); ?>"<?php echo $top_style; ?><?php echo $top_target; ?><?php echo $top_rel; ?>><?php echo esc_html($top_item->title); ?></a>
+								<span class="arrow-orange" style="margin-left: 4px; width: 12px; height: 12px; flex-shrink: 0;"></span>
+								<ul class="dropdown-content">
+									<?php foreach ($top_children as $child_item): ?>
+										<?php
+										$child_id = (int) $child_item->ID;
+										$child_children = isset($header_menu_items_by_parent[$child_id]) ? $header_menu_items_by_parent[$child_id] : array();
+										$child_target = !empty($child_item->target) ? ' target="' . esc_attr($child_item->target) . '"' : '';
+										$child_rel = !empty($child_item->xfn) ? ' rel="' . esc_attr($child_item->xfn) . '"' : '';
+										?>
+										<?php if (!empty($child_children)): ?>
+											<li class="dropdown-sub">
+												<a href="<?php echo esc_url($child_item->url); ?>"<?php echo $child_target; ?><?php echo $child_rel; ?>><?php echo esc_html($child_item->title); ?></a>
+												<span class="arrow-orange"></span>
+												<ul class="dropdown-content-sub">
+													<?php foreach ($child_children as $grandchild_item): ?>
+														<?php
+														$grandchild_target = !empty($grandchild_item->target) ? ' target="' . esc_attr($grandchild_item->target) . '"' : '';
+														$grandchild_rel = !empty($grandchild_item->xfn) ? ' rel="' . esc_attr($grandchild_item->xfn) . '"' : '';
+														?>
+														<li class="dropdown-sub-cat">
+															<a href="<?php echo esc_url($grandchild_item->url); ?>"<?php echo $grandchild_target; ?><?php echo $grandchild_rel; ?>>
+																<?php echo esc_html($grandchild_item->title); ?>
+															</a>
+														</li>
+													<?php endforeach; ?>
+												</ul>
+											</li>
+										<?php else: ?>
+											<li class="dropdown-sub-unique"><a href="<?php echo esc_url($child_item->url); ?>"<?php echo $child_target; ?><?php echo $child_rel; ?>><?php echo esc_html($child_item->title); ?></a></li>
+										<?php endif; ?>
+									<?php endforeach; ?>
+								</ul>
+							</div>
+						<?php else: ?>
+							<a href="<?php echo esc_url($top_item->url); ?>"<?php echo $top_style; ?><?php echo $top_target; ?><?php echo $top_rel; ?>><?php echo esc_html($top_item->title); ?></a>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				<?php else: ?>
           		<a href="https://doc-headshok.com/">ACCUEIL</a>
 				<div class="dropdown">
   					<a href="https://doc-headshok.com/boutique-produits">BOUTIQUE</a>
@@ -1422,6 +1521,7 @@ function header_personnalise_shortcode() {
           		<a href="https://doc-headshok.com/qui-sommes-nous-2/">QUI SOMMES NOUS ?</a>
           		<a href="https://doc-headshok.com/nos-news/">NOS NEWS</a>
 				<a href="https://doc-headshok.com/promotions/" style="color: #FF3F22 !important;">NOS PROMOTIONS</a>
+				<?php endif; ?>
         	</nav>
 		</div>
 		<div class="translator">
