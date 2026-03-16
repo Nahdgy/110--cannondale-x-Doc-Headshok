@@ -71,32 +71,74 @@ function header_personnalise_shortcode() {
 		const burgerClose = document.getElementById('burger-close');
 		const headerMenu = document.getElementById('header-menu');
 		const conteneurReduit = document.querySelector('#header-menu .conteneur-reduit');
-		const drawerPanelsStack = [];
+		let activeDrawerPanel = null;
+		const drawerPanelParentMap = new WeakMap();
 
-		function openDrawerPanel(panel) {
+		function openDrawerPanel(panel, parentPanel) {
 			if (!panel) return;
+			drawerPanelParentMap.set(panel, parentPanel || null);
+			if (activeDrawerPanel && activeDrawerPanel !== panel) {
+				// If the current panel is the parent of the target panel, keep it open.
+				// Nested drawer panels are children in the DOM and depend on parent visibility.
+				if (!(parentPanel && activeDrawerPanel === parentPanel)) {
+					activeDrawerPanel.classList.remove('is-open');
+				}
+			}
 			panel.classList.add('is-open');
-			drawerPanelsStack.push(panel);
+			activeDrawerPanel = panel;
+			if (conteneurReduit) conteneurReduit.classList.add('has-drawer-panel-open');
 		}
 
 		function closeDrawerPanel(panel) {
 			if (!panel) return;
 			panel.classList.remove('is-open');
-			const index = drawerPanelsStack.lastIndexOf(panel);
-			if (index >= 0) drawerPanelsStack.splice(index, 1);
+			let previousPanel = drawerPanelParentMap.get(panel) || null;
+			if (previousPanel) {
+				previousPanel.classList.add('is-open');
+				activeDrawerPanel = previousPanel;
+				if (conteneurReduit) conteneurReduit.classList.add('has-drawer-panel-open');
+			} else {
+				activeDrawerPanel = null;
+				if (conteneurReduit) conteneurReduit.classList.remove('has-drawer-panel-open');
+			}
 		}
 
 		function closeAllDrawerPanels() {
-			drawerPanelsStack.forEach(function(panel) {
+			document.querySelectorAll('#header-menu .drawer-panel').forEach(function(panel) {
 				panel.classList.remove('is-open');
 			});
-			drawerPanelsStack.length = 0;
+			activeDrawerPanel = null;
+			if (conteneurReduit) conteneurReduit.classList.remove('has-drawer-panel-open');
+		}
+
+		function getDirectChildByTag(parent, tagName) {
+			if (!parent) return null;
+			for (let i = 0; i < parent.children.length; i += 1) {
+				const child = parent.children[i];
+				if (child.tagName === tagName) return child;
+			}
+			return null;
+		}
+
+		function getDirectChildByClass(parent, className) {
+			if (!parent) return null;
+			for (let i = 0; i < parent.children.length; i += 1) {
+				const child = parent.children[i];
+				if (child.classList && child.classList.contains(className)) return child;
+			}
+			return null;
 		}
 
 		function ensureDrawerHeader(panel, title) {
-			if (!panel || panel.querySelector('.drawer-header')) return;
+			const hasOwnHeader = panel && panel.firstElementChild && panel.firstElementChild.classList.contains('drawer-header');
+			if (!panel || hasOwnHeader) return;
 			const header = document.createElement('div');
 			header.className = 'drawer-header';
+			if (panel.classList.contains('dropdown-content-sub')) {
+				header.classList.add('drawer-header-sub');
+			} else {
+				header.classList.add('drawer-header-main');
+			}
 			const back = document.createElement('button');
 			back.type = 'button';
 			back.className = 'drawer-back';
@@ -107,7 +149,10 @@ function header_personnalise_shortcode() {
 			header.appendChild(back);
 			header.appendChild(label);
 			panel.insertBefore(header, panel.firstChild);
-			back.addEventListener('click', function() {
+			back.addEventListener('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				e.stopImmediatePropagation();
 				closeDrawerPanel(panel);
 			});
 		}
@@ -122,7 +167,9 @@ function header_personnalise_shortcode() {
 		}
 		// Ferme le menu burger
 		if (burgerClose && headerMenu && burgerDown) {
-			burgerClose.addEventListener('click', function() {
+			burgerClose.addEventListener('click', function(e) {
+				if (e.target && e.target.closest && e.target.closest('.drawer-back')) return;
+				e.stopPropagation();
 				burgerDown.classList.remove('hide');
 				burgerClose.classList.add('hide');
 				headerMenu.style.display = 'none';
@@ -137,36 +184,35 @@ function header_personnalise_shortcode() {
 
 		// Sous-menus en mode drawer (mobile uniquement)
 		document.querySelectorAll('#header-menu .dropdown').forEach(function(dropdown) {
-			const link = dropdown.querySelector('a');
-			const arrow = dropdown.querySelector('.arrow-orange');
-			const panel = dropdown.querySelector('.dropdown-content');
+			const link = getDirectChildByTag(dropdown, 'A');
+			const arrow = getDirectChildByClass(dropdown, 'arrow-orange');
+			const panel = getDirectChildByClass(dropdown, 'dropdown-content');
 			if (panel) panel.classList.add('drawer-panel');
 			function openPanel(e) {
 				if (window.innerWidth > 1129) return;
+				if (!panel) return;
 				e.preventDefault();
 				e.stopPropagation();
-				if (panel) {
-					ensureDrawerHeader(panel, link ? link.textContent.trim() : '');
-					openDrawerPanel(panel);
-				}
+				ensureDrawerHeader(panel, link ? link.textContent.trim() : '');
+				openDrawerPanel(panel, null);
 			}
 			if (link) link.addEventListener('click', openPanel);
 			if (arrow) arrow.addEventListener('click', openPanel);
 		});
 
 		document.querySelectorAll('#header-menu .dropdown-sub').forEach(function(sub) {
-			const link = sub.querySelector('a');
-			const arrow = sub.querySelector('.arrow-orange');
-			const subPanel = sub.querySelector('.dropdown-content-sub');
+			const link = getDirectChildByTag(sub, 'A');
+			const arrow = getDirectChildByClass(sub, 'arrow-orange');
+			const subPanel = getDirectChildByClass(sub, 'dropdown-content-sub');
+			const parentPanel = sub.closest('.dropdown-content');
 			if (subPanel) subPanel.classList.add('drawer-panel');
 			function openSubPanel(e) {
 				if (window.innerWidth > 1129) return;
+				if (!subPanel) return;
 				e.preventDefault();
 				e.stopPropagation();
-				if (subPanel) {
-					ensureDrawerHeader(subPanel, link ? link.textContent.trim() : '');
-					openDrawerPanel(subPanel);
-				}
+				ensureDrawerHeader(subPanel, link ? link.textContent.trim() : '');
+				openDrawerPanel(subPanel, parentPanel || null);
 			}
 			if (link) link.addEventListener('click', openSubPanel);
 			if (arrow) arrow.addEventListener('click', openSubPanel);
@@ -610,7 +656,7 @@ function header_personnalise_shortcode() {
 		   =========================== */
 		.actions-header {
 			display: flex;
-			align-items: flex-end;
+			align-items: center;
 			gap: 16px;
 			height: auto;
 		}
@@ -1173,6 +1219,7 @@ function header_personnalise_shortcode() {
 
 			.conteneur-reduit.is-open {
 				transform: translateX(0);
+				z-index: 4;
 			}
 
 			#header-menu .drawer-panel {
@@ -1202,7 +1249,6 @@ function header_personnalise_shortcode() {
 				position: sticky;
 				top: 0;
 				background: #fff;
-				z-index: 4;
 				display: flex;
 				align-items: center;
 				gap: 10px;
@@ -1233,6 +1279,11 @@ function header_personnalise_shortcode() {
 				width: 100%;
 				display: flex;
 				justify-content: flex-end;
+			}
+
+			.conteneur-reduit.has-drawer-panel-open > .cross {
+				pointer-events: none;
+				opacity: 0.45;
 			}
 
 			.menu-navbar {
@@ -1387,7 +1438,7 @@ function header_personnalise_shortcode() {
 		 
 	<div class="header-menu" id="header-menu">
       <div class="conteneur-reduit">
-		  <div class="cross" id="burger-close" onclick="document.getElementById('burger-down').classList.remove('hide'); document.getElementById('burger-close').classList.add('hide');document.getElementById('header-menu').style.display = 'none';document.getElementById('flags').style.zIndex = '1'">
+		  <div class="cross" id="burger-close">
 			<strong>X</strong>
 		</div>
 		<div class="search-mobile">
