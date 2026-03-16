@@ -1124,10 +1124,18 @@ function header_personnalise_shortcode() {
 			.header-middle {
 				display: grid;
 				grid-template-columns: 2fr auto;
+				gap: 12px;
 			}
 
 			.actions-header {
 				margin-top: 1rem;
+				gap: 5px;
+			}
+
+			.actions-header .header-action-item img {
+				width: 22px;
+				height: 22px;
+				object-fit: contain;
 			}
 
 			.logos {
@@ -1185,6 +1193,12 @@ function header_personnalise_shortcode() {
 		@media screen and (max-width: 1129px) {
 			.header-menu {
 				display: none;
+			}
+
+			.actions-header .header-action-item img {
+				width: 24px;
+				height: 24px;
+				object-fit: contain;
 			}
 
 			.search-desktop {
