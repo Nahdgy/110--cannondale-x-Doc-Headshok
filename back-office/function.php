@@ -775,7 +775,7 @@ if ( ! function_exists( 'hello_elementor_setup' ) ) {
 		if ( apply_filters( 'hello_elementor_register_menus', true ) ) {
 			register_nav_menus( [ 'menu-1' => esc_html__( 'Header', 'hello-elementor' ) ] );
 			register_nav_menus( [ 'menu-2' => esc_html__( 'Footer', 'hello-elementor' ) ] );
-            register_nav_menus( [ 'header_personnalise_menu' => esc_html__( 'Header Personnalisé (Doc Headshok)', 'hello-elementor' ) ] );
+			register_nav_menus( [ 'header_personnalise_menu' => esc_html__( 'Header Personnalisé (Doc Headshok)', 'hello-elementor' ) ] );
 		}
 
 		if ( apply_filters( 'hello_elementor_post_type_support', true ) ) {
@@ -3165,6 +3165,88 @@ function cannondale_get_order_admin_edit_url($order_id) {
     }
 
     return admin_url('post.php?post=' . absint($order_id) . '&action=edit');
+}
+
+// ========== AJOUT COLONNE STOCK DANS ADMIN COMMANDE ==========
+
+/**
+ * Ajouter l'entête de colonne "Stock" dans le tableau des articles de commande
+ */
+add_action('woocommerce_admin_order_item_headers', 'ajouter_entete_colonne_stock');
+function ajouter_entete_colonne_stock() {
+    echo '<th class="item_stock sortable" data-sort="int">Stock</th>';
+}
+
+/**
+ * Afficher le stock du produit dans la colonne "Stock"
+ */
+add_action('woocommerce_admin_order_item_values', 'afficher_stock_commande', 10, 3);
+function afficher_stock_commande($product, $item, $item_id) {
+    if (!is_a($item, 'WC_Order_Item_Product')) {
+        echo '<td class="item_stock" width="1%"><span style="color: #999;">-</span></td>';
+        return;
+    }
+
+    $order_product = $item->get_product();
+    if (!$order_product) {
+        echo '<td class="item_stock" width="1%"><span style="color: #999;">-</span></td>';
+        return;
+    }
+
+    // Pour les variations, WooCommerce peut gérer le stock sur le parent.
+    $stock_owner_id = method_exists($order_product, 'get_stock_managed_by_id')
+        ? (int) $order_product->get_stock_managed_by_id()
+        : (int) $order_product->get_id();
+
+    $stock_product = wc_get_product($stock_owner_id);
+    if (!$stock_product) {
+        $stock_product = $order_product;
+    }
+
+    if (!$stock_product->managing_stock()) {
+        $stock_text = $stock_product->is_in_stock()
+            ? '<span style="color: #2271b1;">En stock</span>'
+            : '<span style="color: #dc3545; font-weight: bold;">Rupture</span>';
+    } else {
+        $stock_quantity = $stock_product->get_stock_quantity();
+        $stock_quantity = is_numeric($stock_quantity) ? (int) wc_stock_amount($stock_quantity) : 0;
+
+        if ($stock_quantity <= 0) {
+            $stock_text = '<span style="color: #dc3545; font-weight: bold;">0</span>';
+        } elseif ($stock_quantity <= 5) {
+            $stock_text = '<span style="color: #ff6c00; font-weight: bold;">' . $stock_quantity . '</span>';
+        } else {
+            $stock_text = '<span style="color: #28a745;">' . $stock_quantity . '</span>';
+        }
+    }
+
+    echo '<td class="item_stock" width="1%">';
+    echo '<div class="view">';
+    echo $stock_text;
+    echo '</div>';
+    echo '</td>';
+}
+
+/**
+ * Ajouter du CSS pour styliser la colonne de stock
+ */
+add_action('admin_head', 'ajouter_css_colonne_stock');
+function ajouter_css_colonne_stock() {
+    if (!is_admin()) return;
+    
+    // Vérifier si nous sommes sur la page de commande
+    global $post_type;
+    if ('shop_order' !== $post_type) return;
+    
+    echo '<style>
+    .woocommerce_order_items .item_stock {
+        text-align: center;
+        font-weight: 500;
+    }
+    .woocommerce_order_items th.item_stock {
+        background-color: #f9f9f9;
+    }
+    </style>';
 }
 
 require HELLO_THEME_PATH . '/theme.php';
