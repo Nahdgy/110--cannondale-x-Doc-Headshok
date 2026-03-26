@@ -228,6 +228,22 @@ if ( ! function_exists( 'hello_elementor_body_open' ) ) {
     }
 }
 
+add_filter( 'template_include', 'cannondale_use_custom_search_template', 99 );
+
+function cannondale_use_custom_search_template( $template ) {
+    if ( is_admin() || ! is_search() ) {
+        return $template;
+    }
+
+    $custom_search_template = HELLO_THEME_ASSETS_PATH . 'search.php';
+
+    if ( file_exists( $custom_search_template ) ) {
+        return $custom_search_template;
+    }
+
+    return $template;
+}
+
 // Supprimer le robots natif WordPress
 add_action( 'init', function() {
     remove_action( 'wp_head', 'wp_robots', 1 );
