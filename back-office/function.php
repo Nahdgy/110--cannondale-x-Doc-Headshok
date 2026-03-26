@@ -897,7 +897,6 @@ if ( ! function_exists( 'hello_elementor_scripts_styles' ) ) {
 		}
 	}
 }
-
 add_action( 'wp_enqueue_scripts', 'hello_elementor_scripts_styles' );
 
 if ( ! function_exists( 'hello_elementor_register_elementor_locations' ) ) {
@@ -926,7 +925,85 @@ if ( ! function_exists( 'hello_elementor_content_width' ) ) {
 		$GLOBALS['content_width'] = apply_filters( 'hello_elementor_content_width', 800 );
 	}
 }
+add_action( 'after_setup_theme', 'hello_elementor_content_width', 0 );
 add_filter( 'woocommerce_order_item_display_meta_key', '__return_false' );
+if ( ! function_exists( 'hello_elementor_add_description_meta_tag' ) ) {
+	/**
+	 * Add description meta tag with excerpt text.
+	 *
+	 * @return void
+	 */
+	function hello_elementor_add_description_meta_tag() {
+		if ( ! apply_filters( 'hello_elementor_description_meta_tag', true ) ) {
+			return;
+		}
+
+		if ( ! is_singular() ) {
+			return;
+		}
+
+		$post = get_queried_object();
+		if ( empty( $post->post_excerpt ) ) {
+			return;
+		}
+
+		echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $post->post_excerpt ) ) . '">' . "\n";
+	}
+}
+//add_action( 'wp_head', 'hello_elementor_add_description_meta_tag' );
+
+// Settings page
+require get_template_directory() . '/includes/settings-functions.php';
+
+// Header & footer styling option, inside Elementor
+require get_template_directory() . '/includes/elementor-functions.php';
+
+if ( ! function_exists( 'hello_elementor_customizer' ) ) {
+	// Customizer controls
+	function hello_elementor_customizer() {
+		if ( ! is_customize_preview() ) {
+			return;
+		}
+
+		if ( ! hello_elementor_display_header_footer() ) {
+			return;
+		}
+
+		require get_template_directory() . '/includes/customizer-functions.php';
+	}
+}
+add_action( 'init', 'hello_elementor_customizer' );
+
+if ( ! function_exists( 'hello_elementor_check_hide_title' ) ) {
+	/**
+	 * Check whether to display the page title.
+	 *
+	 * @param bool $val default value.
+	 *
+	 * @return bool
+	 */
+	function hello_elementor_check_hide_title( $val ) {
+		if ( defined( 'ELEMENTOR_VERSION' ) ) {
+			$current_doc = Elementor\Plugin::instance()->documents->get( get_the_ID() );
+			if ( $current_doc && 'yes' === $current_doc->get_settings( 'hide_title' ) ) {
+				$val = false;
+			}
+		}
+		return $val;
+	}
+}
+add_filter( 'hello_elementor_page_title', 'hello_elementor_check_hide_title' );
+
+/**
+ * BC:
+ * In v2.7.0 the theme removed the `hello_elementor_body_open()` from `header.php` replacing it with `wp_body_open()`.
+ * The following code prevents fatal errors in child themes that still use this function.
+ */
+if ( ! function_exists( 'hello_elementor_body_open' ) ) {
+	function hello_elementor_body_open() {
+		wp_body_open();
+	}
+}
 
 add_action('wp_ajax_envoyer_form_roue', 'envoyer_form_roue');
 add_action('wp_ajax_nopriv_envoyer_form_roue', 'envoyer_form_roue');
@@ -1300,31 +1377,8 @@ function envoyer_form_fourche() {
 	// Retourne le numéro de commande dans la réponse AJAX
 	wp_send_json_success(['message' => 'Formulaire envoyé avec succès !', 'order_number' => $order_number]);
 }
-add_action( 'after_setup_theme', 'hello_elementor_content_width', 0 );
 
-if ( ! function_exists( 'hello_elementor_add_description_meta_tag' ) ) {
-	/**
-	 * Add description meta tag with excerpt text.
-	 *
-	 * @return void
-	 */
-	function hello_elementor_add_description_meta_tag() {
-		if ( ! apply_filters( 'hello_elementor_description_meta_tag', true ) ) {
-			return;
-		}
 
-		if ( ! is_singular() ) {
-			return;
-		}
-
-		$post = get_queried_object();
-		if ( empty( $post->post_excerpt ) ) {
-			return;
-		}
-
-		echo '<meta name="description" content="' . esc_attr( wp_strip_all_tags( $post->post_excerpt ) ) . '">' . "\n";
-	}
-}
 // //JS du fil d'ariane dans le header
 // add_action( 'wp_head', 'hello_elementor_add_description_meta_tag' );
 // function ajouter_fil_ariane_js() {
@@ -1342,59 +1396,6 @@ if ( ! function_exists( 'hello_elementor_add_description_meta_tag' ) ) {
 add_filter( 'woocommerce_placeholder_img_src', 'custom_woocommerce_placeholder_img_src' );
 function custom_woocommerce_placeholder_img_src( $src ) {
     return 'https://doc-headshok.com/wp-content/uploads/2025/09/Photo-indisponible.png';
-}
-
-// Settings page
-require get_template_directory() . '/includes/settings-functions.php';
-
-// Header & footer styling option, inside Elementor
-require get_template_directory() . '/includes/elementor-functions.php';
-
-if ( ! function_exists( 'hello_elementor_customizer' ) ) {
-	// Customizer controls
-	function hello_elementor_customizer() {
-		if ( ! is_customize_preview() ) {
-			return;
-		}
-
-		if ( ! hello_elementor_display_header_footer() ) {
-			return;
-		}
-
-		require get_template_directory() . '/includes/customizer-functions.php';
-	}
-}
-add_action( 'init', 'hello_elementor_customizer' );
-
-if ( ! function_exists( 'hello_elementor_check_hide_title' ) ) {
-	/**
-	 * Check whether to display the page title.
-	 *
-	 * @param bool $val default value.
-	 *
-	 * @return bool
-	 */
-	function hello_elementor_check_hide_title( $val ) {
-		if ( defined( 'ELEMENTOR_VERSION' ) ) {
-			$current_doc = Elementor\Plugin::instance()->documents->get( get_the_ID() );
-			if ( $current_doc && 'yes' === $current_doc->get_settings( 'hide_title' ) ) {
-				$val = false;
-			}
-		}
-		return $val;
-	}
-}
-add_filter( 'hello_elementor_page_title', 'hello_elementor_check_hide_title' );
-
-/**
- * BC:
- * In v2.7.0 the theme removed the `hello_elementor_body_open()` from `header.php` replacing it with `wp_body_open()`.
- * The following code prevents fatal errors in child themes that still use this function.
- */
-if ( ! function_exists( 'hello_elementor_body_open' ) ) {
-	function hello_elementor_body_open() {
-		wp_body_open();
-	}
 }
 
 add_filter('woocommerce_product_single_add_to_cart_text', 'woo_custom_cart_button_text');
