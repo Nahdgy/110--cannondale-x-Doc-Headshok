@@ -2313,7 +2313,13 @@ function mon_compte_personnalise_shortcode() {
                 <h2>Mes demandes de retour</h2>
                 <div class="retours-container">
                     <?php
-                    $retours = obtenir_retours_utilisateur($user->ID);
+                    $retours = function_exists('obtenir_retours_utilisateur')
+                        ? obtenir_retours_utilisateur($user->ID)
+                        : array();
+
+                    if (!is_array($retours)) {
+                        $retours = array();
+                    }
                     
                     $statuts_labels_retour = array(
                         'en_attente' => 'En attente d\'examen',
@@ -2329,7 +2335,12 @@ function mon_compte_personnalise_shortcode() {
                         echo '<div class="retours-liste">';
                         
                         foreach ($retours as $retour) {
+                            if (!isset($retour->order_id)) {
+                                continue;
+                            }
+
                             $order = wc_get_order($retour->order_id);
+                            $order_number = $order instanceof WC_Order ? $order->get_order_number() : 'Commande supprimée';
                             
                             $statut_class = '';
                             switch($retour->statut) {
@@ -2369,7 +2380,7 @@ function mon_compte_personnalise_shortcode() {
                             
                             echo '<div class="retour-details">';
                             echo '<div class="retour-info">';
-                            echo '<p><strong>Commande concernée :</strong> <a href="#commandes">#' . $order->get_order_number() . '</a></p>';
+                            echo '<p><strong>Commande concernée :</strong> <a href="#commandes">#' . esc_html($order_number) . '</a></p>';
                             echo '<p><strong>Motif :</strong> ' . esc_html($retour->motif) . '</p>';
                             
                             if ($retour->description) {
@@ -2432,8 +2443,12 @@ function mon_compte_personnalise_shortcode() {
                 <h2>Historique des prestations</h2>
                 <div class="prestations-container">
                     <?php
-                    $prestations = obtenir_historique_prestations($user->ID);
-                    
+                    $prestations = function_exists('obtenir_historique_prestations')
+                        ? obtenir_historique_prestations($user->ID)
+                        : array();
+
+                    if (!is_array($prestations)) { $prestations = array(); }
+
                     if (!empty($prestations)) {
                         echo '<div class="prestations-liste">';
                         
@@ -2541,8 +2556,12 @@ function mon_compte_personnalise_shortcode() {
                     <?php
                     // Récupérer tous les coupons WooCommerce assignés à cet utilisateur
                     $user_email = $user->user_email;
-                    $user_coupons = obtenir_coupons_utilisateur($user_email);
-                    
+                    $user_coupons = function_exists('obtenir_coupons_utilisateur')
+                        ? obtenir_coupons_utilisateur($user_email)
+                        : array();
+
+                    if (!is_array($user_coupons)) { $user_coupons = array(); }
+
                     if (!empty($user_coupons)) {
                         echo '<div class="codes-promo-liste">';
                         
@@ -2649,8 +2668,12 @@ function mon_compte_personnalise_shortcode() {
                     <?php
                     // Récupérer tous les avoirs de l'utilisateur
                     $user_email = $user->user_email;
-                    $user_avoirs = obtenir_avoirs_utilisateur($user_email);
-                    
+                    $user_avoirs = function_exists('obtenir_avoirs_utilisateur')
+                        ? obtenir_avoirs_utilisateur($user_email)
+                        : array();
+
+                    if (!is_array($user_avoirs)) { $user_avoirs = array(); }
+
                     if (!empty($user_avoirs)) {
                         echo '<div class="avoirs-liste">';
                         
@@ -2732,8 +2755,6 @@ function mon_compte_personnalise_shortcode() {
             
             <div id="parametres" class="section-compte">
                 <h2>Paramètres</h2>
-                <p class="texte-newsletter">S’inscrire à la newsletter</p>
-                <?php echo do_shortcode('[sibwp_form id=1]'); ?>
                 <p class="supprimer-compte">Supprimer mon compte</p>
             </div>
         </div>
