@@ -3209,7 +3209,7 @@ function afficher_stock_commande($product, $item, $item_id) {
         $stock_quantity = is_numeric($stock_quantity) ? (int) wc_stock_amount($stock_quantity) : 0;
 
         if ($stock_quantity <= 0) {
-            $stock_text = '<span style="color: #dc3545; font-weight: bold;">0</span>';
+            $stock_text = '<span style="color: #dc3545; font-weight: bold;">' . $stock_quantity . '</span>';
         } elseif ($stock_quantity <= 5) {
             $stock_text = '<span style="color: #ff6c00; font-weight: bold;">' . $stock_quantity . '</span>';
         } else {
