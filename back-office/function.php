@@ -3246,6 +3246,93 @@ function ajouter_css_colonne_stock() {
     </style>';
 }
 
+/**
+ * Ajout de la fonctionnalité de bouton d'affichage des commandes client dans le détails client
+ */
+add_action('show_user_profile', 'add_view_orders_button_to_user_profile');
+add_action('edit_user_profile', 'add_view_orders_button_to_user_profile');
+add_action('admin_footer-profile.php', 'cannondale_move_orders_button_before_personal_options');
+add_action('admin_footer-user-edit.php', 'cannondale_move_orders_button_before_personal_options');
+
+function cannondale_get_customer_orders_admin_url($user) {
+    $user_id = isset($user->ID) ? absint($user->ID) : 0;
+    if (!$user_id) {
+        return admin_url('edit.php?post_type=shop_order');
+    }
+
+    if (class_exists('Automattic\\WooCommerce\\Utilities\\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()) {
+        $search_value = '';
+
+        if (!empty($user->user_email)) {
+            $search_value = $user->user_email;
+        } elseif (!empty($user->user_login)) {
+            $search_value = $user->user_login;
+        } else {
+            $search_value = (string) $user_id;
+        }
+
+        return add_query_arg(
+            array(
+                'page' => 'wc-orders',
+                's' => $search_value,
+                'search-filter' => 'customers',
+                'action' => '-1',
+                'm' => '0',
+                '_created_via' => '',
+                '_customer_user' => '',
+                'paged' => '1',
+                'action2' => '-1',
+            ),
+            admin_url('admin.php')
+        );
+    }
+
+    return add_query_arg(
+        array(
+            'post_type' => 'shop_order',
+            '_customer_user' => $user_id,
+        ),
+        admin_url('edit.php')
+    );
+}
+
+function add_view_orders_button_to_user_profile($user) {
+    $orders_url = cannondale_get_customer_orders_admin_url($user);
+
+    echo '<div id="cannondale-customer-orders-box">';
+    echo '<h3>Commandes client</h3>';
+    echo '<a href="' . esc_url($orders_url) . '" class="button button-primary">Voir les commandes</a>';
+    echo '</div>';
+}
+
+function cannondale_move_orders_button_before_personal_options() {
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen) {
+        return;
+    }
+
+    if (!in_array($screen->id, array('profile', 'user-edit'), true)) {
+        return;
+    }
+    ?>
+    <script>
+    (function () {
+        var box = document.getElementById('cannondale-customer-orders-box');
+        if (!box) {
+            return;
+        }
+
+        var heading = document.querySelector('.wrap h2');
+        if (!heading || !heading.parentNode) {
+            return;
+        }
+
+        box.style.marginBottom = '18px';
+        heading.parentNode.insertBefore(box, heading);
+    })();
+    </script>
+    <?php
+}
 require HELLO_THEME_PATH . '/theme.php';
 
 HelloTheme\Theme::instance();
