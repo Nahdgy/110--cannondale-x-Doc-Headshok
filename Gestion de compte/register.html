@@ -24,6 +24,7 @@ function mon_formulaire_inscription_shortcode() {
         $prenom = sanitize_text_field($_POST['prenom']);
         $email = sanitize_email($_POST['email']);
         $telephone = sanitize_text_field($_POST['telephone']);
+        $dob = isset($_POST['dob']) ? sanitize_text_field($_POST['dob']) : '';
         $adresse_ligne1 = sanitize_text_field($_POST['adresse_ligne1']);
         $adresse_ligne2 = sanitize_text_field($_POST['adresse_ligne2']);
         $ville = sanitize_text_field($_POST['ville']);
@@ -40,6 +41,14 @@ function mon_formulaire_inscription_shortcode() {
         if (empty($prenom)) $errors[] = 'Le prénom est obligatoire.';
         if (empty($email) || !is_email($email)) $errors[] = 'Une adresse email valide est obligatoire.';
         if (empty($telephone)) $errors[] = 'Le téléphone est obligatoire.';
+        if (empty($dob)) {
+            $errors[] = 'La date de naissance est obligatoire.';
+        } else {
+            $dob_datetime = DateTime::createFromFormat('Y-m-d', $dob);
+            if (!$dob_datetime || $dob_datetime->format('Y-m-d') !== $dob) {
+                $errors[] = 'La date de naissance est invalide.';
+            }
+        }
         if (empty($adresse_ligne1)) $errors[] = 'L\'adresse ligne 1 est obligatoire.';
         if (empty($ville)) $errors[] = 'La ville est obligatoire.';
         if (empty($code_postal)) $errors[] = 'Le code postal est obligatoire.';
@@ -69,6 +78,11 @@ function mon_formulaire_inscription_shortcode() {
                 update_user_meta($user_id, 'civilite', $civilite);
                 update_user_meta($user_id, 'pratique', $pratiques);
                 update_user_meta($user_id, 'telephone', $telephone);
+                update_user_meta($user_id, 'dob', $dob);
+                // Compatibilite avec certains connecteurs CRM/marketing (dont ShopiMind).
+                update_user_meta($user_id, 'billing_birthdate', $dob);
+                update_user_meta($user_id, 'billing_date_of_birth', $dob);
+                update_user_meta($user_id, 'birthdate', $dob);
                 update_user_meta($user_id, 'type_compte', $type_compte);
                 if (!empty($raison_sociale)) {
                     update_user_meta($user_id, 'raison_sociale', $raison_sociale);
@@ -124,6 +138,7 @@ function mon_formulaire_inscription_shortcode() {
     $prenom_value = isset($_POST['prenom']) ? sanitize_text_field($_POST['prenom']) : '';
     $email_value = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     $telephone_value = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
+    $dob_value = isset($_POST['dob']) ? sanitize_text_field($_POST['dob']) : '';
     $adresse_ligne1_value = isset($_POST['adresse_ligne1']) ? sanitize_text_field($_POST['adresse_ligne1']) : '';
     $adresse_ligne2_value = isset($_POST['adresse_ligne2']) ? sanitize_text_field($_POST['adresse_ligne2']) : '';
     $ville_value = isset($_POST['ville']) ? sanitize_text_field($_POST['ville']) : '';
@@ -385,9 +400,70 @@ function mon_formulaire_inscription_shortcode() {
             margin-left: 4px;
         }
 
+        .mon-form-inscription .label-with-tooltip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mon-form-inscription .tooltip-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .mon-form-inscription .tooltip-icon {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #666;
+            border-radius: 50%;
+            color: #666;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 16px;
+            text-align: center;
+            cursor: help;
+            user-select: none;
+            background: #fff;
+        }
+
+        .mon-form-inscription .tooltip-icon:focus-visible {
+            outline: 2px solid #151515;
+            outline-offset: 2px;
+        }
+
+        .mon-form-inscription .tooltip-text {
+            position: absolute;
+            left: 0;
+            top: calc(100% + 8px);
+            min-width: 220px;
+            max-width: 280px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: #111;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.4;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mon-form-inscription .tooltip-container:hover .tooltip-text,
+        .mon-form-inscription .tooltip-container:focus-within .tooltip-text {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
         .mon-form-inscription input[type="email"],
         .mon-form-inscription input[type="text"],
         .mon-form-inscription input[type="tel"],
+        .mon-form-inscription input[type="date"],
         .mon-form-inscription input[type="password"],
         .mon-form-inscription select,
         .mon-form-inscription textarea {
@@ -542,6 +618,36 @@ function mon_formulaire_inscription_shortcode() {
             .pratique-checkboxes {
                 grid-column: span 1;
             }
+
+            .mon-form-inscription .label-with-tooltip {
+                align-items: center;
+            }
+
+            .mon-form-inscription .tooltip-icon {
+                width: 20px;
+                height: 20px;
+                line-height: 18px;
+                font-size: 13px;
+            }
+
+            .mon-form-inscription .tooltip-text {
+                left: 50%;
+                right: auto;
+                top: calc(100% + 10px);
+                transform: translate(-50%, -4px);
+                width: min(280px, calc(100vw - 64px));
+                min-width: 0;
+                max-width: none;
+                font-size: 13px;
+                padding: 10px 12px;
+                text-align: center;
+                box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+            }
+
+            .mon-form-inscription .tooltip-container:hover .tooltip-text,
+            .mon-form-inscription .tooltip-container:focus-within .tooltip-text {
+                transform: translate(-50%, 0);
+            }
         }
     </style>
 
@@ -596,6 +702,17 @@ function mon_formulaire_inscription_shortcode() {
                 <div class="form-group">
                     <label for="telephone">Téléphone <span class="required">*</span></label>
                     <input type="tel" id="telephone" name="telephone" required placeholder="Votre téléphone" value="<?php echo esc_attr($telephone_value); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="dob" class="label-with-tooltip">
+                        Date de naissance <span class="required">*</span>
+                        <span class="tooltip-container">
+                            <span class="tooltip-icon" tabindex="0" aria-label="Information anniversaire">i</span>
+                            <span class="tooltip-text">Pour recevoir mes promotions anniversaire</span>
+                        </span>
+                    </label>
+                    <input type="date" id="dob" name="dob" required value="<?php echo esc_attr($dob_value); ?>">
                 </div>
 
                 <div class="form-group full-width">
