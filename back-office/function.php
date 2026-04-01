@@ -618,7 +618,11 @@ function afficher_page_prestations_admin() {
     }
     
     if (!empty($recherche)) {
-        $where_conditions[] = "(modele_velo LIKE %s OR description LIKE %s OR type_fourche LIKE %s)";
+        $where_conditions[] = "(p.modele_velo LIKE %s OR p.description LIKE %s OR p.type_fourche LIKE %s OR p.numero_suivi LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s)";
+        $where_values[] = '%' . $recherche . '%';
+        $where_values[] = '%' . $recherche . '%';
+        $where_values[] = '%' . $recherche . '%';
+        $where_values[] = '%' . $recherche . '%';
         $where_values[] = '%' . $recherche . '%';
         $where_values[] = '%' . $recherche . '%';
         $where_values[] = '%' . $recherche . '%';
@@ -629,7 +633,7 @@ function afficher_page_prestations_admin() {
         $where_clause = ' WHERE ' . implode(' AND ', $where_conditions);
     }
     
-    $query = "SELECT * FROM $table_prestations" . $where_clause . " ORDER BY date_creation DESC";
+    $query = "SELECT p.* FROM $table_prestations p LEFT JOIN {$wpdb->users} u ON u.ID = p.user_id" . $where_clause . " ORDER BY p.date_creation DESC";
     
     if (!empty($where_values)) {
         $prestations = $wpdb->get_results($wpdb->prepare($query, $where_values));
