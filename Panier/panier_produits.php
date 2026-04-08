@@ -15,28 +15,76 @@ function panier_produits_shortcode() {
     ob_start();
     ?>
     <style>
+        .panier-table-head {
+            display: grid;
+            grid-template-columns: minmax(280px, 2.2fr) 170px 1.2fr 140px 42px;
+            gap: 20px;
+            align-items: center;
+            min-width: 812px;
+            padding: 0 15px 12px 15px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .panier-table-head > div {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 500;
+            font-size: 18px;
+            color: #4a4a4a;
+        }
+        .panier-table-head > div:nth-child(1) {
+            min-width: 280px;
+        }
+        .panier-table-head > div:nth-child(2) {
+            min-width: 170px;
+        }
+        .panier-table-head > div:nth-child(3) {
+            min-width: 180px;
+        }
+        .panier-table-head > div:nth-child(4) {
+            min-width: 140px;
+        }
+        .panier-table-head > div:nth-child(5) {
+            min-width: 42px;
+        }
         .panier-produits {
+            overflow-x: auto;
             overflow-y: hidden; /* scroll caché par défaut */
             padding-right: 10px;
             transition: max-height 0.3s;
         }
         .panier-grid {
             display: grid;
-            grid-template-columns: 100px 1fr auto; /* image | infos | prix */
+            grid-template-columns: minmax(280px, 2.2fr) 170px 1.2fr 140px 42px;
             gap: 20px;
             align-items: center;
+            min-width: 812px;
             padding: 15px;
             border-bottom: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .panier-col-produit {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 280px;
         }
         .panier-info {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
+            min-width: 0;
         }
         .panier-nom {
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 700;
             font-size: 16px;
+            color: #000000;
+        }
+        .panier-description {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-weight: 400;
+            font-size: 15px;
             color: #000000;
         }
         .panier-stock {
@@ -45,11 +93,17 @@ function panier_produits_shortcode() {
             font-size: 16px;
             color: #000000;
         }
+        .panier-col-quantite {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            min-width: 170px;
+        }
         .panier-quantite-wrapper {
             display: flex;
             justify-content: flex-start;
             align-items: center;
-            gap: 10px;
+            gap: 0;
         }
         .panier-quantite {
             border: 1px solid #656565;
@@ -76,6 +130,28 @@ function panier_produits_shortcode() {
             background: transparent;
             font-size: 14px;
         }
+        .panier-col-caracteristiques {
+            font-family: 'din-next-lt-pro', sans-serif;
+            font-size: 16px;
+            color: #000000;
+            min-width: 180px;
+        }
+        .panier-caracteristique-ligne {
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .panier-caracteristique-ligne:last-child {
+            margin-bottom: 0;
+        }
+        .panier-caracteristique-ligne strong {
+            font-weight: 700;
+        }
+        .panier-col-action {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 42px;
+        }
         .panier-supprimer img {
             cursor: pointer;
         }
@@ -90,101 +166,169 @@ function panier_produits_shortcode() {
             font-weight: 700;
             font-size: 16px;
             color: #000000;
+            min-width: 140px;
             text-align: right;
             white-space: nowrap;
         }
 
-	  @media screen and (max-width: 530px) {
-		  .panier-grid {
-			  grid-template-columns: 80px 1fr;
-			  gap: 15px;
-			  padding: 15px 10px;
-		  }
-		  
-		  .panier-image img {
-			  max-width: 70px;
-		  }
-		  
-		  .panier-nom {
-			  font-size: 14px;
-		  }
-		  
-		  .panier-stock {
-			  font-size: 14px;
-		  }
-		  
-		  .panier-quantite-wrapper {
-			  flex-wrap: wrap;
-			  gap: 15px;
-		  }
-		  
-		  .panier-quantite {
-			  padding: 4px 6px;
-		  }
-		  
-		  .panier-quantite button {
-			  padding: 3px 8px;
-			  font-size: 14px;
-		  }
-		  
-		  .panier-quantite input {
-			  width: 50px;
-			  font-size: 13px;
-		  }
-		  
-		  /* Agrandissement de l'icône poubelle */
-		  .panier-supprimer img {
-			  width: 24px;
-			  height: 24px;
-			  min-width: 24px;
-			  min-height: 24px;
-		  }
-		  
-		  .panier-prix {
-			  font-size: 15px;
-			  text-align: left;
-			  margin-top: 5px;
-		  }
-	  }
+      @media screen and (max-width: 860px) {
+          .panier-table-head {
+              display: none;
+          }
+          .panier-grid {
+              grid-template-columns: 1fr auto;
+              grid-template-areas:
+                  "produit produit"
+                  "caracteristiques caracteristiques"
+                  "quantite prix"
+                  "action action";
+              gap: 12px;
+              min-width: 0;
+              padding: 14px 10px;
+          }
+          .panier-col-produit {
+              grid-area: produit;
+              min-width: 0;
+          }
+          .panier-col-quantite {
+              grid-area: quantite;
+              min-width: 0;
+          }
+          .panier-col-caracteristiques {
+              grid-area: caracteristiques;
+              font-size: 14px;
+              min-width: 0;
+          }
+          .panier-prix {
+              grid-area: prix;
+              font-size: 15px;
+              min-width: 0;
+              text-align: right;
+          }
+          .panier-col-action {
+              grid-area: action;
+              justify-content: flex-end;
+              min-width: 0;
+          }
+          .panier-image img {
+              max-width: 70px;
+          }
+          .panier-nom {
+              font-size: 14px;
+          }
+          .panier-description,
+          .panier-stock {
+              font-size: 14px;
+          }
+          .panier-quantite {
+              padding: 4px 6px;
+          }
+          .panier-quantite button {
+              padding: 3px 8px;
+              font-size: 14px;
+          }
+          .panier-quantite input {
+              width: 50px;
+              font-size: 13px;
+          }
+          .panier-supprimer img {
+              width: 24px;
+              height: 24px;
+              min-width: 24px;
+              min-height: 24px;
+          }
+      }
     </style>
 
     <div class="panier-produits">
+        <div class="panier-table-head">
+        <div>Produit</div>
+        <div>Quantité</div>
+        <div>Caractéristique</div>
+        <div class="panier-head-prix">Prix total</div>
+        <div></div>
+    </div>
         <?php foreach ($cart_items as $cart_item_key => $cart_item) :
             $product = $cart_item['data'];
             $qty = $cart_item['quantity'];
             $stock = $product->get_stock_quantity();
             $subtotal = $cart_item['line_total'] + $cart_item['line_tax'];
+            $short_description = wp_strip_all_tags($product->get_short_description());
+            $variation_data = [];
+
+            if (!empty($cart_item['variation']) && is_array($cart_item['variation'])) {
+                foreach ($cart_item['variation'] as $attribute_name => $attribute_value) {
+                    if ($attribute_value === '') {
+                        continue;
+                    }
+
+                    $taxonomy = str_replace('attribute_', '', $attribute_name);
+                    $label = wc_attribute_label($taxonomy);
+                    $display_value = $attribute_value;
+
+                    if (taxonomy_exists($taxonomy)) {
+                        $term = get_term_by('slug', $attribute_value, $taxonomy);
+                        if ($term && !is_wp_error($term)) {
+                            $display_value = $term->name;
+                        }
+                    }
+
+                    $variation_data[] = [
+                        'label' => $label,
+                        'value' => $display_value,
+                    ];
+                }
+            }
         ?>
             <div class="panier-grid" data-key="<?php echo esc_attr($cart_item_key); ?>">
-                <!-- Colonne gauche : image -->
-                <div class="panier-image">
-                    <?php 
-					$image_url = $product->get_image_id() 
-						? wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') 
-						: 'https://cannonbale.com/wp-content/uploads/2023/10/2186-Garde-boue-arriere-Tesoro-Neo-K11078-Cannondale.jpg';
-					?>
-					<img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product->get_name()); ?>">
+                
+                <div class="panier-col-produit">
+                    <div class="panier-image">
+                        <?php 
+						$image_url = $product->get_image_id() 
+							? wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') 
+							: 'https://cannonbale.com/wp-content/uploads/2023/10/2186-Garde-boue-arriere-Tesoro-Neo-K11078-Cannondale.jpg';
+						?>
+						<img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product->get_name()); ?>">
+                    </div>
+
+                    <div class="panier-info">
+                        <div class="panier-nom"><?php echo wp_kses_post($product->get_name()); ?></div>
+                        <?php if (!empty($short_description)) : ?>
+                            <div class="panier-description"><?php echo esc_html($short_description); ?></div>
+                        <?php endif; ?>
+                        <div class="panier-stock">Stocks disponibles : <?php echo $stock ? esc_html($stock) : 'Rupture'; ?></div>
+                    </div>
                 </div>
 
-                <!-- Colonne centre : infos -->
-                <div class="panier-info">
-                    <div class="panier-nom"><?php echo wp_kses_post($product->get_name()); ?></div>
-                    <div class="panier-stock">Stocks Disponibles: <?php echo $stock ? $stock : 'Rupture'; ?></div>
+                <div class="panier-col-quantite">
                     <div class="panier-quantite-wrapper">
                         <div class="panier-quantite">
                             <button class="moins">-</button>
                             <input type="number" min="1" value="<?php echo esc_attr($qty); ?>" readonly>
                             <button class="plus">+</button>
                         </div>
-                        <div class="panier-supprimer">
-                            <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector.png" 
-                                 alt="Supprimer" class="supprimer-btn">
-                        </div>
                     </div>
                 </div>
 
-                <!-- Colonne droite : prix -->
+                <div class="panier-col-caracteristiques">
+                    <?php if (!empty($variation_data)) : ?>
+                        <?php foreach ($variation_data as $variation_item) : ?>
+                            <div class="panier-caracteristique-ligne">
+                                <strong><?php echo esc_html($variation_item['label']); ?> :</strong> <?php echo esc_html($variation_item['value']); ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <div class="panier-caracteristique-ligne">-</div>
+                    <?php endif; ?>
+                </div>
+
                 <div class="panier-prix"><?php echo wc_price($subtotal); ?></div>
+
+                <div class="panier-col-action panier-supprimer">
+                    <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector.png" 
+                         alt="Supprimer" class="supprimer-btn">
+                </div>
             </div>
         <?php endforeach; ?>
     </div>
@@ -327,32 +471,6 @@ function panier_produits_shortcode() {
                 if (callback) callback();
             });
         }
-
-            // Fonction pour déplacer le prix sur mobile
-            function deplacerPrixMobile() {
-            if (window.innerWidth <= 530) {
-                document.querySelectorAll(".panier-grid").forEach(function(row) {
-                    const info = row.querySelector(".panier-info");
-                    const prix = row.querySelector(".panier-prix");
-                    if (info && prix && !prix.classList.contains("moved")) {
-                        // Déplacer juste après le nom du produit
-                        const nom = row.querySelector(".panier-nom");
-                        if (nom) {
-                            nom.insertAdjacentElement("afterend", prix);
-                            prix.classList.add("moved"); // éviter de le bouger plusieurs fois
-                            prix.style.textAlign = "left"; // adapter l'affichage mobile
-                            prix.style.marginTop = "5px";
-                        }
-                    }
-                });
-            }
-        }
-
-            // Exécuter le déplacement prix mobile au chargement
-            deplacerPrixMobile();
-
-            // Réexécuter si on redimensionne
-            window.addEventListener("resize", deplacerPrixMobile);
 
             // Initialisation du scroll
             updateScroll();

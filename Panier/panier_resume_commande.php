@@ -32,20 +32,27 @@ function panier_resume_commande_shortcode() {
 
         <!-- Bouton Paiement -->
         <?php if (is_user_logged_in()) { ?>
-            <a href="https://cannonbale.com/commander/" class="paiement-btn">Paiement</a>
+            <a href="https://doc-headshok.com/commander/" class="paiement-btn">Finaliser ma commande</a>
         <?php } else { ?>
             <a href="/login" class="paiement-btn">Connexion pour payer</a>
         <?php } ?>
 
         <!-- Paiement sécurisé -->
         <div class="paiement-securise">
-            <img src="https://cannonbale.com/wp-content/uploads/2025/07/Vector-1.png" alt="Paiement sécurisé" class="secure-icon">
+            <img src="https://doc-headshok.com/wp-content/uploads/2025/07/Vector-1.png" alt="Paiement sécurisé" class="secure-icon">
             <span class="secure-text">Paiement sécurisé</span>
         </div>
 
     </div>
 
     <style>
+        .panier-resume-commande {
+            background-color: #F9F9F9;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
         .resume-titre {
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 700;
@@ -88,12 +95,14 @@ function panier_resume_commande_shortcode() {
 			width: auto;
 		}
         .paiement-btn:hover {
-            background-color: #151515;
-            color: #F9F9F9;
+            background-color: #fff;
+            color: #FF3F22;
+            border: 1px solid #FF3F22;
         }
         .paiement-btn:focus {
-            background-color: #151515;
-            color: #F9F9F9;
+            background-color: #fff;
+            color: #FF3F22;
+            border: 1px solid #FF3F22;
         }
         .paiement-btn {
             display: block;
@@ -101,7 +110,7 @@ function panier_resume_commande_shortcode() {
             text-decoration: none;
             width: 100%;
             padding: 12px;
-            background-color: #151515;
+            background-color: #FF3F22;
             color: #F9F9F9 !important;
             font-family: 'din-next-lt-pro', sans-serif;
             font-weight: 700;

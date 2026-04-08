@@ -16,7 +16,6 @@ function panier_text_livraison_shortcode() {
             padding: 15px;
             border-radius: 8px;
             width: 100%;
-            margin: 20px auto;
         }
         .panier-livraison-text {
             font-family: "din-next-lt-pro", sans-serif;

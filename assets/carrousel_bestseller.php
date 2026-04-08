@@ -53,10 +53,12 @@ function shortcode_carousel_bestseller() {
             border: 1px solid #eee;
             padding: 10px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             border-radius: 10px;
-            height: 360px;
+            height: 30vh;
             box-sizing: border-box;
+            min-width: 25vw;
+            gap: 10px;
         }
         .carousel-item img {
             height: 180px;
@@ -98,14 +100,54 @@ function shortcode_carousel_bestseller() {
 			background: #FF3F22;
 		}
         @media screen and (max-width: 768px) {
+            .carousel-track {
+                padding: 10px 16px;
+                gap: 14px;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
             .carousel-item {
-                height: 300px;
+                flex-direction: column;
+                align-items: center;
+                min-width: 80vw;
+                max-width: 80vw;
+                height: auto;
+                padding: 14px 12px;
+                scroll-snap-align: start;
+                gap: 10px;
+            }
+            .carousel-item > a {
+                width: 100%;
+                display: flex;
+                justify-content: center;
             }
             .carousel-item img {
                 height: 140px;
+                width: auto;
+                max-width: 100%;
+                object-fit: contain;
+            }
+            .carousel-item-content {
+                width: 100%;
+                gap: 8px;
+            }
+            .carousel-item-title {
+                font-size: 15px;
+            }
+            .carousel-item-price {
+                font-size: 15px;
+            }
+            .carousel-item-footer {
+                justify-content: stretch;
             }
             .add-to-cart-ajax {
-                font-size: 12px;
+                font-size: 14px;
+                width: 100%;
+                padding: 10px 16px;
+                border-radius: 8px;
+            }
+            .carousel-btn {
+                display: none;
             }
         }
     </style>
@@ -150,11 +192,12 @@ function shortcode_carousel_bestseller() {
                         <div class="carousel-item-content">
                             <h3 class="carousel-item-title"><?php the_title(); ?></h3>
                             <span class="carousel-item-price"><?php echo $product->get_price_html(); ?></span>
+                            <div class="carousel-item-footer">
+                                <button class="add-to-cart-ajax" data-product-id="<?php echo $product->get_id(); ?>">Ajouter au panier</button>
+                            </div>
                         </div>
 
-                        <div class="carousel-item-footer">
-                            <button class="add-to-cart-ajax" data-product-id="<?php echo $product->get_id(); ?>">Ajouter au panier</button>
-                        </div>
+                        
                     </div>
                 <?php
                     endwhile;
