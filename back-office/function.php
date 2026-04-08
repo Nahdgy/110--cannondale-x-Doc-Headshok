@@ -1552,6 +1552,13 @@ function wccf_woocommerce_missing_notice() {
     <?php
 }
 
+add_action('admin_enqueue_scripts', 'cannondale_enqueue_category_order_admin_assets');
+function cannondale_enqueue_category_order_admin_assets($hook) {
+    if (($hook === 'term.php' || $hook === 'edit-tags.php') && isset($_GET['taxonomy']) && $_GET['taxonomy'] === 'product_cat') {
+        wp_enqueue_script('jquery-ui-sortable');
+    }
+}
+
 // Ajouter les champs à la page d'ajout de catégorie
 add_action('product_cat_add_form_fields', 'add_category_custom_fields');
 function add_category_custom_fields() {
@@ -1614,6 +1621,41 @@ function edit_category_custom_fields($term) {
     $gallery_ids = get_term_meta($term->term_id, 'category_gallery', true);
     $pdf_id = get_term_meta($term->term_id, 'category_pdf', true);
     $table_data = get_term_meta($term->term_id, 'category_table', true);
+    $stored_product_order = get_term_meta($term->term_id, 'category_product_order', true);
+
+    if (!is_array($stored_product_order)) {
+        $decoded_order = json_decode((string) $stored_product_order, true);
+        if (is_array($decoded_order)) {
+            $stored_product_order = $decoded_order;
+        } else {
+            $stored_product_order = array_filter(array_map('absint', explode(',', (string) $stored_product_order)));
+        }
+    }
+
+    $stored_product_order = array_values(array_filter(array_map('absint', (array) $stored_product_order)));
+
+    $product_ids_in_category = get_posts(array(
+        'post_type' => 'product',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'product_cat',
+                'field' => 'term_id',
+                'terms' => $term->term_id,
+            ),
+        ),
+        'orderby' => array(
+            'menu_order' => 'ASC',
+            'title' => 'ASC',
+        ),
+    ));
+
+    $ordered_product_ids = array_values(array_unique(array_merge(
+        array_values(array_intersect($stored_product_order, $product_ids_in_category)),
+        array_values(array_diff($product_ids_in_category, $stored_product_order))
+    )));
     ?>
     <tr class="form-field">
         <th scope="row" valign="top">
@@ -1726,6 +1768,39 @@ function edit_category_custom_fields($term) {
             <p class="description"><?php _e('Créez un tableau personnalisé pour cette catégorie. Vous pouvez ajuster le nombre de lignes et colonnes, puis cliquer dans chaque cellule pour ajouter du contenu.', 'woocommerce'); ?></p>
         </td>
     </tr>
+
+    <tr class="form-field">
+        <th scope="row" valign="top">
+            <label for="category_product_order"><?php _e('Ordre des produits (drag-and-drop)', 'woocommerce'); ?></label>
+        </th>
+        <td>
+            <p><?php _e('Glissez-deposez les produits pour definir leur ordre d\'affichage pour cette categorie.', 'woocommerce'); ?></p>
+            <input type="text" class="category-product-order-search regular-text" placeholder="Rechercher un produit..." style="margin-bottom:10px;" />
+
+            <?php if (!empty($ordered_product_ids)) : ?>
+                <ul class="category-product-order-list">
+                    <?php foreach ($ordered_product_ids as $product_id) :
+                        $product = wc_get_product($product_id);
+                        if (!$product) {
+                            continue;
+                        }
+                        $sku = $product->get_sku();
+                        ?>
+                        <li data-product-id="<?php echo esc_attr($product_id); ?>">
+                            <span class="drag-handle">&#9776;</span>
+                            <span class="product-order-title"><?php echo esc_html($product->get_name()); ?></span>
+                            <span class="product-order-meta">#<?php echo esc_html($product_id); ?><?php echo $sku ? ' - SKU: ' . esc_html($sku) : ''; ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else : ?>
+                <p><?php _e('Aucun produit publié dans cette catégorie.', 'woocommerce'); ?></p>
+            <?php endif; ?>
+
+            <input type="hidden" id="category_product_order" name="category_product_order" value="<?php echo esc_attr(wp_json_encode($ordered_product_ids)); ?>" />
+            <p class="description"><?php _e('Cet ordre est stocké pour cette catégorie uniquement.', 'woocommerce'); ?></p>
+        </td>
+    </tr>
     <?php
 }
 
@@ -1768,6 +1843,15 @@ function save_category_custom_fields($term_id) {
         } else {
             error_log('Invalid JSON for table data: ' . $table_value);
             error_log('JSON error: ' . json_last_error_msg());
+        }
+    }
+
+    if (isset($_POST['category_product_order'])) {
+        $decoded_order = json_decode(wp_unslash($_POST['category_product_order']), true);
+
+        if (is_array($decoded_order)) {
+            $sanitized_order = array_values(array_filter(array_map('absint', $decoded_order)));
+            update_term_meta($term_id, 'category_product_order', $sanitized_order);
         }
     }
 }
@@ -1993,6 +2077,41 @@ function category_custom_fields_scripts() {
                     updateTableData();
                 }
             }, 2000);
+
+            function refreshCategoryProductOrderInput() {
+                var orderedIds = [];
+                $('.category-product-order-list li').each(function() {
+                    orderedIds.push(parseInt($(this).attr('data-product-id'), 10));
+                });
+
+                $('#category_product_order').val(JSON.stringify(orderedIds.filter(function(id) {
+                    return !isNaN(id) && id > 0;
+                })));
+            }
+
+            if ($('.category-product-order-list').length > 0) {
+                $('.category-product-order-list').sortable({
+                    axis: 'y',
+                    placeholder: 'category-product-order-placeholder',
+                    update: function() {
+                        refreshCategoryProductOrderInput();
+                    }
+                });
+
+                refreshCategoryProductOrderInput();
+            }
+
+            $(document).on('input', '.category-product-order-search', function() {
+                var needle = ($(this).val() || '').toLowerCase().trim();
+                $('.category-product-order-list li').each(function() {
+                    var haystack = $(this).text().toLowerCase();
+                    $(this).toggle(haystack.indexOf(needle) !== -1);
+                });
+            });
+
+            $('form').on('submit', function() {
+                refreshCategoryProductOrderInput();
+            });
         });
         </script>
         <?php

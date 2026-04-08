@@ -74,6 +74,41 @@ function afficher_produits_par_modele() {
     $category_table = json_decode($table_data, true);
   }
 
+	$stored_product_order = get_term_meta($term->term_id, 'category_product_order', true);
+	if (!is_array($stored_product_order)) {
+		$decoded_product_order = json_decode((string) $stored_product_order, true);
+		if (is_array($decoded_product_order)) {
+			$stored_product_order = $decoded_product_order;
+		} else {
+			$stored_product_order = explode(',', (string) $stored_product_order);
+		}
+	}
+
+	$stored_product_order = array_values(array_filter(array_map('absint', (array) $stored_product_order)));
+
+	$all_product_ids_in_category = get_posts([
+		'post_type' => 'product',
+		'post_status' => 'publish',
+		'posts_per_page' => -1,
+		'fields' => 'ids',
+		'tax_query' => [
+			[
+				'taxonomy' => 'product_cat',
+				'field'    => 'slug',
+				'terms'    => $slug,
+			],
+		],
+		'orderby' => [
+			'menu_order' => 'ASC',
+			'title' => 'ASC',
+		],
+	]);
+
+	$ordered_product_ids = array_values(array_unique(array_merge(
+		array_values(array_intersect($stored_product_order, $all_product_ids_in_category)),
+		array_values(array_diff($all_product_ids_in_category, $stored_product_order))
+	)));
+
   // 👉 D'abord exécuter la requête pour récupérer les produits
 	// Récupération de tous les produits pour JS (pour bouton voir plus)
 	$args_all = [
@@ -88,6 +123,16 @@ function afficher_produits_par_modele() {
 			],
 		],
 	];
+
+	if (!empty($ordered_product_ids)) {
+		$args_all['post__in'] = $ordered_product_ids;
+		$args_all['orderby'] = 'post__in';
+	} else {
+		$args_all['orderby'] = [
+			'menu_order' => 'ASC',
+			'title' => 'ASC',
+		];
+	}
 	$loop_all = new WP_Query($args_all);
 	$all_produits = [];
 	if ($loop_all->have_posts()) {
@@ -124,6 +169,16 @@ function afficher_produits_par_modele() {
 			],
 		],
 	];
+
+	if (!empty($ordered_product_ids)) {
+		$args['post__in'] = $ordered_product_ids;
+		$args['orderby'] = 'post__in';
+	} else {
+		$args['orderby'] = [
+			'menu_order' => 'ASC',
+			'title' => 'ASC',
+		];
+	}
 
 	$loop = new WP_Query($args);
 	$produits_total = $loop_all->found_posts;
