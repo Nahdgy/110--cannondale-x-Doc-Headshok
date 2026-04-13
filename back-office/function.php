@@ -135,6 +135,7 @@ if ( ! function_exists( 'hello_elementor_scripts_styles' ) ) {
                 HELLO_ELEMENTOR_VERSION
             );
         }
+
     }
 }
 add_action( 'wp_enqueue_scripts', 'hello_elementor_scripts_styles' );
@@ -3456,6 +3457,148 @@ function cannondale_move_orders_button_before_personal_options() {
     </script>
     <?php
 }
+add_filter('woocommerce_checkout_fields', 'cannondale_checkout_fields_maquette');
+function cannondale_checkout_fields_maquette($fields) {
+    if (function_exists('is_checkout') && !is_checkout()) {
+        return $fields;
+    }
+
+    // Force optional company fields for both address blocks, regardless of locale defaults.
+    if (!isset($fields['billing']['billing_company'])) {
+        $fields['billing']['billing_company'] = array(
+            'type' => 'text',
+            'label' => 'Raison sociale (facultatif)',
+            'required' => false,
+            'class' => array('form-row-wide'),
+            'priority' => 20,
+            'autocomplete' => 'organization',
+        );
+    }
+
+    if (!isset($fields['shipping']['shipping_company'])) {
+        $fields['shipping']['shipping_company'] = array(
+            'type' => 'text',
+            'label' => 'Raison sociale (facultatif)',
+            'required' => false,
+            'class' => array('form-row-wide'),
+            'priority' => 20,
+            'autocomplete' => 'organization',
+        );
+    }
+
+    $billing_layout = array(
+        'billing_country' => array('priority' => 10, 'class' => array('form-row-wide')),
+        'billing_company' => array('priority' => 20, 'required' => false, 'class' => array('form-row-wide')),
+        'billing_first_name' => array('priority' => 30, 'class' => array('form-row-first')),
+        'billing_last_name' => array('priority' => 40, 'class' => array('form-row-last')),
+        'billing_address_1' => array('priority' => 50, 'class' => array('form-row-wide')),
+        'billing_address_2' => array('priority' => 60, 'required' => false, 'class' => array('form-row-wide')),
+        'billing_postcode' => array('priority' => 70, 'class' => array('form-row-first')),
+        'billing_city' => array('priority' => 80, 'class' => array('form-row-last')),
+        'billing_phone' => array('priority' => 90, 'required' => false, 'class' => array('form-row-wide')),
+        'billing_email' => array('priority' => 100, 'class' => array('form-row-wide')),
+    );
+
+    $shipping_layout = array(
+        'shipping_country' => array('priority' => 10, 'class' => array('form-row-wide')),
+        'shipping_company' => array('priority' => 20, 'required' => false, 'class' => array('form-row-wide')),
+        'shipping_first_name' => array('priority' => 30, 'class' => array('form-row-first')),
+        'shipping_last_name' => array('priority' => 40, 'class' => array('form-row-last')),
+        'shipping_address_1' => array('priority' => 50, 'class' => array('form-row-wide')),
+        'shipping_address_2' => array('priority' => 60, 'required' => false, 'class' => array('form-row-wide')),
+        'shipping_postcode' => array('priority' => 70, 'class' => array('form-row-first')),
+        'shipping_city' => array('priority' => 80, 'class' => array('form-row-last')),
+    );
+
+    foreach ($billing_layout as $field_key => $config) {
+        if (!isset($fields['billing'][$field_key])) {
+            continue;
+        }
+
+        foreach ($config as $prop => $value) {
+            $fields['billing'][$field_key][$prop] = $value;
+        }
+    }
+
+    foreach ($shipping_layout as $field_key => $config) {
+        if (!isset($fields['shipping'][$field_key])) {
+            continue;
+        }
+
+        foreach ($config as $prop => $value) {
+            $fields['shipping'][$field_key][$prop] = $value;
+        }
+    }
+
+    if (isset($fields['order']['order_comments'])) {
+        $fields['order']['order_comments']['placeholder'] = 'Ajouter une note a votre commande';
+        $fields['order']['order_comments']['class'] = array('form-row-wide');
+    }
+
+    // Prefill company fields from the custom account field when available.
+    $current_user_id = get_current_user_id();
+    if ($current_user_id > 0) {
+        $company_name = trim((string) get_user_meta($current_user_id, 'raison_sociale', true));
+
+        if ($company_name !== '') {
+            if (isset($fields['billing']['billing_company'])) {
+                $fields['billing']['billing_company']['default'] = $company_name;
+            }
+
+            if (isset($fields['shipping']['shipping_company'])) {
+                $fields['shipping']['shipping_company']['default'] = $company_name;
+            }
+        }
+    }
+
+    return $fields;
+}
+
+add_filter('woocommerce_ship_to_different_address_checked', '__return_true');
+
+function cannondale_is_checkout_request_context() {
+    if (function_exists('is_order_received_page') && is_order_received_page()) {
+        return false;
+    }
+
+    if (function_exists('is_checkout') && is_checkout()) {
+        return true;
+    }
+
+    if (!empty($_REQUEST['wc-ajax'])) {
+        $wc_ajax_action = sanitize_key(wp_unslash($_REQUEST['wc-ajax']));
+        return in_array($wc_ajax_action, array('update_order_review', 'apply_coupon', 'remove_coupon'), true);
+    }
+
+    return false;
+}
+
+add_filter('woocommerce_cart_item_name', 'cannondale_checkout_review_item_with_image', 20, 3);
+function cannondale_checkout_review_item_with_image($item_name, $cart_item, $cart_item_key) {
+    if (!cannondale_is_checkout_request_context()) {
+        return $item_name;
+    }
+
+    if (empty($cart_item['data']) || !is_a($cart_item['data'], 'WC_Product')) {
+        return $item_name;
+    }
+
+    $product = $cart_item['data'];
+    $image = $product->get_image(
+        array(48, 48),
+        array(
+            'class' => 'checkout-review-item__image',
+            'loading' => 'lazy',
+        )
+    );
+
+    if (empty($image)) {
+        return $item_name;
+    }
+
+    return '<span class="checkout-review-item">' . $image . '<span class="checkout-review-item__title">' . $item_name . '</span></span>';
+}
+
 require HELLO_THEME_PATH . '/theme.php';
 
 HelloTheme\Theme::instance();
