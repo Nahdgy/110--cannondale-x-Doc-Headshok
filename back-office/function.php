@@ -262,23 +262,53 @@ add_filter( 'rank_math/frontend/robots', function( $robots ) {
 });
 add_filter( 'rank_math/frontend/canonical', function( $canonical ) {
 
-    if ( isset($_GET['pratique']) && isset($_GET['modele']) ) {
-        return home_url( add_query_arg( null, null ) );
+    if ( is_page('detail-velo') ) {
+        $pratique = get_query_var('pratique');
+        $modele = get_query_var('modele');
+
+        if ( !$pratique && isset($_GET['pratique']) ) {
+            $pratique = sanitize_title(wp_unslash($_GET['pratique']));
+        }
+
+        if ( !$modele && isset($_GET['modele']) ) {
+            $modele = sanitize_title(wp_unslash($_GET['modele']));
+        }
+
+        if ( $pratique && $modele ) {
+            return home_url('/velo/' . $pratique . '/' . $modele . '/');
+        }
     }
 
     return $canonical;
 
 });
 // Rewrite URL propre vers page dynamique
-add_action('init', function() {
-
+function cannondale_register_detail_velo_rewrite_rule() {
     add_rewrite_rule(
         '^velo/([^/]+)/([^/]+)/?$',
         'index.php?pagename=detail-velo&pratique=$matches[1]&modele=$matches[2]',
         'top'
     );
+}
+add_action('init', 'cannondale_register_detail_velo_rewrite_rule', 9);
 
-});
+function cannondale_maybe_flush_detail_velo_rewrite_rules() {
+    if (wp_installing()) {
+        return;
+    }
+
+    $rewrite_version = '2026-04-14-1';
+    $stored_version = get_option('cannondale_detail_velo_rewrite_version');
+
+    if ($stored_version === $rewrite_version) {
+        return;
+    }
+
+    cannondale_register_detail_velo_rewrite_rule();
+    flush_rewrite_rules(false);
+    update_option('cannondale_detail_velo_rewrite_version', $rewrite_version, false);
+}
+add_action('init', 'cannondale_maybe_flush_detail_velo_rewrite_rules', 20);
 
 // Autoriser les query vars
 add_filter('query_vars', function($vars) {
@@ -290,7 +320,9 @@ add_action('template_redirect', function() {
 
     if (is_page('detail-velo') && isset($_GET['modele']) && isset($_GET['pratique'])) {
 
-        $url = home_url('/velo/' . sanitize_text_field($_GET['pratique']) . '/' . sanitize_text_field($_GET['modele']) . '/');
+        $pratique = sanitize_title(wp_unslash($_GET['pratique']));
+        $modele = sanitize_title(wp_unslash($_GET['modele']));
+        $url = home_url('/velo/' . $pratique . '/' . $modele . '/');
 
         wp_redirect($url, 301);
         exit;
