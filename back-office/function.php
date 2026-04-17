@@ -260,190 +260,1045 @@ add_filter( 'rank_math/frontend/robots', function( $robots ) {
 
     return $robots;
 });
-add_filter( 'rank_math/frontend/canonical', function( $canonical ) {
+// Configuration optimisée pour snippets Elementor avec code inline
+// Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
 
-    if ( is_page('detail-velo') ) {
-        $pratique = get_query_var('pratique');
-        $modele = get_query_var('modele');
-
-        if ( !$pratique && isset($_GET['pratique']) ) {
-            $pratique = sanitize_title(wp_unslash($_GET['pratique']));
-        }
-
-        if ( !$modele && isset($_GET['modele']) ) {
-            $modele = sanitize_title(wp_unslash($_GET['modele']));
-        }
-
-        if ( $pratique && $modele ) {
-            return home_url('/velo/' . $pratique . '/' . $modele . '/');
-        }
-    }
-
-    return $canonical;
-
-});
-// Rewrite URL propre vers page dynamique
-function cannondale_register_detail_velo_rewrite_rule() {
+// Réécriture de l'url clasique des products catégory
+function custom_rewrite_velo() {
     add_rewrite_rule(
         '^velo/([^/]+)/([^/]+)/?$',
-        'index.php?pagename=detail-velo&pratique=$matches[1]&modele=$matches[2]',
+        'index.php?pratique=$matches[1]&modele=$matches[2]',
         'top'
     );
 }
-add_action('init', 'cannondale_register_detail_velo_rewrite_rule', 9);
+add_action('init', 'custom_rewrite_velo');
 
-function cannondale_maybe_flush_detail_velo_rewrite_rules() {
-    if (wp_installing()) {
-        return;
-    }
-
-    $rewrite_version = '2026-04-14-1';
-    $stored_version = get_option('cannondale_detail_velo_rewrite_version');
-
-    if ($stored_version === $rewrite_version) {
-        return;
-    }
-
-    cannondale_register_detail_velo_rewrite_rule();
-    flush_rewrite_rules(false);
-    update_option('cannondale_detail_velo_rewrite_version', $rewrite_version, false);
-}
-add_action('init', 'cannondale_maybe_flush_detail_velo_rewrite_rules', 20);
-
-// Autoriser les query vars
-add_filter('query_vars', function($vars) {
+//Déclarations des query vars nécessaires à la récupérations des informations par le code de page dynamique
+function custom_query_vars($vars) {
     $vars[] = 'pratique';
     $vars[] = 'modele';
     return $vars;
-});
-add_action('template_redirect', function() {
+}
+add_filter('query_vars', 'custom_query_vars');
 
-    if (is_page('detail-velo') && isset($_GET['modele']) && isset($_GET['pratique'])) {
-
-        $pratique = sanitize_title(wp_unslash($_GET['pratique']));
-        $modele = sanitize_title(wp_unslash($_GET['modele']));
-        $url = home_url('/velo/' . $pratique . '/' . $modele . '/');
-
-        wp_redirect($url, 301);
-        exit;
+// Routing vers le code du template 
+function custom_template_modele($template) {
+    if (get_query_var('modele')) {
+        return get_template_directory() . '/template-modele.php';
     }
+    return $template;
+}
+add_filter('template_include', 'custom_template_modele');
 
-});
+//Fonction de détail modèle vélo
+if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
+	function afficher_produits_par_modele() {
 
-//Système de redirection des pages wordpress product-category
-add_action('template_redirect', function() {
+		ob_start();
 
-    if (is_product_category()) {
+		$modele   = get_query_var('modele');
+		$pratique = get_query_var('pratique');
 
-        $term = get_queried_object();
+	
 
-        if (!$term || empty($term->slug)) {
-            return;
-        }
+		if (!$modele) {
+			echo '<p>Aucun modèle sélectionné.</p>';
+			return ob_get_clean();
+		}
 
-        // Récupérer la hiérarchie
-        $ancestors = get_ancestors($term->term_id, 'product_cat');
-        $ancestors = array_reverse($ancestors);
+		$slug = sanitize_text_field($modele);
+		$modele_slug = $slug;
+		$instance_id = 'pm_' . preg_replace('/[^A-Za-z0-9_]/', '', wp_generate_password(8, false, false));
+		$tri_select_id = 'tri-sous-categories-' . $instance_id;
+		$grille_id = 'grille-produits-modele-' . $instance_id;
+		$voir_plus_id = 'voir-plus-' . $instance_id;
+		$nombre_produits_id = 'nombre-produits-' . $instance_id;
+		$modal_id = 'modalZoom-' . $instance_id;
+		$image_zoom_id = 'imageZoomee-' . $instance_id;
+		$zoom_instructions_id = 'zoom-instructions-' . $instance_id;
+		$open_zoom_function = 'ouvrirImageZoom_' . $instance_id;
+		$close_zoom_function = 'fermerImageZoom_' . $instance_id;
+		$term = get_term_by('slug', $slug, 'product_cat');
+		if ($term && $pratique) {
+			$parent = get_term($term->parent, 'product_cat');
 
-        $segments = [];
+			if (!$parent || $parent->slug !== $pratique) {
+				return '<p>Modèle invalide.</p>';
+			}
+		}
+		if (!$term) {
+			echo '<p>Modèle introuvable.</p>';
+			return ob_get_clean();
+		}
 
-        foreach ($ancestors as $ancestor_id) {
-            $ancestor = get_term($ancestor_id, 'product_cat');
-            if ($ancestor && !is_wp_error($ancestor)) {
-                $segments[] = $ancestor->slug;
-            }
-        }
+	// Récupération des champs personnalisés de la catégorie
+	$chemin_pdf = '';
+	$pdf_id = get_term_meta($term->term_id, 'category_pdf', true);
+	if ($pdf_id) {
+		$chemin_pdf = wp_get_attachment_url($pdf_id);
+	}
+	
+	// Récupération de la galerie d'images de la catégorie
+		$gallery_ids = get_term_meta($term->term_id, 'category_gallery', true);
+		$category_images = [];
+		if (!empty($gallery_ids)) {
+			if (is_array($gallery_ids)) {
+				$gallery_array = $gallery_ids;
+			} else {
+				$gallery_array = explode(',', (string) $gallery_ids);
+			}
 
-        $segments[] = $term->slug;
+			$gallery_array = array_filter(array_map('absint', $gallery_array));
 
-        // On suppose que la structure est velo/pratique/modele
-        if (count($segments) >= 3) {
+			foreach ($gallery_array as $image_id) {
+				$image_url = wp_get_attachment_image_url($image_id, 'medium');
+				$image_full_url = wp_get_attachment_image_url($image_id, 'full');
+				if ($image_url) {
+					$category_images[] = [
+						'medium' => $image_url,
+						'full' => $image_full_url ?: $image_url,
+						'title' => get_the_title($image_id)
+					];
+				}
+			}
+		}
+	
+	// Récupération du tableau personnalisé de la catégorie
+	$table_data = get_term_meta($term->term_id, 'category_table', true);
+	$category_table = null;
+	if ($table_data) {
+		$category_table = json_decode($table_data, true);
+	}
 
-            $pratique = $segments[1];
-            $modele   = $segments[2];
+		$stored_product_order = get_term_meta($term->term_id, 'category_product_order', true);
+		if (!is_array($stored_product_order)) {
+			$decoded_product_order = json_decode((string) $stored_product_order, true);
+			if (is_array($decoded_product_order)) {
+				$stored_product_order = $decoded_product_order;
+			} else {
+				$stored_product_order = explode(',', (string) $stored_product_order);
+			}
+		}
 
-            $new_url = home_url('/velo/' . $pratique . '/' . $modele . '/');
+		$stored_product_order = array_values(array_filter(array_map('absint', (array) $stored_product_order)));
 
-            wp_redirect($new_url, 301);
-            exit;
-        }
-    }
+		$all_product_ids_in_category = get_posts([
+			'post_type' => 'product',
+			'post_status' => 'publish',
+			'posts_per_page' => -1,
+			'fields' => 'ids',
+			'tax_query' => [
+				[
+					'taxonomy' => 'product_cat',
+					'field'    => 'slug',
+					'terms'    => $slug,
+				],
+			],
+			'orderby' => [
+				'menu_order' => 'ASC',
+				'title' => 'ASC',
+			],
+		]);
 
-});
+		$ordered_product_ids = array_values(array_unique(array_merge(
+			array_values(array_intersect($stored_product_order, $all_product_ids_in_category)),
+			array_values(array_diff($all_product_ids_in_category, $stored_product_order))
+		)));
 
-//Système de redirection des page wordpress product-tag
-add_action('template_redirect', function() {
+	// 👉 D'abord exécuter la requête pour récupérer les produits
+		// Récupération de tous les produits pour JS (pour bouton voir plus)
+		$args_all = [
+			'post_type' => 'product',
+			'post_status' => 'publish',
+			'posts_per_page' => -1,
+			'tax_query' => [
+				[
+					'taxonomy' => 'product_cat',
+					'field'    => 'slug',
+					'terms'    => $slug,
+				],
+			],
+		];
 
-    if (is_product_tag()) {
+		if (!empty($ordered_product_ids)) {
+			$args_all['post__in'] = $ordered_product_ids;
+			$args_all['orderby'] = 'post__in';
+		} else {
+			$args_all['orderby'] = [
+				'menu_order' => 'ASC',
+				'title' => 'ASC',
+			];
+		}
+		$loop_all = new WP_Query($args_all);
+		$all_produits = [];
+		if ($loop_all->have_posts()) {
+			while ($loop_all->have_posts()) {
+				$loop_all->the_post();
+				global $product;
+				$thumbnail = get_the_post_thumbnail($product->get_id(), 'medium');
+				if (!$thumbnail) {
+					$thumbnail = '<img src="' . wc_placeholder_img_src('medium') . '" alt="Image par défaut" />';
+				}
+				$all_produits[] = [
+					'permalink' => get_permalink(),
+					'thumbnail' => $thumbnail,
+					'title' => get_the_title(),
+					'price_html' => $product->get_price_html(),
+					'id' => $product->get_id(),
+					'sku' => $product->get_sku(),
+					'name' => $product->get_name(),
+				];
+			}
+			wp_reset_postdata();
+		}
 
-        $tag = get_queried_object();
+		$limite_affichage = 18;
+		$args = [
+			'post_type' => 'product',
+			'post_status' => 'publish',
+			'posts_per_page' => $limite_affichage,
+			'tax_query' => [
+				[
+					'taxonomy' => 'product_cat',
+					'field'    => 'slug',
+					'terms'    => $slug,
+				],
+			],
+		];
 
-        if (!$tag || empty($tag->term_id)) {
-            return;
-        }
+		if (!empty($ordered_product_ids)) {
+			$args['post__in'] = $ordered_product_ids;
+			$args['orderby'] = 'post__in';
+		} else {
+			$args['orderby'] = [
+				'menu_order' => 'ASC',
+				'title' => 'ASC',
+			];
+		}
 
-        // Chercher un produit avec ce tag
-        $args = [
-            'post_type'      => 'product',
-            'posts_per_page' => 1,
-            'tax_query' => [
-                [
-                    'taxonomy'         => 'product_cat',
-                    'field'            => 'term_id',
-                    'terms'            => $tag->term_id,
-                    'include_children' => false,
-                ],
-            ],
-        ];
+		$loop = new WP_Query($args);
+		$produits_total = $loop_all->found_posts;
 
-        $query = new WP_Query($args);
+	// 👉 Ensuite, afficher le HTML
+	?>
+	<style>
+			.produits-par-modele-wrapper {
+                display: block;
+                width: 100%;
+				padding: 24px 20px 40px;
+				box-sizing: border-box;
+                background: #ffffff;
+                border: 1px solid #dcdcdc;
+                border-radius: 12px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+                margin: 0 0 24px;
+			}
 
-        if ($query->have_posts()) {
+			#<?php echo esc_attr($voir_plus_id); ?> {
+				display: block;
+				margin: 20px auto 0;
+				background-color: #000;
+				color: #fff;
+				padding: 10px 20px;
+				font-size: 14px;
+				font-family: 'din-next-lt-pro', sans-serif;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			#<?php echo esc_attr($voir_plus_id); ?>:hover {
+				background-color: #FF3F22;
+				color: #fff;
+			}
+		.grille-produits-modele {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+		}
 
-            $query->the_post();
+		.produit-modele {
+		background-color: #F7F7F7;
+		padding: 15px;
+		border-radius: 6px;
+		text-align: center;
+		position: relative;
+		transition: transform 0.3s ease;
+		display: flex;
+		flex-direction: column;
+		min-height: 400px;
+		box-sizing: border-box;
+		}
 
-            $categories = wp_get_post_terms(get_the_ID(), 'product_cat');
+		.produit-modele:hover {
+		transform: scale(1.03);
+		box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+		}
 
-            if (!empty($categories)) {
+		.produit-modele img {
+		max-width: 100%;
+		height: auto;
+		margin-bottom: 18px;
+		border-radius: 6px;
+		background: #fff;
+		box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+		object-fit: contain;
+		}
 
-                foreach ($categories as $cat) {
+		.info-produit {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: space-between;
+		height: 100%;
+		flex-grow: 1;
+		}
 
-                    $ancestors = get_ancestors($cat->term_id, 'product_cat');
-                    $ancestors = array_reverse($ancestors);
+		.texte-produit h3 {
+		font-size: 16px;
+		font-weight: 600;
+		margin: 10px 0;
+		color: #000 !important;
+		text-align: left;
+		}
 
-                    $segments = [];
+		.texte-produit p {
+		font-size: 14px;
+		color: #444;
+		margin: 0;
+		text-align: left;
+		}
 
-                    foreach ($ancestors as $ancestor_id) {
-                        $ancestor = get_term($ancestor_id, 'product_cat');
-                        if ($ancestor && !is_wp_error($ancestor)) {
-                            $segments[] = $ancestor->slug;
-                        }
-                    }
+		.bouton-ajouter-panier {
+		align-self: flex-end;
+		background-color: #000000 !important;
+		color: #ffffff !important;
+		width: 100%;
+		border-radius: 6px;
+		padding: 10px;
+		text-align: center;
+		font-size: 16px;
+		font-weight: 600;
+		text-decoration: none;
+		margin-top: 5px;
+		transition: background-color 0.3s ease;
+		}
 
-                    $segments[] = $cat->slug;
+		.bouton-ajouter-panier:hover {
+		background-color: #000000 !important;
+		color: #ffffff !important;
+		}
 
-                    if (count($segments) >= 3) {
+		.barre-tri {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 5px;
+		}
+		#<?php echo esc_attr($nombre_produits_id); ?> {
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-weight: 300;
+		font-size: 24px;
+		color: black;
+		margin-right: 2rem;
+		}
+		.tri-container {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		}
+		.tri-container label {
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-weight: 300;
+		font-size: 16px;
+		color: #000;
+		margin-bottom: 0;
+		}
+		#<?php echo esc_attr($tri_select_id); ?> {
+		width: 160px;
+		padding: 6px 8px;
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-size: 14px;
+		}
+		.separator-red {
+		border: none;
+		border-top: 2px solid #FF3F22;
+		margin: 18px 0;
+		}
 
-                        $pratique = $segments[1];
-                        $modele   = $segments[2];
+		.titre-et-manuel {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		margin-bottom: 15px;
+		gap: 10px;
+		}
 
-                        $new_url = home_url('/velo/' . $pratique . '/' . $modele . '/');
+		.titre-modele {
+		font-family: Helvetica, sans-serif;
+		font-weight: 700;
+		font-size: 42px;
+		color: #000000;
+		margin: 0;
+		}
 
-                        wp_redirect($new_url, 301);
-                        exit;
-                    }
-                }
-            }
+		.produits-affiches {
+		font-family: 'DIN Next LT Pro', sans-serif;
+		font-weight: 300;
+		font-size: 24px;
+		color: #656565;
+		margin-left: 10px;
+		}
 
-            wp_reset_postdata();
-        }
-    }
+		.bouton-manuel {
+		background-color: #151515 !important;
+		color: #F9F9F9 !important;
+		padding: 10px 20px;
+		border-radius: 6px;
+		text-decoration: none;
+		font-weight: 700;
+		font-size: 16px;
+		font-family: 'DIN Next LT Pro', sans-serif;
+		white-space: nowrap;
+		transition: background-color 0.3s ease;
+		}
 
-});
+		.bouton-manuel:hover {
+		background-color: #000 !important;
+		}
 
+		.images-et-essentiel {
+		display: flex;
+		gap: 30px;
+		flex-wrap: wrap;
+		margin-bottom: 30px;
+		flex-direction: column;
+		}
 
-// Configuration optimisée pour snippets Elementor avec code inline
-// Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
+		.images-modele {
+		display: flex;
+		gap: 15px;
+		flex-wrap: wrap;
+		max-width: 70%;
+		}
+
+		.modele-image {
+		max-width: 150px;
+		height: auto;
+		border: 1px solid #ccc;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: transform 0.2s ease;
+		}
+
+		.modele-image:hover {
+		transform: scale(1.05);
+		}
+
+		.boite-essentiel {
+		background-color: #F7F7F7;
+		padding: 20px;
+		border-radius: 8px;
+		flex: 0 0 250px; /* ✅ réduit la largeur */
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-start; /* ✅ pour aligner le titre en haut */
+		min-height: 200px;
+		}
+
+		.titre-essentiel {
+		font-family: 'DIN Next LT Pro', sans-serif;
+		font-size: 20px;
+		font-weight: 700;
+		margin-bottom: 15px;
+		text-align: center;
+		width: 100%;
+		}
+
+		.contenu-essentiel {
+		text-align: left;
+		font-size: 14px;
+		color: #444;
+		width: 100%;
+		}
+
+		/* MODAL ZOOM IMAGE */
+		#<?php echo esc_attr($modal_id); ?> {
+		display: none;
+		position: fixed;
+		z-index: 9999;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		overflow: auto;
+		background-color: rgba(0,0,0,0.9);
+		padding: 0;
+		}
+
+		.modal-content-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 100vh;
+		padding: 20px;
+		gap: 30px;
+		}
+
+		.main-image-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		}
+
+		#<?php echo esc_attr($modal_id); ?> img {
+		max-height: 60vh;
+		max-width: 50vw;
+		height: auto;
+		width: auto;
+		cursor: zoom-in;
+		transition: transform 0.3s ease;
+		object-fit: contain;
+		transform-origin: center center;
+		}
+
+		#<?php echo esc_attr($modal_id); ?> .close {
+		position: absolute;
+		top: 20px;
+		right: 35px;
+		color: #fff;
+		font-size: 40px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: 0.3s;
+		z-index: 10001;
+		}
+
+		#<?php echo esc_attr($zoom_instructions_id); ?> {
+		position: absolute;
+		bottom: 20px;
+		left: 50%;
+		transform: translateX(-50%);
+		color: #fff;
+		background: rgba(0, 0, 0, 0.7);
+		padding: 10px 20px;
+		border-radius: 5px;
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-size: 14px;
+		z-index: 10001;
+		}
+
+		/* STYLES POUR LE TABLEAU PERSONNALISÉ DE CATÉGORIE */
+		.tableau-category {
+		margin: 30px 0;
+		background-color: #f9f9f9;
+		padding: 20px;
+		border-radius: 8px;
+		}
+
+		.titre-tableau {
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-size: 24px;
+		font-weight: 700;
+		margin-bottom: 15px;
+		text-align: center;
+		color: #000;
+		}
+
+		.category-table-display {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 20px 0;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		background: white;
+		}
+
+		.category-table-display td {
+		border: 1px solid #ddd;
+		padding: 12px;
+		background: #f9f9f9;
+		transition: background 0.3s ease;
+		font-family: 'din-next-lt-pro', sans-serif;
+		font-size: 14px;
+		}
+
+		.category-table-display tr:nth-child(even) td {
+		background: #f1f1f1;
+		}
+
+		.category-table-display tr:hover td {
+		background: #e8f4f8;
+		}
+
+		.category-table-display tr:first-child td {
+		font-weight: 600;
+		background: #e0e0e0 !important;
+		color: #000;
+		}
+
+		/* Responsive Design */
+		@media screen and (max-width: 1129px) {
+			.grille-produits-modele {
+			grid-template-columns: repeat(2, 1fr);
+			}
+			.barre-tri {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 15px;
+			}
+			.tri-container {
+			justify-content: center;
+			flex-wrap: wrap;
+			}
+		}
+		@media (max-width: 1024px) {
+			.modal-content-container {
+				flex-direction: column;
+				gap: 20px;
+			}
+			
+			#<?php echo esc_attr($modal_id); ?> img {
+				max-width: 90vw;
+				max-height: 70vh;
+			}
+		}
+		
+		@media screen and (max-width: 768px) {
+				.produits-par-modele-wrapper {
+					padding: 20px 12px 32px;
+				}
+
+			.grille-produits-modele {
+			grid-template-columns: repeat(2, 1fr);
+			gap: 10px;
+			}
+			.produit-modele {
+			min-height: 0px;
+			}
+			.texte-produit h3 {
+			font-size: 14px;
+			}
+			.bouton-ajouter-panier {
+			padding: 8px 12px;
+			font-size: 14px;
+			}
+			.barre-tri {
+			flex-direction: column;
+			gap: 10px;
+			}
+			#<?php echo esc_attr($tri_select_id); ?> {
+			width: 100px;
+			}
+		}
+	</style>
+		<div class="produits-par-modele-wrapper">
+		<div class="titre-et-manuel">
+		<h1 class="titre-modele">
+			<?php echo esc_html($term->name); ?>
+		</h1>
+
+		<?php if ($chemin_pdf): ?>
+			<a href="<?php echo esc_url($chemin_pdf); ?>" download class="bouton-manuel">TÉLÉCHARGER LE MANUEL</a>
+		<?php else: ?>
+			<p style="color: #777; font-size: 14px;">Aucun manuel PDF disponible.</p>
+		<?php endif; ?>
+		</div>
+
+		<div class="images-et-essentiel">
+		<div class="images-modele">
+			<?php
+			// Afficher d'abord les images de la galerie de catégorie
+			if (!empty($category_images)) {
+				foreach ($category_images as $img) {
+				echo '<img src="' . esc_url($img['medium']) . '" alt="' . esc_attr($img['title']) . '" class="modele-image" onclick="' . esc_attr($open_zoom_function) . '(&quot;' . esc_url($img['full']) . '&quot;)">';
+				}
+			} else {
+				// Si pas d'images dans la galerie de catégorie, utiliser l'ancienne méthode
+				$images_args = [
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'image',
+				'posts_per_page' => -1,
+				'post_status'    => 'inherit',
+				's'              => $modele_slug
+				];
+
+				$images_query = new WP_Query($images_args);
+
+				if ($images_query->have_posts()) {
+				while ($images_query->have_posts()) {
+					$images_query->the_post();
+					$image_url = wp_get_attachment_image_src(get_the_ID(), 'medium')[0];
+					$image_full_url = wp_get_attachment_image_src(get_the_ID(), 'full')[0];
+					echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr(get_the_title()) . '" class="modele-image" onclick="' . esc_attr($open_zoom_function) . '(&quot;' . esc_url($image_full_url) . '&quot;)">';
+				}
+				wp_reset_postdata();
+				} else {
+				echo '<p style="font-size: 14px; color: #777;">Aucune image disponible pour ce modèle.</p>';
+				}
+			}
+			?>
+		</div>
+
+		<?php
+		// Affichage du tableau personnalisé de la catégorie (si disponible)
+		if ($category_table && isset($category_table['rows']) && isset($category_table['cols']) && isset($category_table['data'])) {
+			echo '<div class="tableau-category">';
+			echo '<h3 class="titre-tableau">Informations techniques</h3>';
+			echo '<table class="category-table-display">';
+			for ($i = 0; $i < $category_table['rows']; $i++) {
+			echo '<tr>';
+			for ($j = 0; $j < $category_table['cols']; $j++) {
+				$cell_content = isset($category_table['data'][$i][$j]) ? $category_table['data'][$i][$j] : '';
+				echo '<td>' . esc_html($cell_content) . '</td>';
+			}
+			echo '</tr>';
+			}
+			echo '</table>';
+			echo '</div>';
+		}
+		?>
+		</div>
+
+	<div id="produits-filtrables-container" style="display:flex; flex-direction: column; gap:20px; margin-bottom: 2%;">
+		<div class="barre-tri">
+		<div style="display: flex; align-items: center;">
+					<div id="<?php echo esc_attr($nombre_produits_id); ?>">
+			<span class="produits-affiches"><?php echo $produits_total; ?> résultats</span>
+			</div>
+		</div>
+		<div class="tri-container">
+					<label for="<?php echo esc_attr($tri_select_id); ?>">Trier par :</label>
+					<select id="<?php echo esc_attr($tri_select_id); ?>">
+			<option value="default">Tri par défaut</option>
+			<option value="alpha">Ordre alphabétique A-Z</option>
+			<option value="alpha-desc">Ordre alphabétique Z-A</option>
+			</select>
+		</div>
+		</div>
+		<hr class="separator-red">
+	</div>
+	<?php
+
+	// 👉 Puis afficher les produits
+		if ($loop->have_posts()) {
+			echo '<div class="grille-produits-modele" id="' . esc_attr($grille_id) . '">';
+			$i = 0;
+			while ($loop->have_posts() && $i < $limite_affichage) {
+				$loop->the_post();
+				global $product;
+				$thumbnail = get_the_post_thumbnail($product->get_id(), 'medium');
+				if (!$thumbnail) {
+					$thumbnail = '<img src="' . wc_placeholder_img_src('medium') . '" alt="Image par défaut" />';
+				}
+				echo '<div class="produit-modele">';
+				echo '<a href="' . get_permalink() . '">' . $thumbnail . '</a>';
+				echo '<div class="info-produit">';
+				echo '<div class="texte-produit">';
+				echo '<h3>' . get_the_title() . '</h3>';
+				echo '<p>' . $product->get_price_html() . '</p>';
+				echo '</div>';
+				echo '<a href="' . esc_url('?add-to-cart=' . $product->get_id()) . '" 
+									data-quantity="1" 
+									class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" 
+									data-product_id="' . esc_attr($product->get_id()) . '" 
+									data-product_sku="' . esc_attr($product->get_sku()) . '" 
+									aria-label="Ajouter “' . esc_attr($product->get_name()) . '” au panier" 
+									rel="nofollow">Ajouter au panier</a>';
+				echo '</div>';
+				echo '</div>';
+				$i++;
+			}
+			echo '</div>';
+				if ($produits_total > $limite_affichage) {
+					echo '<button id="' . esc_attr($voir_plus_id) . '">Voir plus</button>';
+				}
+			wp_reset_postdata();
+		} else {
+			echo '<p>Aucun produit trouvé pour ce modèle.</p>';
+		}
+        echo '</div>';
+		if ($produits_total > $limite_affichage) : ?>
+			<script>
+				window.allProduitsByModel = window.allProduitsByModel || {};
+				window.allProduitsByModel[<?php echo wp_json_encode($instance_id); ?>] = <?php echo wp_json_encode($all_produits); ?>;
+			</script>
+		<?php endif; ?>
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				const instanceId = <?php echo wp_json_encode($instance_id); ?>;
+				const triSelect = document.getElementById(<?php echo wp_json_encode($tri_select_id); ?>);
+				const grille = document.getElementById(<?php echo wp_json_encode($grille_id); ?>);
+				const voirPlusBtn = document.getElementById(<?php echo wp_json_encode($voir_plus_id); ?>);
+				const allProduitsByModel = (window.allProduitsByModel && window.allProduitsByModel[instanceId]) ? window.allProduitsByModel[instanceId] : null;
+				if (triSelect && grille) {
+					triSelect.addEventListener('change', function () {
+						const items = Array.from(grille.querySelectorAll('.produit-modele'));
+						if (this.value === 'alpha') {
+							items.sort((a, b) => a.querySelector('h3').textContent.localeCompare(b.querySelector('h3').textContent));
+						} else if (this.value === 'alpha-desc') {
+							items.sort((a, b) => b.querySelector('h3').textContent.localeCompare(a.querySelector('h3').textContent));
+						} else {
+							return;
+						}
+						items.forEach(item => grille.appendChild(item));
+					});
+				}
+				if (voirPlusBtn && allProduitsByModel) {
+					voirPlusBtn.addEventListener('click', function (e) {
+						e.preventDefault();
+						grille.innerHTML = '';
+						allProduitsByModel.forEach(function(p) {
+							const div = document.createElement('div');
+							div.className = 'produit-modele';
+							div.innerHTML = `
+								<a href="${p.permalink}">${p.thumbnail}</a>
+								<div class=\"info-produit\">
+									<div class=\"texte-produit\">
+										<h3>${p.title}</h3>
+										<p>${p.price_html}</p>
+									</div>
+									<a href="<?php echo esc_url(home_url('/?add-to-cart=')); ?>${p.id}" data-quantity="1" class="bouton-ajouter-panier add_to_cart_button ajax_add_to_cart" data-product_id="${p.id}" data-product_sku="${p.sku}" aria-label="Ajouter “${p.name}” au panier" rel="nofollow">Ajouter au panier</a>
+								</div>
+							`;
+							grille.appendChild(div);
+						});
+						voirPlusBtn.style.display = 'none';
+					});
+				}
+			});
+		</script>
+
+		<div id="<?php echo esc_attr($modal_id); ?>" onclick="<?php echo esc_attr($close_zoom_function); ?>()">
+		<span class="close">&times;</span>
+		<div class="modal-content-container">
+			<div class="main-image-container">
+			<img id="<?php echo esc_attr($image_zoom_id); ?>" src="" onclick="event.stopPropagation();">
+			</div>
+		</div>
+		<div id="<?php echo esc_attr($zoom_instructions_id); ?>">
+			Cliquez sur l'image pour zoomer (Niveau 1/3)
+		</div>
+		</div>
+
+		<script>
+		// Encapsuler tout le code de zoom dans DOMContentLoaded
+		document.addEventListener('DOMContentLoaded', function() {
+			let zoomLevel = 0; // Niveau de zoom actuel (0, 1, 2, 3)
+			const maxZoomLevels = 3; // Maximum 3 niveaux de zoom
+			const zoomScales = [1, 2, 3.5, 5]; // Facteurs d'agrandissement pour chaque niveau
+
+			// Vérifier si on est sur un écran d'ordinateur (largeur > 1024px)
+			function isDesktop() {
+			return window.innerWidth > 1024;
+			}
+
+			// Fonction globale pour ouvrir le zoom
+			window[<?php echo wp_json_encode($open_zoom_function); ?>] = function(src) {
+			console.log('Fonction ouvrirImageZoom appelée avec:', src);
+			
+			const modal = document.getElementById(<?php echo wp_json_encode($modal_id); ?>);
+			const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+			
+			console.log('Éléments trouvés:', { modal, img }); // Debug
+			
+			// Vérifier que les éléments existent
+			if (!modal) {
+				console.error('Modal non trouvé:', modal);
+				return;
+			}
+			
+			if (!img) {
+				console.error('Image non trouvée:', img);
+				return;
+			}
+			
+			try {
+				modal.style.display = "block";
+				img.src = src;
+				
+				// Réinitialiser le zoom
+				zoomLevel = 0;
+				img.style.transform = 'scale(1)';
+				img.style.transformOrigin = 'center center';
+				img.style.cursor = 'zoom-in';
+				
+				// Mettre à jour les instructions initiales
+				updateZoomInstructions();
+				
+				// Configurer le zoom par clic et mouvement
+				setupClickZoom();
+				setupMouseMove();
+				
+				console.log('Modal ouvert avec succès'); // Debug
+			} catch (error) {
+				console.error('Erreur lors de l\'ouverture du modal:', error);
+			}
+			}
+
+			// Fonction globale pour fermer le zoom
+			window[<?php echo wp_json_encode($close_zoom_function); ?>] = function() {
+			const modal = document.getElementById(<?php echo wp_json_encode($modal_id); ?>);
+			if (modal) {
+				modal.style.display = "none";
+				zoomLevel = 0;
+			}
+			}
+
+			// Fonction globale pour gérer le clic sur l'image
+			function handleImageClick(e) {
+			e.stopPropagation();
+			
+			const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+			
+			// Vérifier que l'image existe
+			if (!img) {
+				console.error('Image non trouvée dans handleImageClick');
+				return;
+			}
+			
+			// Calculer la position du clic par rapport à l'image
+			const rect = img.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			
+			// Passer au niveau de zoom suivant
+			zoomLevel++;
+			
+			// Si on dépasse le maximum, revenir au niveau 0
+			if (zoomLevel > maxZoomLevels) {
+				zoomLevel = 0;
+				img.style.transformOrigin = 'center center';
+			} else {
+				// Définir le point d'origine du zoom à l'endroit du clic
+				img.style.transformOrigin = `${x}% ${y}%`;
+			}
+			
+			// Appliquer le nouveau niveau de zoom
+			const scale = zoomScales[zoomLevel];
+			img.style.transform = `scale(${scale})`;
+			img.style.transition = 'transform 0.3s ease';
+			
+			// Mettre à jour le curseur selon le niveau de zoom
+			if (zoomLevel === 0) {
+				img.style.cursor = 'zoom-in';
+			} else if (zoomLevel === maxZoomLevels) {
+				img.style.cursor = 'zoom-out';
+			} else {
+				img.style.cursor = 'zoom-in';
+			}
+			
+			// Mettre à jour les instructions
+			updateZoomInstructions();
+			
+			console.log('Zoom level:', zoomLevel, 'Scale:', scale, 'Origin:', `${x}% ${y}%`); // Debug
+			}
+
+			// Gérer le mouvement de la souris pour déplacer le point de zoom
+			function handleMouseMove(e) {
+			const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+			
+			if (!img || zoomLevel === 0) {
+				return;
+			}
+			
+			// Calculer la position de la souris par rapport à l'image
+			const rect = img.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			
+			// Mettre à jour le point d'origine du zoom en temps réel
+			img.style.transformOrigin = `${x}% ${y}%`;
+			}
+
+			function setupClickZoom() {
+			const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+			
+			// Vérifier que l'image existe
+			if (!img) {
+				console.error('Image non trouvée pour setupClickZoom');
+				return;
+			}
+			
+			// Nettoyer les anciens event listeners
+			img.removeEventListener('click', handleImageClick);
+			
+			// Ajouter le nouvel event listener pour le clic
+			img.addEventListener('click', handleImageClick);
+			
+			console.log('Event listener ajouté pour le zoom'); // Debug
+			}
+
+			function setupMouseMove() {
+			const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+			
+			// Vérifier que l'image existe
+			if (!img) {
+				console.error('Image non trouvée pour setupMouseMove');
+				return;
+			}
+			
+			// Nettoyer les anciens event listeners
+			img.removeEventListener('mousemove', handleMouseMove);
+			
+			// Ajouter le nouvel event listener pour le mouvement de la souris
+			img.addEventListener('mousemove', handleMouseMove);
+			
+			console.log('Event listener ajouté pour le mouvement de la souris'); // Debug
+			}
+
+			function updateZoomInstructions() {
+			const instructions = document.getElementById(<?php echo wp_json_encode($zoom_instructions_id); ?>);
+			
+			// Vérifier que l'élément existe
+			if (!instructions) {
+				console.error('Instructions non trouvées');
+				return;
+			}
+			
+			if (zoomLevel === 0) {
+				instructions.textContent = 'Cliquez sur une partie de l\'image pour zoomer (Niveau 1/3)';
+			} else if (zoomLevel === maxZoomLevels) {
+				instructions.textContent = 'Cliquez pour revenir à la taille normale • Bougez la souris pour explorer';
+			} else {
+				instructions.textContent = `Zoom niveau ${zoomLevel}/3 • Cliquez pour zoomer davantage • Bougez la souris pour explorer`;
+			}
+			}
+
+			// Gestion responsive
+			window.addEventListener('resize', function() {
+			if (!isDesktop()) {
+				// Sur mobile/tablette, réinitialiser le zoom
+				const img = document.getElementById(<?php echo wp_json_encode($image_zoom_id); ?>);
+				if (img) {
+				zoomLevel = 0;
+				img.style.transform = 'scale(1)';
+				img.style.transformOrigin = 'center center';
+				img.style.cursor = 'default';
+				}
+			}
+			});
+			
+			console.log('Script de zoom initialisé avec succès');
+		});
+		</script>
+
+	<?php
+
+		if (current_user_can('administrator') && isset($_POST['sauver_contenu_essentiel'])) {
+		$contenu_sauvegarde = wp_kses_post($_POST['contenu_essentiel']);
+		update_option('contenu_essentiel_' . $modele_slug, $contenu_sauvegarde);
+
+		// Redirection propre vers la même URL en GET (PRG pattern)
+		$url_actuelle = esc_url_raw(add_query_arg(null, null));
+		wp_redirect($url_actuelle);
+		exit;
+		}
+
+	return ob_get_clean();
+	}
+}
+
 
 // Fonction utilitaire pour générer les variables AJAX dans les snippets
 function get_ajax_prestations_vars() {
