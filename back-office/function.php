@@ -485,7 +485,7 @@ if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
 			.produits-par-modele-wrapper {
                 display: block;
                 width: 100%;
-				padding: 24px 20px 40px;
+				padding: 24vh 20vw 40px;
 				box-sizing: border-box;
                 background: #ffffff;
                 border: 1px solid #dcdcdc;
@@ -866,7 +866,7 @@ if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
 		
 		@media screen and (max-width: 768px) {
 				.produits-par-modele-wrapper {
-					padding: 20px 12px 32px;
+					padding: 20vh 12px 32px;
 				}
 
 			.grille-produits-modele {
