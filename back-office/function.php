@@ -263,32 +263,55 @@ add_filter( 'rank_math/frontend/robots', function( $robots ) {
 // Configuration optimisée pour snippets Elementor avec code inline
 // Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
 
-// Réécriture de l'url clasique des products catégory
-function custom_rewrite_velo() {
-    add_rewrite_rule(
-        '^velo/([^/]+)/([^/]+)/?$',
-        'index.php?pratique=$matches[1]&modele=$matches[2]',
-        'top'
-    );
-}
-add_action('init', 'custom_rewrite_velo');
-
-//Déclarations des query vars nécessaires à la récupérations des informations par le code de page dynamique
-function custom_query_vars($vars) {
-    $vars[] = 'pratique';
-    $vars[] = 'modele';
-    return $vars;
-}
-add_filter('query_vars', 'custom_query_vars');
-
-// Routing vers le code du template 
-function custom_template_modele($template) {
-    if (get_query_var('modele')) {
-        return get_template_directory() . '/template-modele.php';
+// Cible les categories modele de velo (URLs natives WooCommerce)
+function cannondale_is_velo_modele_category_context() {
+    if (is_admin() || !is_tax('product_cat')) {
+        return false;
     }
-    return $template;
+
+    $term = get_queried_object();
+    if (!($term instanceof WP_Term) || $term->taxonomy !== 'product_cat') {
+        return false;
+    }
+
+    $velo_term = get_term_by('slug', 'velo', 'product_cat');
+    if (!$velo_term || is_wp_error($velo_term)) {
+        return false;
+    }
+
+    $allowed_pratiques = array('vtt', 'vae', 'route', 'velos-urbains');
+    $parent_term = !empty($term->parent) ? get_term((int) $term->parent, 'product_cat') : null;
+
+    if (!$parent_term || is_wp_error($parent_term)) {
+        return false;
+    }
+
+    $is_model_under_allowed_pratique = in_array($parent_term->slug, $allowed_pratiques, true)
+        && term_is_ancestor_of($velo_term, $parent_term, 'product_cat');
+
+    return (bool) $is_model_under_allowed_pratique;
 }
-add_filter('template_include', 'custom_template_modele');
+
+// Rend le template custom directement depuis ce fichier pour eviter les conflits template_include.
+function cannondale_render_velo_modele_template() {
+    if (!cannondale_is_velo_modele_category_context()) {
+        return;
+    }
+
+    global $wp_query;
+    if (isset($wp_query->is_404) && $wp_query->is_404) {
+        $wp_query->is_404 = false;
+        status_header(200);
+    }
+
+    get_header();
+    echo '<main id="primary" class="site-main">';
+    echo afficher_produits_par_modele();
+    echo '</main>';
+    get_footer();
+    exit;
+}
+add_action('template_redirect', 'cannondale_render_velo_modele_template', 1);
 
 //Fonction de détail modèle vélo
 if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
@@ -298,6 +321,21 @@ if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
 
 		$modele   = get_query_var('modele');
 		$pratique = get_query_var('pratique');
+
+        // Fallback pour les URLs natives WooCommerce (/product-category/...)
+        if (!$modele && is_tax('product_cat')) {
+            $queried_term = get_queried_object();
+            if ($queried_term instanceof WP_Term && $queried_term->taxonomy === 'product_cat') {
+                $modele = $queried_term->slug;
+
+                if (!empty($queried_term->parent)) {
+                    $parent_term = get_term((int) $queried_term->parent, 'product_cat');
+                    if ($parent_term && !is_wp_error($parent_term)) {
+                        $pratique = $parent_term->slug;
+                    }
+                }
+            }
+        }
 
 	
 
@@ -482,34 +520,34 @@ if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
 	// 👉 Ensuite, afficher le HTML
 	?>
 	<style>
-			.produits-par-modele-wrapper {
-                display: block;
-                width: 100%;
-				padding: 24vh 20vw 40px;
-				box-sizing: border-box;
-                background: #ffffff;
-                border: 1px solid #dcdcdc;
-                border-radius: 12px;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-                margin: 0 0 24px;
-			}
+        .produits-par-modele-wrapper {
+            display: block;
+            width: 100%;
+            padding: 30vh 20vw 40px;
+            box-sizing: border-box;
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            margin: 0 0 24px;
+        }
 
-			#<?php echo esc_attr($voir_plus_id); ?> {
-				display: block;
-				margin: 20px auto 0;
-				background-color: #000;
-				color: #fff;
-				padding: 10px 20px;
-				font-size: 14px;
-				font-family: 'din-next-lt-pro', sans-serif;
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-			}
-			#<?php echo esc_attr($voir_plus_id); ?>:hover {
-				background-color: #FF3F22;
-				color: #fff;
-			}
+        #<?php echo esc_attr($voir_plus_id); ?> {
+            display: block;
+            margin: 20px auto 0;
+            background-color: #000;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-family: 'din-next-lt-pro', sans-serif;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #<?php echo esc_attr($voir_plus_id); ?>:hover {
+            background-color: #FF3F22;
+            color: #fff;
+        }
 		.grille-produits-modele {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
