@@ -1944,7 +1944,7 @@ function envoyer_form_roue() {
 	}
 
 	// Génération du numéro de commande unique
-	$order_number = 'CMD-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
+	$order_number = 'PRST-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
 
 	// Construction du message avec formatage amélioré
 	$message = "Numéro de commande : $order_number\n";
@@ -2104,7 +2104,7 @@ function envoyer_form_fox() {
 	}
 
 	// Génération du numéro de commande unique
-	$order_number = 'CMD-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
+	$order_number = 'PRST-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
 
 	// Construction du message
 	$message = "Numéro de commande : $order_number\n";
@@ -2201,7 +2201,7 @@ function envoyer_form_fourche() {
 	}
 
 	// Génération du numéro de commande unique
-	$order_number = 'CMD-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
+	$order_number = 'PRST-' . date('Ymd') . '-' . substr(md5(uniqid(rand(), true)), 0, 6);
 
 	// Construction du message avec formatage amélioré
 	$message = "Numéro de commande : $order_number\n";
