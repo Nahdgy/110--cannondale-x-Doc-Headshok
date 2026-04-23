@@ -245,6 +245,12 @@ function cannondale_use_custom_search_template( $template ) {
     return $template;
 }
 
+add_filter( 'woocommerce_get_privacy_policy_text', 'custom_privacy_policy_text' );
+
+function custom_privacy_policy_text( $text ) {
+    return 'Paiment 100% sécurisé, pour toutes informations veuillez vous référer à notre <a style="color:#ff3f21;" href="/CGV/">conditions générales de vente</a>.';
+}
+
 // Configuration optimisée pour snippets Elementor avec code inline
 // Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
 
@@ -508,7 +514,7 @@ if ( ! function_exists( 'afficher_produits_par_modele' ) ) {
         .produits-par-modele-wrapper {
             display: block;
             width: 100%;
-            padding: 30vh 20vw 40px;
+            padding: 40vh 10vw 40px;
             box-sizing: border-box;
             background: #ffffff;
             border: 1px solid #dcdcdc;
