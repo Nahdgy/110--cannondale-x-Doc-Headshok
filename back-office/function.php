@@ -245,21 +245,6 @@ function cannondale_use_custom_search_template( $template ) {
     return $template;
 }
 
-// Supprimer le robots natif WordPress
-add_action( 'init', function() {
-    remove_action( 'wp_head', 'wp_robots', 1 );
-});
-
-// Forcer noindex sur catégories et tags produits
-add_filter( 'rank_math/frontend/robots', function( $robots ) {
-
-    if ( is_tax( 'product_tag' ) || is_tax( 'product_cat' ) ) {
-        $robots['index'] = 'noindex';
-        $robots['follow'] = 'follow';
-    }
-
-    return $robots;
-});
 // Configuration optimisée pour snippets Elementor avec code inline
 // Pas besoin d'enqueue de fichier externe, juste les fonctions utilitaires
 
